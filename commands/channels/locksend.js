@@ -53,21 +53,23 @@ module.exports = {
             embed.setDescription(
                 `Currently Status: 🔒\nSuccessfully locksended this channel for ${
                     roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
-                }\n\`Everyone with that role can no longer send messages in the channel\``
+                }\n\`Everyone with that role can no longer send messages in the channel\`\n\nTo reset changes:\n\`\`\`/locksend role: <@&${roleid}>\`\`\``
             );
         } else {
             interaction.channel.permissionOverwrites.set([
                 {
                     id: options.role.id,
-                    allow: "SEND_MESSAGES",
+                    default: "SEND_MESSAGES",
                 },
             ]);
 
-            embed.setDescription(
-                `Currently Status: 🔓\nSuccessfully unlocksended this channel for ${
-                    roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
-                }\n\`Everyone with that role can now send messsages in the channel\``
-            );
+            embed
+                .setDescription(
+                    `Currently Status: 🔓\nSuccessfully unlocksended this channel for ${
+                        roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
+                    }\n\`Everyone with that role can now send messsages in the channel\``
+                )
+                .setColor("BLURPLE");
         }
 
         return interaction.reply({ embeds: [embed] });

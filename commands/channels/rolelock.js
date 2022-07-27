@@ -6,14 +6,13 @@ const { error_reply } = require("../../utils/error");
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("lockview")
-        .setDescription(
-            "lock view to change if a role or user can view the channel"
-        )
+        .setName("rolelock")
+        .setDescription("lock view so that only one role can view the channel")
         .addRoleOption((oi) => {
             return oi
                 .setName("role")
-                .setDescription("A valid role that exists in this server");
+                .setDescription("A valid role that exists in this server")
+                .setRequired(true);
         }),
     async execute(interaction, client) {
         const options = {
@@ -28,35 +27,44 @@ module.exports = {
             return error_reply(interaction, message);
         }
 
-        let roleid;
-        if (!options.role) {
-            options.role = await interaction.guild.roles.everyone;
-            roleid = "everyone";
-        } else {
-            roleid = options.role.id;
+        const roleid = options.role.id;
+        const everyonerole = await interaction.guild.roles.everyone;
+
+        if (roleid === interaction.guildId) {
+            message = `\`No point in locking for everyone using this command. Please use /lockview\``;
+            return error_reply(interaction, message);
         }
 
-        const currentsatus = interaction.channel
+        const currentsatusrole = interaction.channel
             .permissionsFor(options.role.id)
             .has("VIEW_CHANNEL");
+        const currentsatuseveryone = interaction.channel
+            .permissionsFor(everyonerole.id)
+            .has("VIEW_CHANNEL");
 
-        const embed = new MessageEmbed().setColor("YELLOW");
+        const embed = new MessageEmbed().setColor("GREEN");
 
-        if (currentsatus === true) {
+        if (currentsatuseveryone === true) {
             interaction.channel.permissionOverwrites.set([
                 {
-                    id: options.role.id,
+                    id: everyonerole.id,
                     deny: "VIEW_CHANNEL",
+                },
+                {
+                    id: options.role.id,
+                    allow: "VIEW_CHANNEL",
                 },
             ]);
 
             embed.setDescription(
-                `Currently Status: 🔒\nSuccessfully lockviewed this channel for ${
-                    roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
-                }\n\`Everyone with that role can no longer view the channel\`\n\nTo reset changes:\n\`\`\`/lockview role: <@&${roleid}>\`\`\``
+                `Currently Status: 🔒\nSuccessfully rolelocked this channel to <@&${roleid}>\n\`Only people with that role can view the channel\`\n\nTo reset changes:\n\`\`\`/rolelock role: <@&${roleid}>\`\`\``
             );
         } else {
             interaction.channel.permissionOverwrites.set([
+                {
+                    id: everyonerole.id,
+                    allow: "VIEW_CHANNEL",
+                },
                 {
                     id: options.role.id,
                     default: "VIEW_CHANNEL",
@@ -65,9 +73,7 @@ module.exports = {
 
             embed
                 .setDescription(
-                    `Currently Status: 🔓\nSuccessfully unlockviewed this channel for ${
-                        roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
-                    }\n\`Everyone with that role can now view the channel\``
+                    `Currently Status: 🔓\nSuccessfully unrolelocked this channel from <@&${roleid}>\n\`Everyone can view the channel\``
                 )
                 .setColor("BLURPLE");
         }
