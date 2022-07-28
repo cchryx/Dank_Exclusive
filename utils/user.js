@@ -22,6 +22,67 @@ class Userfunctions {
             console.log(error);
         }
     }
+    static async user_ar(message, mentions, guildData) {
+        mentions.forEach(async (mention) => {
+            const userid = mention.id;
+
+            let userData;
+            try {
+                userData = await UserModel.findOne({
+                    userid: userid,
+                });
+                if (!userData) {
+                    let user = await UserModel.create({
+                        userid: userid,
+                    });
+
+                    user.save();
+
+                    userData = user;
+                }
+            } catch (error) {
+                console.log(error);
+            }
+
+            if (!userData.autoreaction) return;
+
+            if (
+                !mention.roles.cache.find(
+                    (r) => r.id === guildData.boostroles[0]
+                )
+            ) {
+                const user = message.guild.members.cache.get(mention.id);
+                user.roles.remove([
+                    guildData.boostroles[1],
+                    guildData.boostroles[2],
+                ]);
+            }
+
+            if (
+                !mention.roles.cache.find(
+                    (r) => r.id === guildData.boostroles[0]
+                ) &&
+                userData.autoreaction
+            ) {
+                userData.autoreaction = null;
+                return await UserModel.findOneAndUpdate(
+                    { userid: userData.userid },
+                    userData
+                );
+            }
+
+            const emoji = userData.autoreaction;
+            return message.react(`${emoji}`).catch(async (error) => {
+                if (error.code === 10014) {
+                    userData.autoreaction = null;
+                    return await UserModel.findOneAndUpdate(
+                        { userid: userData.userid },
+                        userData
+                    );
+                }
+            });
+        });
+    }
 }
 
 module.exports = Userfunctions;

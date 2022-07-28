@@ -26,7 +26,11 @@ mongoose
     });
 
 const client = new Client({
-    intents: [GatewayIntentBits.Guilds],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
     partials: [Partials.Channel],
 });
 client.commands = new Collection();
