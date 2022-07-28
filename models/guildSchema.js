@@ -14,6 +14,10 @@ const guildSchema = new mongoose.Schema(
             type: Array,
             default: [],
         },
+        boostroles: {
+            type: Array,
+            default: [],
+        },
     },
     { minimize: false }
 );

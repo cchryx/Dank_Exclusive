@@ -1,11 +1,11 @@
-const { Collection, MessageEmbed } = require("discord.js");
+const { InteractionType, Collection, MessageEmbed } = require("discord.js");
 
 const { user_fetch } = require("../utils/user");
 
 module.exports = {
     name: "interactionCreate",
     async execute(interaction, client) {
-        if (!interaction.isCommand()) return;
+        if (!interaction.type === InteractionType.ApplicationCommand) return;
 
         const commandname = interaction.commandName;
         const command = client.commands.get(commandname);

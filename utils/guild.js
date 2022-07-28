@@ -1,4 +1,4 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 const GuildModel = require("../models/guildSchema");
 
@@ -41,10 +41,31 @@ class Guildfunctions {
             }
         });
 
-        if (guildData.moderation_userids.includes(interaction.user.id)) {
+        if (guildData.moderation_guildids.includes(interaction.guild.id)) {
             status = true;
         }
         return status;
+    }
+    static async guild_fetch(guildid) {
+        let guildData;
+        try {
+            guildData = await GuildModel.findOne({
+                guildid: guildid,
+            });
+            if (!guildData) {
+                let guild = await GuildModel.create({
+                    guildid: guildid,
+                });
+
+                guild.save();
+
+                guildData = guild;
+            }
+
+            return guildData;
+        } catch (error) {
+            console.log(error);
+        }
     }
 }
 

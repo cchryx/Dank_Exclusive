@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 const { guild_checkperm } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
@@ -38,30 +38,26 @@ module.exports = {
 
         const currentsatus = interaction.channel
             .permissionsFor(options.role.id)
-            .has("SEND_MESSAGES");
+            .has("SendMessages");
 
-        const embed = new MessageEmbed().setColor("YELLOW");
+        const embed = new EmbedBuilder().setColor("Yellow");
 
         if (currentsatus === true) {
-            interaction.channel.permissionOverwrites.set([
-                {
-                    id: options.role.id,
-                    deny: "SEND_MESSAGES",
-                },
-            ]);
+            interaction.channel.permissionOverwrites.edit(options.role.id, {
+                SendMessages: false,
+            });
 
             embed.setDescription(
                 `Currently Status: 🔒\nSuccessfully locksended this channel for ${
                     roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
-                }\n\`Everyone with that role can no longer send messages in the channel\`\n\nTo reset changes:\n\`\`\`/locksend role: <@&${roleid}>\`\`\``
+                }\n\`Everyone with that role can no longer send messages in the channel\`\n\nTo reset changes:\n\`\`\`/locksend ${
+                    roleid === "everyone" ? "" : `role: <@&${roleid}>`
+                }\`\`\``
             );
         } else {
-            interaction.channel.permissionOverwrites.set([
-                {
-                    id: options.role.id,
-                    default: "SEND_MESSAGES",
-                },
-            ]);
+            interaction.channel.permissionOverwrites.edit(options.role.id, {
+                SendMessages: null,
+            });
 
             embed
                 .setDescription(
@@ -69,7 +65,7 @@ module.exports = {
                         roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
                     }\n\`Everyone with that role can now send messsages in the channel\``
                 )
-                .setColor("BLURPLE");
+                .setColor("Blurple");
         }
 
         return interaction.reply({ embeds: [embed] });

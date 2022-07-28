@@ -1,10 +1,10 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 class Errorfunctions {
     static async error_reply(interaction, message) {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
             .setDescription(message)
-            .setColor("RED");
+            .setColor("Red");
 
         return interaction.reply({ embeds: [embed], ephemeral: true });
     }

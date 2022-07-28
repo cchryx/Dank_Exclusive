@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
 const { guild_checkperm } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
@@ -38,30 +38,26 @@ module.exports = {
 
         const currentsatus = interaction.channel
             .permissionsFor(options.role.id)
-            .has("VIEW_CHANNEL");
+            .has("ViewChannel");
 
-        const embed = new MessageEmbed().setColor("YELLOW");
+        const embed = new EmbedBuilder().setColor("Yellow");
 
         if (currentsatus === true) {
-            interaction.channel.permissionOverwrites.set([
-                {
-                    id: options.role.id,
-                    deny: "VIEW_CHANNEL",
-                },
-            ]);
+            interaction.channel.permissionOverwrites.edit(options.role.id, {
+                ViewChannel: false,
+            });
 
             embed.setDescription(
                 `Currently Status: 🔒\nSuccessfully lockviewed this channel for ${
                     roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
-                }\n\`Everyone with that role can no longer view the channel\`\n\nTo reset changes:\n\`\`\`/lockview role: <@&${roleid}>\`\`\``
+                }\n\`Everyone with that role can no longer view the channel\`\n\nTo reset changes:\n\`\`\`/lockview ${
+                    roleid === "everyone" ? "" : ` role: <@&${roleid}>`
+                }\`\`\``
             );
         } else {
-            interaction.channel.permissionOverwrites.set([
-                {
-                    id: options.role.id,
-                    default: "VIEW_CHANNEL",
-                },
-            ]);
+            interaction.channel.permissionOverwrites.edit(options.role.id, {
+                ViewChannel: null,
+            });
 
             embed
                 .setDescription(
@@ -69,7 +65,7 @@ module.exports = {
                         roleid === "everyone" ? "@everyone" : `<@&${roleid}>`
                     }\n\`Everyone with that role can now view the channel\``
                 )
-                .setColor("BLURPLE");
+                .setColor("Blurple");
         }
         return interaction.reply({ embeds: [embed] });
     },

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, MessageActionRow, MessageButton } = require("discord.js");
 
 const { guild_checkperm } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
@@ -35,47 +35,36 @@ module.exports = {
             return error_reply(interaction, message);
         }
 
-        const currentsatusrole = interaction.channel
-            .permissionsFor(options.role.id)
-            .has("VIEW_CHANNEL");
         const currentsatuseveryone = interaction.channel
             .permissionsFor(everyonerole.id)
-            .has("VIEW_CHANNEL");
+            .has("ViewChannel");
 
-        const embed = new MessageEmbed().setColor("GREEN");
+        const embed = new EmbedBuilder().setColor("Green");
 
         if (currentsatuseveryone === true) {
-            interaction.channel.permissionOverwrites.set([
-                {
-                    id: everyonerole.id,
-                    deny: "VIEW_CHANNEL",
-                },
-                {
-                    id: options.role.id,
-                    allow: "VIEW_CHANNEL",
-                },
-            ]);
+            interaction.channel.permissionOverwrites.edit(everyonerole.id, {
+                ViewChannel: false,
+            });
+            interaction.channel.permissionOverwrites.edit(options.role.id, {
+                ViewChannel: true,
+            });
 
             embed.setDescription(
                 `Currently Status: 🔒\nSuccessfully rolelocked this channel to <@&${roleid}>\n\`Only people with that role can view the channel\`\n\nTo reset changes:\n\`\`\`/rolelock role: <@&${roleid}>\`\`\``
             );
         } else {
-            interaction.channel.permissionOverwrites.set([
-                {
-                    id: everyonerole.id,
-                    allow: "VIEW_CHANNEL",
-                },
-                {
-                    id: options.role.id,
-                    default: "VIEW_CHANNEL",
-                },
-            ]);
+            interaction.channel.permissionOverwrites.edit(everyonerole.id, {
+                ViewChannel: true,
+            });
+            interaction.channel.permissionOverwrites.edit(options.role.id, {
+                ViewChannel: null,
+            });
 
             embed
                 .setDescription(
                     `Currently Status: 🔓\nSuccessfully unrolelocked this channel from <@&${roleid}>\n\`Everyone can view the channel\``
                 )
-                .setColor("BLURPLE");
+                .setColor("Blurple");
         }
         return interaction.reply({ embeds: [embed] });
     },
