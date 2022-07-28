@@ -41,9 +41,12 @@ class Guildfunctions {
             }
         });
 
-        if (guildData.moderation_guildids.includes(interaction.guild.id)) {
-            status = true;
+        if (guildData.moderation_userids.length > 0) {
+            if (guildData.moderation_guildids.includes(interaction.guild.id)) {
+                status = true;
+            }
         }
+
         return status;
     }
     static async guild_fetch(guildid) {
