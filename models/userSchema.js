@@ -20,8 +20,8 @@ const userSchema = new mongoose.Schema(
             },
         },
         autoreaction: {
-            type: String,
-            default: null,
+            type: Array,
+            default: [],
         },
         dankdonations: {
             type: Number,
