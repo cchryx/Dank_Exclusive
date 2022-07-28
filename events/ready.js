@@ -1,4 +1,5 @@
 const colors = require("colors");
+const { Client, GatewayIntentBits, ActivityType } = require("discord.js");
 
 module.exports = {
     name: "ready",
@@ -9,11 +10,9 @@ module.exports = {
 
         client.user.setPresence({
             activities: [
-                {
-                    name: `Dank Exclusive`,
-                    type: "WATCHING",
-                },
+                { name: `Dank Exclusive`, type: ActivityType.Watching },
             ],
+            status: "dnd",
         });
     },
 };
