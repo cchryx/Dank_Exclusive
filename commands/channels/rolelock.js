@@ -18,7 +18,7 @@ module.exports = {
         const options = {
             role: interaction.options.getRole("role"),
         };
-        requiredperms = ["MANAGE_CHANNELS", "MANAGE_GUILD", "ADMINISTRATOR"];
+        requiredperms = ["ManageChannels", "ManageGuild", "Administrator"];
         let message;
         let pass = await guild_checkperm(interaction, requiredperms);
 
@@ -38,8 +38,6 @@ module.exports = {
         const currentsatuseveryone = interaction.channel
             .permissionsFor(everyonerole.id)
             .has("ViewChannel");
-
-        const embed = new EmbedBuilder().setColor("Green");
 
         if (currentsatuseveryone === true) {
             interaction.channel.permissionOverwrites.edit(everyonerole.id, {

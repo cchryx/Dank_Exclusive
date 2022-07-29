@@ -1,6 +1,7 @@
-const { InteractionType, Collection, MessageEmbed } = require("discord.js");
+const { InteractionType, Collection, EmbedBuilder } = require("discord.js");
 
 const { user_fetch } = require("../utils/user");
+const { error_reply } = require("../utils/error");
 
 module.exports = {
     name: "interactionCreate",

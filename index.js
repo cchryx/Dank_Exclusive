@@ -1,8 +1,6 @@
 const { mongodb_srv, discord_token } = require("./config.json");
 const colors = require("colors");
 
-const { error_reply } = require("./utils/error");
-
 const {
     Client,
     Collection,
@@ -30,6 +28,7 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers,
     ],
     partials: [Partials.Channel],
 });
@@ -42,14 +41,6 @@ const eventFiles = fs
     .readdirSync("./events")
     .filter((file) => file.endsWith(".js"));
 const commandFolders = fs.readdirSync("./commands");
-
-process.on("uncaughtException", (err) => {
-    console.log(err);
-});
-
-process.on("unhandledRejection", (err) => {
-    console.log(err);
-});
 
 (async () => {
     for (file of functions) {
