@@ -143,7 +143,7 @@ module.exports = {
             }
         }
 
-        let count = -1;
+        let count = 0;
         users.forEach((id) => {
             interaction.guild.members.cache.get(id).roles.add(role);
             count = count + 1;
@@ -160,7 +160,6 @@ module.exports = {
                             : ``
                     }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
                 );
-                return random_message.edit({ embeds: [embed] });
             } else {
                 embed.setDescription(
                     `**Adding roles...**\nPlease hold, don't run command again till finished processing\n\nRole: <@&${
@@ -171,8 +170,8 @@ module.exports = {
                             : ``
                     }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
                 );
-                return random_message.edit({ embeds: [embed] });
             }
+            return random_message.edit({ embeds: [embed] });
         });
     },
 };
