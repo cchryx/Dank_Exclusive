@@ -155,27 +155,29 @@ module.exports = {
             interaction.guild.members.cache.get(id).roles.add(role);
             count = count + 1;
             const percentdont = (count / noofusers).toFixed(2);
-            embed.setDescription(
-                `**Adding roles...**\nPlease hold, don't run command again till finished processing\n\nRole: <@&${
-                    role.id
-                }>\n${
-                    role_blacklisted
-                        ? `Blacklisted Role: <@&${role_blacklisted.id}>\n`
-                        : ``
-                }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
-            );
+            if (count === noofusers) {
+                embed.setDescription(
+                    `**Finished! YAY**\nThis command is avaliable again\n\nRole: <@&${
+                        role.id
+                    }>\n${
+                        role_blacklisted
+                            ? `Blacklisted Role: <@&${role_blacklisted.id}>\n`
+                            : ``
+                    }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
+                );
+            } else {
+                embed.setDescription(
+                    `**Adding roles...**\nPlease hold, don't run command again till finished processing\n\nRole: <@&${
+                        role.id
+                    }>\n${
+                        role_blacklisted
+                            ? `Blacklisted Role: <@&${role_blacklisted.id}>\n`
+                            : ``
+                    }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
+                );
+            }
 
             random_message.edit({ embeds: [embed] });
         });
-        embed.setDescription(
-            `**Finished! YAY**\nThis command is avaliable again\n\nRole: <@&${
-                role.id
-            }>\n${
-                role_blacklisted
-                    ? `Blacklisted Role: <@&${role_blacklisted.id}>\n`
-                    : ``
-            }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
-        );
-        return random_message.edit({ embeds: [embed] });
     },
 };
