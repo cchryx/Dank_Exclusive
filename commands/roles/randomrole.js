@@ -111,8 +111,8 @@ module.exports = {
             fetchReply: true,
         });
 
-        users = [];
-        for (let i = 0; i <= noofusers; i++) {
+        let users = [];
+        for (let i = 0; i < noofusers; i++) {
             let user;
             if (role_blacklisted) {
                 user = fetchMembers
@@ -134,27 +134,22 @@ module.exports = {
                     )
                     .random().id;
             }
-            users.push(user);
-            const amountdone = i + 1;
-            const percentdont = (amountdone / noofusers).toFixed(2);
-            embed.setDescription(
-                `**Getting random users...**\nPlease hold, don't run command again till finished processing\n\nRole: <@&${
-                    role.id
-                }>\n${
-                    role_blacklisted
-                        ? `Blacklisted Role: <@&${role_blacklisted.id}>\n`
-                        : ``
-                }Amount Done: \`${amountdone.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
-            );
-
-            random_message.edit({ embeds: [embed] });
+            if (users.includes(user)) {
+                i = i - 1;
+            } else {
+                users.push(user);
+                const amountdone = i + 1;
+                const percentdont = ((amountdone / noofusers) * 100).toFixed(2);
+            }
         }
 
         let count = -1;
         users.forEach((id) => {
             interaction.guild.members.cache.get(id).roles.add(role);
             count = count + 1;
-            const percentdont = (count / noofusers).toFixed(2);
+            const percentdont = ((count / noofusers) * 100).toFixed(2);
+            const remainderdevided = count % 5;
+
             if (count === noofusers) {
                 embed.setDescription(
                     `**Finished! YAY**\nThis command is avaliable again\n\nRole: <@&${
@@ -165,6 +160,7 @@ module.exports = {
                             : ``
                     }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
                 );
+                return random_message.edit({ embeds: [embed] });
             } else {
                 embed.setDescription(
                     `**Adding roles...**\nPlease hold, don't run command again till finished processing\n\nRole: <@&${
@@ -175,9 +171,8 @@ module.exports = {
                             : ``
                     }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
                 );
+                return random_message.edit({ embeds: [embed] });
             }
-
-            random_message.edit({ embeds: [embed] });
         });
     },
 };
