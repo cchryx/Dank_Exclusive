@@ -167,5 +167,15 @@ module.exports = {
 
             random_message.edit({ embeds: [embed] });
         });
+        embed.setDescription(
+            `**Finished! YAY**\nThis command is avaliable again\n\nRole: <@&${
+                role.id
+            }>\n${
+                role_blacklisted
+                    ? `Blacklisted Role: <@&${role_blacklisted.id}>\n`
+                    : ``
+            }Amount Done: \`${count.toLocaleString()}/${noofusers.toLocaleString()}\` \`${percentdont}%\``
+        );
+        return random_message.edit({ embeds: [embed] });
     },
 };
