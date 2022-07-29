@@ -150,7 +150,7 @@ module.exports = {
             random_message.edit({ embeds: [embed] });
         }
 
-        let count = 0;
+        let count = -1;
         users.forEach((id) => {
             interaction.guild.members.cache.get(id).roles.add(role);
             count = count + 1;
