@@ -73,6 +73,10 @@ class Userfunctions {
                 }
             });
 
+            if (slots_max > 2) {
+                slots_max = 2;
+            }
+
             if (slots_used > slots_max) {
                 userData.autoreaction = userData.autoreaction.slice(
                     0,

@@ -57,6 +57,10 @@ module.exports = {
                 }
             });
 
+            if (slots_max > 2) {
+                slots_max = 2;
+            }
+
             if (slots_used > slots_max) {
                 userData.autoreaction = userData.autoreaction.slice(
                     0,
@@ -142,6 +146,10 @@ module.exports = {
                     hasroles.push(key);
                 }
             });
+
+            if (slots_max > 2) {
+                slots_max = 2;
+            }
 
             if (slots_used === 0) {
                 slots_display = `\`no slots\``;
@@ -277,6 +285,10 @@ module.exports = {
                     hasroles.push(key);
                 }
             });
+
+            if (slots_max > 2) {
+                slots_max = 2;
+            }
 
             if (slots_used > slots_max) {
                 userData.autoreaction = userData.autoreaction.slice(
