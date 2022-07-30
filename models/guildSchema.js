@@ -18,6 +18,18 @@ const guildSchema = new mongoose.Schema(
             type: Array,
             default: [],
         },
+        perkar_roles: {
+            type: Object,
+            default: {},
+        },
+        perkchannel_roles: {
+            type: Object,
+            default: {},
+        },
+        perkrole_roles: {
+            type: Object,
+            default: {},
+        },
     },
     { minimize: false }
 );

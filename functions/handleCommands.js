@@ -27,7 +27,7 @@ module.exports = (client) => {
         const rest = new REST({ version: "9" }).setToken(discord_token);
 
         (async () => {
-            const mode = "";
+            const mode = "global";
             if (mode === "global") {
                 try {
                     console.log(
