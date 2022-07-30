@@ -250,7 +250,7 @@ module.exports = {
                 if (verifyemoji._emoji.id) {
                     emoji = `<a:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
                 } else {
-                    emoji = `:${verifyemoji._emoji.name}:`;
+                    emoji = `${verifyemoji._emoji.name}`;
                 }
                 userData.autoreaction.push(emoji);
                 slots_used = slots_used + 1;
