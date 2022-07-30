@@ -30,7 +30,7 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("add")
-                .setDescription("Choose add an autoreaction")
+                .setDescription("Add an autoreaction")
                 .addStringOption((oi) => {
                     return oi
                         .setName("emoji")
@@ -256,7 +256,11 @@ module.exports = {
 
             if (verifyemoji !== false) {
                 if (verifyemoji._emoji.id) {
-                    emoji = `<a:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
+                    if (verifyemoji._emoji.animated === true) {
+                        emoji = `<a:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
+                    } else {
+                        emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
+                    }
                 } else {
                     emoji = `${verifyemoji._emoji.name}`;
                 }

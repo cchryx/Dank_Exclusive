@@ -22,10 +22,7 @@ const userSchema = new mongoose.Schema(
         customrole: {
             type: Object,
             default: {
-                id: {
-                    type: String,
-                    default: null,
-                },
+                id: null,
                 users: {
                     type: Array,
                     default: [],
