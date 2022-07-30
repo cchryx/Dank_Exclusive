@@ -19,6 +19,19 @@ const userSchema = new mongoose.Schema(
                 },
             },
         },
+        customrole: {
+            type: Object,
+            default: {
+                id: {
+                    type: String,
+                    default: null,
+                },
+                users: {
+                    type: Array,
+                    default: [],
+                },
+            },
+        },
         autoreaction: {
             type: Array,
             default: [],
