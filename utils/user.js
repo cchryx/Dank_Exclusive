@@ -47,28 +47,42 @@ class Userfunctions {
             if (!userData.autoreaction) return;
 
             if (
-                !mention.roles.cache.find(
-                    (r) => r.id === guildData.boostroles[0]
-                )
+                guildData.boostroles[0] &&
+                guildData.boostroles[1] &&
+                guildData.boostroles[2]
             ) {
-                const user = message.guild.members.cache.get(mention.id);
-                user.roles.remove([
-                    guildData.boostroles[1],
-                    guildData.boostroles[2],
-                ]);
+                if (
+                    !mention.roles.cache.find(
+                        (r) => r.id === guildData.boostroles[0]
+                    )
+                ) {
+                    const user = message.guild.members.cache.get(mention.id);
+                    user.roles.remove([
+                        guildData.boostroles[1],
+                        guildData.boostroles[2],
+                    ]);
+                }
             }
 
-            if (
-                !mention.roles.cache.find(
-                    (r) => r.id === guildData.boostroles[0]
-                ) &&
-                userData.autoreaction
-            ) {
-                userData.autoreaction = [];
-                return await UserModel.findOneAndUpdate(
+            let slots_max = 0;
+            let slots_used = userData.autoreaction.length;
+
+            Object.keys(guildData.perkar_roles).forEach((key) => {
+                if (mention.roles.cache.find((r) => r.id === key)) {
+                    slots_max = slots_max + guildData.perkar_roles[key];
+                }
+            });
+
+            if (slots_used > slots_max) {
+                userData.autoreaction = userData.autoreaction.slice(
+                    0,
+                    slots_max
+                );
+                await UserModel.findOneAndUpdate(
                     { userid: userData.userid },
                     userData
                 );
+                slots_used = userData.autoreaction.length;
             }
 
             userData.autoreaction.forEach((emoji) => {
