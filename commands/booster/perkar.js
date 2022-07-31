@@ -109,7 +109,7 @@ module.exports = {
             );
             const show_embed = new EmbedBuilder()
                 .setColor("Random")
-                .setTitle("Perk Autoreactions")
+                .setTitle("Perk Autoreactions <a:alert:945455886187503686>")
                 .setDescription(
                     `**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
@@ -271,9 +271,9 @@ module.exports = {
                     { userid: interaction.user.id },
                     userData
                 );
-                message = `**Autoreaction updated successfully**\nEmoji: ${emoji}\nAvaliable Slots: ${
+                message = `<a:ravena_check:1002981211708325950> **Autoreaction updated successfully**\nEmoji: ${emoji}\nAvaliable Slots: \`${
                     slots_max - slots_used
-                }`;
+                }\``;
                 embed.setColor("Green").setDescription(message);
                 return verify_msg.edit({ embeds: [embed] });
             }
@@ -344,7 +344,11 @@ module.exports = {
                 .setColor("Random")
                 .setTitle("Perk Autoreactions")
                 .setDescription(
-                    `\`You have 15 seconds of idle time before timeout\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                    `${
+                        slots_used > 0
+                            ? `\`You have 15 seconds of idle time before timeout\`\n`
+                            : ``
+                    }**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
                     }\``
                 )
