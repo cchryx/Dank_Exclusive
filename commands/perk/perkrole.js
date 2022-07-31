@@ -509,8 +509,9 @@ module.exports = {
                 });
             }
 
-            userData.customrole.users.pull(user);
-            slots_used = slots_used + 1;
+            const pullIndex = userData.customrole.users.indexOf(user.id);
+            userData.customrole.users.splice(pullIndex, 1);
+            slots_used = slots_used - 1;
 
             await UserModel.findOneAndUpdate(
                 { userid: interaction.user.id },
@@ -518,7 +519,7 @@ module.exports = {
             );
             interaction.guild.members.cache
                 .get(options.user.id)
-                .roles.add(userData.customrole.id);
+                .roles.remove(userData.customrole.id);
             message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Role: <@&${
                 userData.customrole.id
             }>\nUser: ${user}\nAvaliable Slots: \`${slots_max - slots_used}\``;
@@ -665,8 +666,8 @@ module.exports = {
                 });
             }
 
-            userData.customrole.users.push(user);
-            slots_used = slots_used - 1;
+            userData.customrole.users.push(user.id);
+            slots_used = slots_used + 1;
 
             await UserModel.findOneAndUpdate(
                 { userid: interaction.user.id },
@@ -674,7 +675,7 @@ module.exports = {
             );
             interaction.guild.members.cache
                 .get(options.user.id)
-                .roles.remove(userData.customrole.id);
+                .roles.add(userData.customrole.id);
             message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Role: <@&${
                 userData.customrole.id
             }>\nUser: ${user}\nAvaliable Slots: \`${slots_max - slots_used}\``;
