@@ -295,7 +295,9 @@ module.exports = {
                 .setColor("Random")
                 .setTitle("Perk Roles <a:crown:924052254074474567>")
                 .setDescription(
-                    `**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                    `Role: <@&${
+                        userData.customrole.id
+                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
                     }\``
                 )
