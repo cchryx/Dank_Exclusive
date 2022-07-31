@@ -18,7 +18,29 @@ module.exports = {
         .setName("perkrole")
         .setDescription("Perk command: create/remove/edit your autoreaction")
         .addSubcommand((subcommand) =>
-            subcommand.setName("create").setDescription("Create your role")
+            subcommand
+                .setName("create")
+                .setDescription("Create your role")
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("name")
+                        .setDescription(
+                            "Valid role name with at least 1 character but the max is 100"
+                        )
+                        .setRequired(true);
+                })
+                .addAttachmentOption((oi) => {
+                    return oi
+                        .setName("icon")
+                        .setDescription(
+                            "Valid non-animated emoji from Dank Exclusive"
+                        );
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("color")
+                        .setDescription("Valid hex color");
+                })
         )
         .addSubcommand((subcommand) =>
             subcommand.setName("show").setDescription("Show your current role")
@@ -52,21 +74,21 @@ module.exports = {
             subcommand
                 .setName("edit")
                 .setDescription("Edit your role: color, icon, name")
-                .addUserOption((oi) => {
+                .addStringOption((oi) => {
                     return oi
                         .setName("icon")
                         .setDescription(
                             "Valid non-animated emoji from Dank Exclusive"
                         );
                 })
-                .addUserOption((oi) => {
+                .addStringOption((oi) => {
                     return oi
                         .setName("name")
                         .setDescription(
                             "Valid role name with at least 1 character but the max is 100"
                         );
                 })
-                .addUserOption((oi) => {
+                .addStringOption((oi) => {
                     return oi
                         .setName("color")
                         .setDescription("Valid hex color");
@@ -85,15 +107,175 @@ module.exports = {
         }
 
         if (interaction.options.getSubcommand() === "create") {
+            if (!guildData.perkrole_head) {
+                error_message = `\`This server doesn't have a head role where the perkroles can be put under\``;
+                return error_reply(interaction, error_message);
+            }
+            let allowtocreate = false;
+            const allowedroles = [];
+            Object.keys(guildData.perkrole_roles).forEach((key) => {
+                if (interaction.member.roles.cache.find((r) => r.id === key)) {
+                    return (allowtocreate = true);
+                }
+                allowedroles.push(key);
+            });
+            const allowedroles_mapped = allowedroles
+                .map((element) => {
+                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
+                })
+                .join("\n");
+
+            if (allowtocreate === false) {
+                if (userData.customrole.id) {
+                    interaction.guild.roles.delete(
+                        userData.customrole.id,
+                        "Didn't fulfill perkrole requirements"
+                    );
+                }
+                userData.customrole.id = null;
+                userData.customrole.users = [];
+                await UserModel.findOneAndUpdate(
+                    { userid: userData.userid },
+                    userData
+                );
+
+                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
+                return error_reply(interaction, error_message);
+            }
+            if (userData.customrole.id) {
+                error_message = `\`You already have your own role\`\n\`\`\`fix\n/perkrole edit\`\`\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const options = {
+                name: interaction.options.getString("name"),
+                color: interaction.options.getString("color"),
+                icon: interaction.options.getAttachment("icon"),
+            };
+
+            const roleinfo = {};
+            const headrole = await interaction.guild.roles.fetch(
+                guildData.perkrole_head
+            );
+
+            roleinfo.name = options.name;
+            roleinfo.color = options.color || null;
+            // roleinfo.icon = options.icon || null;
+            roleinfo.reason = "creating perk role";
+            roleinfo.position = headrole.rawPosition - 1;
+
+            const rolecreated = await interaction.guild.roles
+                .create(roleinfo)
+                .catch((error) => console.log(error));
+
+            userData.customrole.id = rolecreated.id;
+            interaction.guild.members.cache
+                .get(interaction.user.id)
+                .roles.add(rolecreated);
+            await UserModel.findOneAndUpdate(
+                { userid: userData.userid },
+                userData
+            );
+
+            const embed = new EmbedBuilder()
+                .setColor(rolecreated.color)
+                .setDescription(
+                    `<a:ravena_check:1002981211708325950> **Role created successfully**\n\nRole: <@&${rolecreated.id}>\nRole Id: \`${rolecreated.id}\`\nPosition: \`${rolecreated.rawPosition}\``
+                );
+
+            return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "show") {
             if (!userData.customrole.id) {
                 error_message = `\`You do not have your own role\`\n\`\`\`fix\n/perkrole create\`\`\``;
                 return error_reply(interaction, error_message);
             }
         } else if (interaction.options.getSubcommand() === "edit") {
+            if (!guildData.perkrole_head) {
+                error_message = `\`This server doesn't have a head role where the perkroles can be put under\``;
+                return error_reply(interaction, error_message);
+            }
+            let allowtocreate = false;
+            const allowedroles = [];
+            Object.keys(guildData.perkrole_roles).forEach((key) => {
+                if (interaction.member.roles.cache.find((r) => r.id === key)) {
+                    return (allowtocreate = true);
+                }
+                allowedroles.push(key);
+            });
+            const allowedroles_mapped = allowedroles
+                .map((element) => {
+                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
+                })
+                .join("\n");
+
+            if (allowtocreate === false) {
+                if (userData.customrole.id) {
+                    interaction.guild.roles.delete(
+                        userData.customrole.id,
+                        "Didn't fulfill perkrole requirements"
+                    );
+                }
+                userData.customrole.id = null;
+                userData.customrole.users = [];
+                await UserModel.findOneAndUpdate(
+                    { userid: userData.userid },
+                    userData
+                );
+
+                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
+                return error_reply(interaction, error_message);
+            }
+
+            const options = {
+                name: interaction.options.getString("name"),
+                color: interaction.options.getString("color"),
+                icon: interaction.options.getAttachment("icon"),
+            };
+
+            const roleinfo = {};
+            const role = await interaction.guild.roles.fetch(
+                userData.customrole.id
+            );
+
+            roleinfo.name = options.name || role.name;
+            roleinfo.color = options.color || role.color;
+            // roleinfo.icon = options.icon || editedrole.icon;
+
+            const roleupdated = await interaction.guild.roles
+                .edit(role.id, roleinfo)
+                .catch((error) => console.log(error));
+
+            const embed = new EmbedBuilder()
+                .setColor(roleupdated.color)
+                .setDescription(
+                    `<a:ravena_check:1002981211708325950> **Role updated successfully**\n\nRole: <@&${roleupdated.id}>\nRole Id: \`${roleupdated.id}\`\nColor: \`${roleupdated.color}\``
+                );
+            return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "userremove") {
         } else if (interaction.options.getSubcommand() === "useradd") {
         } else if (interaction.options.getSubcommand() === "remove") {
+            const roledeleted = interaction.guild.roles.cache.find(
+                (r) => r.id === userData.customrole.id
+            );
+
+            interaction.guild.roles.delete(
+                userData.customrole.id,
+                "Delete perkrole"
+            );
+            userData.customrole.id = null;
+            userData.customrole.users = [];
+            await UserModel.findOneAndUpdate(
+                { userid: userData.userid },
+                userData
+            );
+
+            const embed = new EmbedBuilder()
+                .setColor(roledeleted.color)
+                .setDescription(
+                    `<a:ravena_check:1002981211708325950> **Role removed successfully**\n\nRole: <@&${roledeleted.id}>\nRole Id: \`${roledeleted.id}\`\nPosition: \`${roledeleted.rawPosition}\``
+                );
+
+            return interaction.reply({ embeds: [embed] });
         }
     },
 };

@@ -23,10 +23,7 @@ const userSchema = new mongoose.Schema(
             type: Object,
             default: {
                 id: null,
-                users: {
-                    type: Array,
-                    default: [],
-                },
+                users: [],
             },
         },
         autoreaction: {

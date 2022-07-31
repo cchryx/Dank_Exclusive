@@ -30,6 +30,10 @@ const guildSchema = new mongoose.Schema(
             type: Object,
             default: {},
         },
+        perkrole_head: {
+            type: String,
+            default: "",
+        },
     },
     { minimize: false }
 );
