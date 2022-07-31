@@ -31,10 +31,8 @@ module.exports = {
                 })
                 .addAttachmentOption((oi) => {
                     return oi
-                        .setName("icon")
-                        .setDescription(
-                            "Valid non-animated emoji from Dank Exclusive"
-                        );
+                        .setName("uploadicon")
+                        .setDescription("Valid non-animated image under 256KB");
                 })
                 .addStringOption((oi) => {
                     return oi
@@ -74,12 +72,10 @@ module.exports = {
             subcommand
                 .setName("edit")
                 .setDescription("Edit your role: color, icon, name")
-                .addStringOption((oi) => {
+                .addAttachmentOption((oi) => {
                     return oi
-                        .setName("icon")
-                        .setDescription(
-                            "Valid non-animated emoji from Dank Exclusive"
-                        );
+                        .setName("uploadicon")
+                        .setDescription("Valid non-animated image under 256KB");
                 })
                 .addStringOption((oi) => {
                     return oi
@@ -150,13 +146,18 @@ module.exports = {
             const options = {
                 name: interaction.options.getString("name"),
                 color: interaction.options.getString("color"),
-                icon: interaction.options.getAttachment("icon"),
+                uploadicon: interaction.options.getAttachment("uploadicon"),
             };
 
             const roleinfo = {};
             const headrole = await interaction.guild.roles.fetch(
                 guildData.perkrole_head
             );
+
+            var validhex_reg = /^#([0-9a-f]{3}){1,2}$/i;
+            if (validhex_reg.test(options.color) === false) {
+                options.color = null;
+            }
 
             roleinfo.name = options.name;
             roleinfo.color = options.color || null;
@@ -166,8 +167,13 @@ module.exports = {
 
             const rolecreated = await interaction.guild.roles
                 .create(roleinfo)
-                .catch((error) => console.log(error));
+                .catch((error) => {
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
 
+            if (roleupdated === false) return;
             userData.customrole.id = rolecreated.id;
             interaction.guild.members.cache
                 .get(interaction.user.id)
@@ -180,7 +186,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor(rolecreated.color)
                 .setDescription(
-                    `<a:ravena_check:1002981211708325950> **Role created successfully**\n\nRole: <@&${rolecreated.id}>\nRole Id: \`${rolecreated.id}\`\nPosition: \`${rolecreated.rawPosition}\``
+                    `<a:ravena_check:1002981211708325950> **Role created successfully**\n\nRole: <@&${rolecreated.id}>\nRole Id: \`${rolecreated.id}\`\nColor: \`${options.color}\`\nPosition: \`${rolecreated.rawPosition}\``
                 );
 
             return interaction.reply({ embeds: [embed] });
@@ -229,8 +235,13 @@ module.exports = {
             const options = {
                 name: interaction.options.getString("name"),
                 color: interaction.options.getString("color"),
-                icon: interaction.options.getAttachment("icon"),
+                uploadicon: interaction.options.getAttachment("uploadicon"),
             };
+
+            var validhex_reg = /^#([0-9a-f]{3}){1,2}$/i;
+            if (validhex_reg.test(options.color) === false) {
+                options.color = null;
+            }
 
             const roleinfo = {};
             const role = await interaction.guild.roles.fetch(
@@ -239,16 +250,38 @@ module.exports = {
 
             roleinfo.name = options.name || role.name;
             roleinfo.color = options.color || role.color;
-            // roleinfo.icon = options.icon || editedrole.icon;
+
+            if (options.uploadicon) {
+                roleinfo.icon = options.uploadicon.attachment;
+            } else {
+                roleinfo.icon = role.icon;
+            }
 
             const roleupdated = await interaction.guild.roles
                 .edit(role.id, roleinfo)
-                .catch((error) => console.log(error));
+                .catch((error) => {
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+
+            if (roleupdated === false) return;
+
+            let embedcolor;
+            if (roleupdated.color) {
+                embedcolor = roleupdated.color;
+            } else {
+                embedcolor = role.color;
+            }
 
             const embed = new EmbedBuilder()
-                .setColor(roleupdated.color)
+                .setColor(embedcolor)
                 .setDescription(
-                    `<a:ravena_check:1002981211708325950> **Role updated successfully**\n\nRole: <@&${roleupdated.id}>\nRole Id: \`${roleupdated.id}\`\nColor: \`${roleupdated.color}\``
+                    `<a:ravena_check:1002981211708325950> **Role updated successfully**\n\nRole: <@&${
+                        roleupdated.id
+                    }>\nRole Id: \`${roleupdated.id}\`\nColor: \`${
+                        options.color || role.color
+                    }\``
                 );
             return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "userremove") {
