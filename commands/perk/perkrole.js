@@ -509,7 +509,7 @@ module.exports = {
                 });
             }
 
-            userData.customrole.users.push(user);
+            userData.customrole.users.pull(user);
             slots_used = slots_used + 1;
 
             await UserModel.findOneAndUpdate(
@@ -665,7 +665,7 @@ module.exports = {
                 });
             }
 
-            userData.customrole.users.pull(user);
+            userData.customrole.users.push(user);
             slots_used = slots_used - 1;
 
             await UserModel.findOneAndUpdate(
