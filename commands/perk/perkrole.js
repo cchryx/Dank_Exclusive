@@ -453,7 +453,7 @@ module.exports = {
             }
 
             const options = {
-                user: interaction.options.getMember("user"),
+                user: interaction.options.getUser("user"),
             };
 
             let slots_max = 0;
