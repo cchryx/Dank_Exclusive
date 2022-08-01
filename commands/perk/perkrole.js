@@ -536,7 +536,7 @@ module.exports = {
             interaction.guild.members.cache
                 .get(options.user.id)
                 .roles.remove(userData.customrole.id);
-            message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Role: <@&${
+            message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Role: <@&${
                 userData.customrole.id
             }>\nUser: ${user}\nAvaliable Slots: \`${slots_max - slots_used}\``;
 
@@ -699,7 +699,7 @@ module.exports = {
             interaction.guild.members.cache
                 .get(options.user.id)
                 .roles.add(userData.customrole.id);
-            message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Role: <@&${
+            message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Role: <@&${
                 userData.customrole.id
             }>\nUser: ${user}\nAvaliable Slots: \`${slots_max - slots_used}\``;
 
