@@ -586,6 +586,11 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
+            if (options.user.id === interaction.user.id) {
+                error_message = `\`You own the role so why give to yourself?\``;
+                return error_reply(interaction, error_message);
+            }
+
             let slots_max = 0;
             let slots_used = userData.customrole.users.length;
             let slots_display;
