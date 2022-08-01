@@ -246,6 +246,13 @@ module.exports = {
             });
 
             if (slots_used > slots_max) {
+                const removedusers = userData.customrole.users.slice(slots_max);
+                removedusers.forEach(async (removedid) => {
+                    const user = await interaction.guild.members.fetch(
+                        removedid
+                    );
+                    user.roles.remove(userData.customrole.id);
+                });
                 userData.customrole.users = userData.customrole.users.slice(
                     0,
                     slots_max
@@ -295,7 +302,7 @@ module.exports = {
                 .setColor("Random")
                 .setTitle("Perk Roles <a:crown:924052254074474567>")
                 .setDescription(
-                    `Role: <@&${
+                    `\`Slots is the number of autoreactions you are permitted to add\`\nRole: <@&${
                         userData.customrole.id
                     }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
@@ -487,6 +494,13 @@ module.exports = {
             }
 
             if (slots_used >= slots_max) {
+                const removedusers = userData.customrole.users.slice(slots_max);
+                removedusers.forEach(async (removedid) => {
+                    const user = await interaction.guild.members.fetch(
+                        removedid
+                    );
+                    user.roles.remove(userData.customrole.id);
+                });
                 userData.customrole.users = userData.customrole.users.slice(
                     0,
                     slots_max
@@ -618,6 +632,13 @@ module.exports = {
             }
 
             if (slots_used >= slots_max) {
+                const removedusers = userData.customrole.users.slice(slots_max);
+                removedusers.forEach(async (removedid) => {
+                    const user = await interaction.guild.members.fetch(
+                        removedid
+                    );
+                    user.roles.remove(userData.customrole.id);
+                });
                 userData.customrole.users = userData.customrole.users.slice(
                     0,
                     slots_max
@@ -638,7 +659,7 @@ module.exports = {
                     .addFields(
                         {
                             name: "Your Slots ↭",
-                            value: `**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                            value: `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                                 slots_max - slots_used
                             }\``,
                             inline: true,

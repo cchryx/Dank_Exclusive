@@ -111,7 +111,7 @@ module.exports = {
                 .setColor("Random")
                 .setTitle("Perk Autoreactions <a:alert:945455886187503686>")
                 .setDescription(
-                    `**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                    `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
                     }\``
                 )
@@ -203,7 +203,7 @@ module.exports = {
                     .addFields(
                         {
                             name: "Your Slots ↭",
-                            value: `**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                            value: `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                                 slots_max - slots_used
                             }\``,
                             inline: true,
@@ -348,7 +348,7 @@ module.exports = {
                         slots_used > 0
                             ? `\`You have 15 seconds of idle time before timeout\`\n`
                             : ``
-                    }**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                    }\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
                     }\``
                 )
@@ -448,7 +448,7 @@ module.exports = {
                         .setColor("Random")
                         .setTitle("Perk Autoreactions")
                         .setDescription(
-                            `\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                            `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                                 slots_max - slots_used
                             }\``
                         )
