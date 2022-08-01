@@ -380,26 +380,30 @@ module.exports = {
 
             if (options.uploadicon) {
                 roleinfo.icon = options.uploadicon.attachment;
-            } else {
-                roleinfo.icon = role.icon;
             }
 
-            const roleupdated = await interaction.guild.roles
+            const updaterole = await interaction.guild.roles
                 .edit(role.id, roleinfo)
                 .catch((error) => {
-                    error_message = `\`${error.rawError.message}\``;
+                    error_message = `\`${
+                        error.rawError
+                            ? error.rawError.message
+                            : "There was an error"
+                    }\``;
                     error_reply(interaction, error_message);
                     return false;
                 });
 
-            if (roleupdated === false) return;
+            if (updaterole === false) return;
 
             let embedcolor;
-            if (roleupdated.color) {
-                embedcolor = roleupdated.color;
+            if (options.color) {
+                embedcolor = options.color;
             } else {
                 embedcolor = role.color;
             }
+
+            const roleupdated = interaction.guild.roles.cache.get(role.id);
 
             const embed = new EmbedBuilder()
                 .setColor(embedcolor)
@@ -410,6 +414,10 @@ module.exports = {
                         options.color || role.color
                     }\``
                 );
+
+            if (options.uploadicon) {
+                embed.setThumbnail(options.uploadicon.attachment);
+            }
             return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "userremove") {
             let allowtocreate = false;
