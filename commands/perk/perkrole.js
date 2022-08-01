@@ -302,7 +302,7 @@ module.exports = {
                 .setColor("Random")
                 .setTitle("Perk Roles <a:crown:924052254074474567>")
                 .setDescription(
-                    `\`Slots is the number of autoreactions you are permitted to add\`\nRole: <@&${
+                    `\`Slots is the number of users you are permitted to add\`\nRole: <@&${
                         userData.customrole.id
                     }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                         slots_max - slots_used
@@ -672,7 +672,7 @@ module.exports = {
                     .addFields(
                         {
                             name: "Your Slots ↭",
-                            value: `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
                                 slots_max - slots_used
                             }\``,
                             inline: true,
