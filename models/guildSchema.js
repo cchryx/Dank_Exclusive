@@ -6,6 +6,14 @@ const guildSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        giveaway_roles: {
+            type: Array,
+            default: [],
+        },
+        giveaway_userids: {
+            type: Array,
+            default: [],
+        },
         moderation_roles: {
             type: Array,
             default: [],
