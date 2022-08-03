@@ -14,7 +14,11 @@ const UserModel = require("../../models/userSchema");
 const GuildModel = require("../../models/guildSchema");
 
 const { user_fetch } = require("../../utils/user");
-const { guild_fetch, guild_checkperm_giveaway } = require("../../utils/guild");
+const {
+    guild_fetch,
+    guild_checkperm_giveaway,
+    guild_checkrole,
+} = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
 
 const humantime = humanizeDuration.humanizer({
@@ -114,6 +118,13 @@ module.exports = {
                 })
                 .addStringOption((oi) => {
                     return oi
+                        .setName("blacklistroles")
+                        .setDescription(
+                            "Id: What user role is blacklisted to join this giveaway, sparate by spaces"
+                        );
+                })
+                .addStringOption((oi) => {
+                    return oi
                         .setName("message")
                         .setDescription(
                             "Message that will be attached to the giveaway"
@@ -133,7 +144,8 @@ module.exports = {
         const embedTheme = {
             color: "#f7cb8d",
             emoji_join: "<:smoothie:1003726574094397560>",
-            emoji_mainpoint: "<:mainpoint_summer:1003711384028184658>",
+            emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>
+            ",
             emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
             dividerurl:
                 "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
@@ -147,6 +159,8 @@ module.exports = {
                 donator: interaction.options.getMember("donator"),
                 reqrole: interaction.options.getString("reqroles"),
                 bypassroles: interaction.options.getString("bypassroles"),
+                blacklistroles: interaction.options.getString("blacklistroles"),
+
                 message: interaction.options.getString("message"),
                 mentions: interaction.options.getString("mentions"),
             };
@@ -231,52 +245,64 @@ module.exports = {
                     text: `Winners: ${options.winners.toLocaleString()}`,
                 });
 
-            let requiredroles;
+            let info_array = [];
+
+            let required;
+            let required_roles;
             if (options.reqrole) {
-                const reqrole_args = options.reqrole.split(" ");
-                const requiredrolesarry = [];
-                reqrole_args.forEach((element) => {
-                    if (
-                        interaction.guild.roles.cache.find(
-                            (role) => role.id === element
-                        )
-                    ) {
-                        const fetchedrole = interaction.guild.roles.cache.find(
-                            (role) => role.id === element
-                        );
-                        requiredrolesarry.push(fetchedrole);
-                    }
-                });
-                const requiredroles_map = requiredrolesarry
+                required_roles = await guild_checkrole(
+                    interaction,
+                    options.reqrole
+                );
+            }
+            if (required_roles) {
+                required = `${embedTheme.emoji_subpoint}Required: ${required_roles.mapstring}`;
+            }
+            if (required) {
+                info_array.push(required);
+            }
+
+            let bypass;
+            let bypass_roles;
+            if (options.bypassroles) {
+                bypass_roles = await guild_checkrole(
+                    interaction,
+                    options.bypassroles
+                );
+            }
+            if (bypass_roles) {
+                bypass = `${embedTheme.emoji_subpoint}Bypass: ${bypass_roles.mapstring}`;
+            }
+            if (bypass) {
+                info_array.push(bypass);
+            }
+
+            let blacklist;
+            let blacklist_roles;
+            if (options.blacklistroles) {
+                blacklist_roles = await guild_checkrole(
+                    interaction,
+                    options.blacklistroles
+                );
+            }
+            if (blacklist_roles) {
+                blacklist = `${embedTheme.emoji_subpoint}Blacklisted: ${blacklist_roles.mapstring}`;
+            }
+
+            if (blacklist) {
+                info_array.push(blacklist);
+            }
+
+            if (info_array.length > 0) {
+                const info_map = info_array
                     .map((element) => {
                         return element;
                     })
-                    .join(" ");
+                    .join("\n");
 
-                if (requiredrolesarry.length <= 0) {
-                    requiredroles = null;
-                } else {
-                    requiredroles = requiredroles_map;
-                }
-            }
-
-            let requiredstring;
-
-            if (requiredroles) {
-                if (!requiredstring) {
-                    requiredstring = `${embedTheme.emoji_subpoint}Roles: ${requiredroles}`;
-                } else {
-                    requiredstring =
-                        requiredstring +
-                        `\n${embedTheme.emoji_subpoint}Roles: ${requiredroles}`;
-                }
-            }
-
-            if (requiredstring) {
                 giveaway_embed.setFields({
-                    name: "Requirements",
-                    value: requiredstring,
-                    inline: true,
+                    name: "Information:",
+                    value: info_map,
                 });
             }
 
