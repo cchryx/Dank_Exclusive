@@ -12,6 +12,7 @@ const {
 
 const UserModel = require("../../models/userSchema");
 const GuildModel = require("../../models/guildSchema");
+const GiveawayModel = require("../../models/giveawaySchema");
 
 const { user_fetch } = require("../../utils/user");
 const {
@@ -46,12 +47,12 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("show")
-                .setDescription("Show your current autoreactions")
+                .setDescription("Show your current active giveaways")
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("start")
-                .setDescription("Choose an autoreaction to remove")
+                .setDescription("Start a new giveaway")
                 .addStringOption((oi) => {
                     return oi
                         .setName("type")
@@ -148,6 +149,7 @@ module.exports = {
             emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
             dividerurl:
                 "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
+            button_style: 4,
         };
         if (interaction.options.getSubcommand() === "start") {
             const options = {
@@ -208,12 +210,12 @@ module.exports = {
                     .join(" ");
 
                 if (mentionedrole.length <= 0) {
-                    mentions = `\`no mentions for this giveaway\``;
+                    mentions = `\`No mentions for this giveaway\``;
                 } else {
                     mentions = mentionedrole_map;
                 }
             } else {
-                mentions = `\`no mentions for this giveaway\``;
+                mentions = `\`No mentions for this giveaway\``;
             }
             const etime = `time: ` + options.time;
             const timeargs = etime.split(" ");
@@ -233,7 +235,7 @@ module.exports = {
                         embedTheme.emoji_mainpoint
                     }**Ending:** <t:${Math.floor(
                         endtime / 1000
-                    )}:R> (\`${humantime(time)}\`)\n${
+                    )}:R> (\`duration: ${humantime(time)}\`)\n${
                         embedTheme.emoji_mainpoint
                     }**Host:** ${interaction.user}\n${
                         embedTheme.emoji_mainpoint
@@ -244,7 +246,7 @@ module.exports = {
                     text: `Winners: ${options.winners.toLocaleString()}`,
                 });
 
-            const info_array = {};
+            const info_object = {};
             const info_arry_raw = {};
 
             let required_roles;
@@ -255,7 +257,7 @@ module.exports = {
                 );
             }
             if (required_roles) {
-                info_array.required = `${embedTheme.emoji_subpoint}Required: ${required_roles.mapstring}`;
+                info_object.required = `${embedTheme.emoji_subpoint}Required: ${required_roles.mapstring}`;
                 info_arry_raw.required = required_roles.roles;
             }
 
@@ -267,7 +269,7 @@ module.exports = {
                 );
             }
             if (bypass_roles) {
-                info_array.bypass = `${embedTheme.emoji_subpoint}Bypass: ${bypass_roles.mapstring}`;
+                info_object.bypass = `${embedTheme.emoji_subpoint}Bypass: ${bypass_roles.mapstring}`;
                 info_arry_raw.bypass = bypass_roles.roles;
             }
 
@@ -279,7 +281,7 @@ module.exports = {
                 );
             }
             if (blacklist_roles) {
-                info_array.blacklist = `${embedTheme.emoji_subpoint}Blacklisted: ${blacklist_roles.mapstring}`;
+                info_object.blacklist = `${embedTheme.emoji_subpoint}Blacklisted: ${blacklist_roles.mapstring}`;
                 info_arry_raw.blacklist = blacklist_roles.roles;
             }
 
@@ -325,10 +327,11 @@ module.exports = {
                 }
             }
 
-            if (info_array != {}) {
-                const info_map = Object.keys(info_array)
+            let info_map;
+            if (Object.keys(info_object).length > 0) {
+                info_map = Object.keys(info_object)
                     .map((key) => {
-                        return info_array[key];
+                        return info_object[key];
                     })
                     .join("\n");
 
@@ -349,14 +352,57 @@ module.exports = {
                     });
                 embeds.push(message_embed);
             }
+
+            function findbuttonstyle(style) {
+                if (style === "danger") {
+                    return ButtonStyle.Danger;
+                } else if (style === "primary") {
+                    return ButtonStyle.Primary;
+                } else if (style === "secondary") {
+                    return ButtonStyle.Secondary;
+                } else if (style === "success") {
+                    return ButtonStyle.Success;
+                } else {
+                    return ButtonStyle.Primary;
+                }
+            }
+
+            const row = new ActionRowBuilder();
+            const button_join = new ButtonBuilder()
+                .setCustomId(`giveaway_join`)
+                .setLabel(`0`)
+                .setEmoji(`${embedTheme.emoji_join}`)
+                .setStyle(embedTheme.button_style);
+            row.addComponents(button_join);
+
             interaction.reply({
                 content: "Giveaway started!",
                 ephemeral: true,
             });
-            return interaction.channel.send({
+
+            const send_msg = await interaction.channel.send({
                 content: mentions,
                 embeds: embeds,
+                components: [row],
                 allowedMentions: { parse: ["users", "roles"] },
+            });
+
+            return GiveawayModel.create({
+                guildid: interaction.guildId,
+                channelid: interaction.channelId,
+                messageid: send_msg.id,
+                hostid: interaction.user.id,
+                sponsorid: options.donator.id,
+                sponsormessage: options.message,
+                winnersamount: options.winners,
+                prize: options.prize,
+                duration: time,
+                endsAt: endtime,
+                infodisplay: info_map,
+                typeurl: typeurl,
+                requirements: info_arry_raw.required,
+                blacklist: info_arry_raw.blacklist,
+                bypass: info_arry_raw.bypass,
             });
         } else if (interaction.options.getSubcommand() === "show") {
         }

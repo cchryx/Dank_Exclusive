@@ -130,7 +130,7 @@ class Guildfunctions {
                 const fetchedrole = interaction.guild.roles.cache.find(
                     (r) => r.id === roleid
                 );
-                roles_array_fromstring.push(fetchedrole);
+                roles_array_fromstring.push(fetchedrole.id);
             }
         });
 
@@ -138,7 +138,7 @@ class Guildfunctions {
 
         roles_mapstring = roles_array
             .map((element) => {
-                return element;
+                return `<@&${element}>`;
             })
             .join(", ");
 
