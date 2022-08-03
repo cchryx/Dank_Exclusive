@@ -244,9 +244,9 @@ module.exports = {
                     text: `Winners: ${options.winners.toLocaleString()}`,
                 });
 
-            let info_array = [];
+            const info_array = {};
+            const info_arry_raw = {};
 
-            let required;
             let required_roles;
             if (options.reqrole) {
                 required_roles = await guild_checkrole(
@@ -255,13 +255,10 @@ module.exports = {
                 );
             }
             if (required_roles) {
-                required = `${embedTheme.emoji_subpoint}Required: ${required_roles.mapstring}`;
-            }
-            if (required) {
-                info_array.push(required);
+                info_array.required = `${embedTheme.emoji_subpoint}Required: ${required_roles.mapstring}`;
+                info_arry_raw.required = required_roles.roles;
             }
 
-            let bypass;
             let bypass_roles;
             if (options.bypassroles) {
                 bypass_roles = await guild_checkrole(
@@ -270,13 +267,10 @@ module.exports = {
                 );
             }
             if (bypass_roles) {
-                bypass = `${embedTheme.emoji_subpoint}Bypass: ${bypass_roles.mapstring}`;
-            }
-            if (bypass) {
-                info_array.push(bypass);
+                info_array.bypass = `${embedTheme.emoji_subpoint}Bypass: ${bypass_roles.mapstring}`;
+                info_arry_raw.bypass = bypass_roles.roles;
             }
 
-            let blacklist;
             let blacklist_roles;
             if (options.blacklistroles) {
                 blacklist_roles = await guild_checkrole(
@@ -285,17 +279,56 @@ module.exports = {
                 );
             }
             if (blacklist_roles) {
-                blacklist = `${embedTheme.emoji_subpoint}Blacklisted: ${blacklist_roles.mapstring}`;
+                info_array.blacklist = `${embedTheme.emoji_subpoint}Blacklisted: ${blacklist_roles.mapstring}`;
+                info_arry_raw.blacklist = blacklist_roles.roles;
             }
 
-            if (blacklist) {
-                info_array.push(blacklist);
+            if (info_arry_raw.required && info_arry_raw.bypass) {
+                let repeat = false;
+                info_arry_raw.required.forEach((role) => {
+                    if (info_arry_raw.bypass.includes(role)) {
+                        repeat = true;
+                    }
+                });
+
+                if (repeat === true) {
+                    message = `\`Not allowing repeating roles in required and bypass\``;
+                    return error_reply(interaction, message);
+                }
             }
 
-            if (info_array.length > 0) {
-                const info_map = info_array
-                    .map((element) => {
-                        return element;
+            if (info_arry_raw.required && info_arry_raw.blacklist) {
+                let repeat = false;
+                info_arry_raw.required.forEach((role) => {
+                    if (info_arry_raw.blacklist.includes(role)) {
+                        repeat = true;
+                    }
+                });
+
+                if (repeat === true) {
+                    message = `\`Not allowing repeating roles in required and blacklist\``;
+                    return error_reply(interaction, message);
+                }
+            }
+
+            if (info_arry_raw.blacklist && info_arry_raw.bypass) {
+                let repeat = false;
+                info_arry_raw.blacklist.forEach((role) => {
+                    if (info_arry_raw.bypass.includes(role)) {
+                        repeat = true;
+                    }
+                });
+
+                if (repeat === true) {
+                    message = `\`Not allowing repeating roles in blacklist and bypass\``;
+                    return error_reply(interaction, message);
+                }
+            }
+
+            if (info_array != {}) {
+                const info_map = Object.keys(info_array)
+                    .map((key) => {
+                        return info_array[key];
                     })
                     .join("\n");
 

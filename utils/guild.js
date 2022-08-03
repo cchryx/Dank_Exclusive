@@ -119,7 +119,7 @@ class Guildfunctions {
     }
 
     static async guild_checkrole(interaction, string) {
-        const roles_array = [];
+        const roles_array_fromstring = [];
         const roles_args = string.split(" ");
         let roles_mapstring;
 
@@ -130,15 +130,17 @@ class Guildfunctions {
                 const fetchedrole = interaction.guild.roles.cache.find(
                     (r) => r.id === roleid
                 );
-                roles_array.push(fetchedrole);
+                roles_array_fromstring.push(fetchedrole);
             }
         });
+
+        const roles_array = [...new Set(roles_array_fromstring)];
 
         roles_mapstring = roles_array
             .map((element) => {
                 return element;
             })
-            .join(" ");
+            .join(", ");
 
         if (roles_array.length <= 0) {
             return null;
