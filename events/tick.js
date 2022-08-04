@@ -136,6 +136,41 @@ module.exports = {
                                     return `<@${id}>`;
                                 })
                                 .join(", ");
+
+                            const host_embed = new EmbedBuilder()
+                                .setTitle("Your giveaway ended!")
+                                .setDescription(
+                                    `Please payout when the winners dm you and send you the link to the giveaway, you can get a claim time (default: \`24 hours\`)\n\n${
+                                        embedTheme.emoji_mainpoint
+                                    }**Prize:** ${giveaway.prize}\n${
+                                        embedTheme.emoji_mainpoint
+                                    }**Winners:** ${
+                                        giveaway.winnersresults.length > 0
+                                            ? `${winners_map}`
+                                            : `*there was no entries to determine a winner*`
+                                    }`
+                                );
+                            client.users
+                                .fetch(giveaway.hostid, false)
+                                .then((user) => {
+                                    user.send({
+                                        content: `<@${giveaway.hostid}>`,
+                                        embeds: [embed],
+                                        components: [
+                                            new ActionRowBuilder().addComponents(
+                                                new ButtonBuilder()
+                                                    .setLabel("Giveaway")
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setEmoji(
+                                                        embedTheme.emoji_join
+                                                    )
+                                                    .setURL(
+                                                        `https://discord.com/channels/${giveaway.guildid}/${giveaway.channelid}/${giveaway.messageid}`
+                                                    )
+                                            ),
+                                        ],
+                                    });
+                                });
                             const results_embed =
                                 new EmbedBuilder().setDescription(
                                     `${embedTheme.emoji_mainpoint} ${
