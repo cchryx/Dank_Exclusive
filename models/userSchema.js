@@ -9,14 +9,8 @@ const userSchema = new mongoose.Schema(
         privatechannel: {
             type: Object,
             default: {
-                id: {
-                    type: String,
-                    default: null,
-                },
-                users: {
-                    type: Array,
-                    default: [],
-                },
+                id: null,
+                users: [],
             },
         },
         customrole: {

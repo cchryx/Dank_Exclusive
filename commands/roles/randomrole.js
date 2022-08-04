@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 
-const { guild_checkperm } = require("../../utils/guild");
+const { guild_checkperm_mod } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
 const { reference_letternumber } = require("../../utils/reference");
 
@@ -44,7 +44,7 @@ module.exports = {
             "ManageRoles",
         ];
         let message;
-        let pass = await guild_checkperm(interaction, requiredperms);
+        let pass = await guild_checkperm_mod(interaction, requiredperms);
 
         if (!pass === true) {
             message = `\`You don't have the required permissions to preform this action\``;
