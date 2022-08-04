@@ -62,39 +62,45 @@ module.exports = {
 
         for (const giveaway of giveaway_query) {
             if (Date.now() >= giveaway.endsAt) {
-                const giveawayentries = [];
-                if (giveaway.entries.length > 0) {
-                    for (let i = 0; i < giveaway.winnersamount; i++) {
-                        const choosewinner =
-                            giveaway.entries[
+                let winners = [];
+                if (giveaway.winnersamount > 1) {
+                    for (i = 0; i < giveaway.winnersamount; i++) {
+                        winners.push(
+                            giveaway.entries.filter(
+                                (val) => !winners.includes(val)
+                            )[
                                 Math.floor(
-                                    Math.random() * giveaway.entries.length
+                                    Math.random() *
+                                        giveaway.entries.filter(
+                                            (val) => !winners.includes(val)
+                                        ).length
                                 )
-                            ];
-
-                        if (!choosewinner) {
-                            continue;
-                        }
-                        const pullIndex =
-                            giveaway.entries.indexOf(choosewinner);
-                        giveaway.entries.splice(pullIndex, 1);
-                        giveaway.winnersresults.push(choosewinner);
-                        giveawayentries.push(choosewinner);
+                            ]
+                        );
                     }
+                } else if (giveaway.winnersamount === 1) {
+                    winners = [
+                        giveaway.entries[
+                            Math.floor(Math.random() * giveaway.entries.length)
+                        ],
+                    ];
                 }
 
-                giveaway.entries = giveawayentries;
-                giveaway.hasEnded = true;
-                await GiveawayModel.findOneAndUpdate(
-                    {
-                        messageid: giveaway.messageid,
-                    },
-                    giveaway
-                );
+                winners = winners.filter(function (element) {
+                    return element !== undefined;
+                });
 
                 try {
                     const channel = client.channels.cache.get(
                         giveaway.channelid
+                    );
+                    giveaway.winnersresults = winners;
+                    giveaway.hasEnded = true;
+                    await GiveawayModel.findOneAndUpdate(
+                        {
+                            messageid: giveaway.messageid,
+                        },
+                        giveaway
                     );
 
                     if (channel) {

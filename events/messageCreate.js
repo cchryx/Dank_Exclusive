@@ -13,7 +13,6 @@ module.exports = {
                 message.mentions.members,
                 await guild_fetch(message.guildId)
             );
-            r;
         }
     },
 };

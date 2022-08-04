@@ -51,6 +51,18 @@ module.exports = {
                     messageid: interaction.message.id,
                 });
 
+                if (!giveaway) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(`\`Giveaway no longer exists\``)
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
                 if (giveaway.hasEnded === true) {
                     return interaction.reply({
                         embeds: [
@@ -338,7 +350,7 @@ module.exports = {
                 const results_embed = new EmbedBuilder().setDescription(
                     `${embedTheme.emoji_reroll} \`re-roll activated\`\n${embedTheme.emoji_mainpoint} Congratulations, you have won the re-roll for the giveaway for **${giveaway.prize}**`
                 );
-                await interaction.message.reply({
+                await interaction.reply({
                     content: `**Host:** <@${giveaway.hostid}>\nRe-rolled Winner: <@${choosewinner}>`,
                     embeds: [results_embed],
                     components: [

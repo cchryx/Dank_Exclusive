@@ -36,6 +36,7 @@ module.exports = {
                         .setName("uploadicon")
                         .setDescription("Valid non-animated image under 256KB");
                 })
+
                 .addStringOption((oi) => {
                     return oi
                         .setName("color")
@@ -80,6 +81,11 @@ module.exports = {
                     return oi
                         .setName("uploadicon")
                         .setDescription("Valid non-animated image under 256KB");
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("eomjiicon")
+                        .setDescription("Valid non-animated eomji under 256KB");
                 })
                 .addStringOption((oi) => {
                     return oi
@@ -374,7 +380,54 @@ module.exports = {
                 name: interaction.options.getString("name"),
                 color: interaction.options.getString("color"),
                 uploadicon: interaction.options.getAttachment("uploadicon"),
+                emojiicon: interaction.options.getString("emojiicon"),
             };
+
+            let verify_msg;
+            if (emojiicon) {
+                const embed = new EmbedBuilder()
+                    .setColor("Random")
+                    .setDescription("Checking if your emoji is valid...");
+
+                verify_msg = await interaction.reply({
+                    embeds: [embed],
+                    fetchReply: true,
+                });
+
+                const verifyemoji = await verify_msg
+                    .react(`${emoji}`)
+                    .catch(async (error) => {
+                        if (error.code === 10014) {
+                            message =
+                                "**You emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
+                            embed.setColor("Red").setDescription(message);
+                            verify_msg.edit({ embeds: [embed] });
+                            options.emojiicon = null;
+                            return false;
+                        }
+                    });
+
+                if (verifyemoji !== false) {
+                    let passedemoji = false;
+                    if (verifyemoji._emoji.id) {
+                        if (verifyemoji._emoji.animated === true) {
+                            options.emojiicon = null;
+                        } else {
+                            passedemoji = true;
+                            emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
+                        }
+                    } else {
+                        passedemoji = true;
+                        emoji = `${verifyemoji._emoji.name}`;
+                    }
+
+                    if (passedemoji === true) {
+                        message = `<a:ravena_check:1002981211708325950> **Emoji accepted**\nEmoji: ${emoji}`;
+                        embed.setColor("Green").setDescription(message);
+                        verify_msg.edit({ embeds: [embed] });
+                    }
+                }
+            }
 
             var validhex_reg = /^#([0-9a-f]{3}){1,2}$/i;
             if (validhex_reg.test(options.color) === false) {
@@ -391,6 +444,10 @@ module.exports = {
 
             if (options.uploadicon) {
                 roleinfo.icon = options.uploadicon.attachment;
+            }
+
+            if (options.emojiicon) {
+                roleinfo.icon = options.emojiicon;
             }
 
             const updaterole = await interaction.guild.roles
@@ -429,7 +486,12 @@ module.exports = {
             if (options.uploadicon) {
                 embed.setThumbnail(options.uploadicon.attachment);
             }
-            return interaction.reply({ embeds: [embed] });
+
+            if (verify_msg) {
+                return verify_msg.edit({ embeds: [embed] });
+            } else {
+                return interaction.reply({ embeds: [embed] });
+            }
         } else if (interaction.options.getSubcommand() === "userremove") {
             let allowtocreate = false;
             const allowedroles = [];
