@@ -155,7 +155,7 @@ module.exports = {
                                 .then((user) => {
                                     user.send({
                                         content: `<@${giveaway.hostid}>`,
-                                        embeds: [embed],
+                                        embeds: [host_embed],
                                         components: [
                                             new ActionRowBuilder().addComponents(
                                                 new ButtonBuilder()
