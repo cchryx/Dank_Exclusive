@@ -36,7 +36,11 @@ module.exports = {
                         .setName("uploadicon")
                         .setDescription("Valid non-animated image under 256KB");
                 })
-
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("emojiicon")
+                        .setDescription("Valid non-animated emoji under 256KB");
+                })
                 .addStringOption((oi) => {
                     return oi
                         .setName("color")
@@ -84,8 +88,8 @@ module.exports = {
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("eomjiicon")
-                        .setDescription("Valid non-animated eomji under 256KB");
+                        .setName("emojiicon")
+                        .setDescription("Valid non-animated emoji under 256KB");
                 })
                 .addStringOption((oi) => {
                     return oi
@@ -168,7 +172,67 @@ module.exports = {
                 name: interaction.options.getString("name"),
                 color: interaction.options.getString("color"),
                 uploadicon: interaction.options.getAttachment("uploadicon"),
+                emojiicon: interaction.options.getString("emojiicon"),
             };
+
+            let verify_msg;
+            let emoji;
+            if (options.emojiicon) {
+                emoji = options.emojiicon;
+                const embed = new EmbedBuilder()
+                    .setColor("Random")
+                    .setDescription("Checking if your emoji is valid...");
+
+                verify_msg = await interaction.reply({
+                    embeds: [embed],
+                    fetchReply: true,
+                });
+
+                const verifyemoji = await verify_msg
+                    .react(`${emoji}`)
+                    .catch(async (error) => {
+                        if (error.code === 10014) {
+                            message =
+                                "**You emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
+                            embed.setColor("Red").setDescription(message);
+                            verify_msg.edit({ embeds: [embed] });
+                            options.emojiicon = null;
+                            return false;
+                        }
+                    });
+
+                if (verifyemoji !== false) {
+                    let passedemoji = false;
+                    if (verifyemoji._emoji.id) {
+                        if (verifyemoji._emoji.animated === true) {
+                            message =
+                                "**You emoji was not valid**\n`Role icon doesn't accept animated emojis`";
+                            embed.setColor("Red").setDescription(message);
+                            return verify_msg.edit({ embeds: [embed] });
+                        } else {
+                            options.emojiicon = `https://cdn.discordapp.com/emojis/${verifyemoji._emoji.id}.webp`;
+                            passedemoji = true;
+                            emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
+                        }
+                    } else {
+                        message =
+                            "**You emoji was not valid**\n`Couldn't find emoji id`";
+                        embed.setColor("Red").setDescription(message);
+                        return verify_msg.edit({ embeds: [embed] });
+                    }
+
+                    if (passedemoji === true) {
+                        message = `<a:ravena_check:1002981211708325950> **Emoji accepted**\nEmoji: ${emoji}`;
+                        embed.setColor("Green").setDescription(message);
+                        verify_msg.edit({ embeds: [embed] });
+                    }
+                } else {
+                    message =
+                        "**You emoji was not valid**\n`That emoji wasn't able to used as a role icon`";
+                    embed.setColor("Red").setDescription(message);
+                    verify_msg.edit({ embeds: [embed] });
+                }
+            }
 
             const roleinfo = {};
             const headrole = await interaction.guild.roles.fetch(
@@ -182,7 +246,13 @@ module.exports = {
 
             roleinfo.name = options.name;
             roleinfo.color = options.color || null;
-            // roleinfo.icon = options.icon || null;
+            if (options.uploadicon) {
+                roleinfo.icon = options.uploadicon.attachment;
+            }
+
+            if (options.emojiicon) {
+                roleinfo.icon = options.emojiicon;
+            }
             roleinfo.reason = "creating perk role";
             roleinfo.position = headrole.rawPosition - 1;
 
@@ -204,13 +274,24 @@ module.exports = {
                 userData
             );
 
+            let newmessage = `<a:ravena_check:1002981211708325950> **Role created successfully**\n\nRole: <@&${rolecreated.id}>\nRole Id: \`${rolecreated.id}\`\nColor: \`${options.color}\`\nPosition: \`${rolecreated.rawPosition}\``;
+
+            if (verify_msg) {
+                newmessage = newmessage + `\nEmoji Icon: ${emoji}`;
+            }
             const embed = new EmbedBuilder()
                 .setColor(rolecreated.color)
-                .setDescription(
-                    `<a:ravena_check:1002981211708325950> **Role created successfully**\n\nRole: <@&${rolecreated.id}>\nRole Id: \`${rolecreated.id}\`\nColor: \`${options.color}\`\nPosition: \`${rolecreated.rawPosition}\``
-                );
+                .setDescription(newmessage);
 
-            return interaction.reply({ embeds: [embed] });
+            if (options.uploadicon) {
+                embed.setThumbnail(options.uploadicon.attachment);
+            }
+
+            if (verify_msg) {
+                return verify_msg.edit({ embeds: [embed] });
+            } else {
+                return interaction.reply({ embeds: [embed] });
+            }
         } else if (interaction.options.getSubcommand() === "show") {
             if (!userData.customrole.id) {
                 error_message = `\`You do not have your own role\`\n\`\`\`fix\n/perkrole create\`\`\``;
@@ -384,7 +465,9 @@ module.exports = {
             };
 
             let verify_msg;
-            if (emojiicon) {
+            let emoji;
+            if (options.emojiicon) {
+                emoji = options.emojiicon;
                 const embed = new EmbedBuilder()
                     .setColor("Random")
                     .setDescription("Checking if your emoji is valid...");
@@ -411,14 +494,20 @@ module.exports = {
                     let passedemoji = false;
                     if (verifyemoji._emoji.id) {
                         if (verifyemoji._emoji.animated === true) {
-                            options.emojiicon = null;
+                            message =
+                                "**You emoji was not valid**\n`Role icon doesn't accept animated emojis`";
+                            embed.setColor("Red").setDescription(message);
+                            return verify_msg.edit({ embeds: [embed] });
                         } else {
+                            options.emojiicon = `https://cdn.discordapp.com/emojis/${verifyemoji._emoji.id}.webp`;
                             passedemoji = true;
                             emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
                         }
                     } else {
-                        passedemoji = true;
-                        emoji = `${verifyemoji._emoji.name}`;
+                        message =
+                            "**You emoji was not valid**\n`Couldn't find emoji id`";
+                        embed.setColor("Red").setDescription(message);
+                        return verify_msg.edit({ embeds: [embed] });
                     }
 
                     if (passedemoji === true) {
@@ -426,6 +515,11 @@ module.exports = {
                         embed.setColor("Green").setDescription(message);
                         verify_msg.edit({ embeds: [embed] });
                     }
+                } else {
+                    message =
+                        "**You emoji was not valid**\n`That emoji wasn't able to used as a role icon`";
+                    embed.setColor("Red").setDescription(message);
+                    verify_msg.edit({ embeds: [embed] });
                 }
             }
 
@@ -453,6 +547,7 @@ module.exports = {
             const updaterole = await interaction.guild.roles
                 .edit(role.id, roleinfo)
                 .catch((error) => {
+                    console.log(error);
                     error_message = `\`${
                         error.rawError
                             ? error.rawError.message
@@ -473,15 +568,18 @@ module.exports = {
 
             const roleupdated = interaction.guild.roles.cache.get(role.id);
 
+            let newmessage = `<a:ravena_check:1002981211708325950> **Role updated successfully**\n\nRole: <@&${
+                roleupdated.id
+            }>\nRole Id: \`${roleupdated.id}\`\nColor: \`${
+                options.color || role.color
+            }\``;
+
+            if (verify_msg) {
+                newmessage = newmessage + `\nEmoji Icon: ${emoji}`;
+            }
             const embed = new EmbedBuilder()
                 .setColor(embedcolor)
-                .setDescription(
-                    `<a:ravena_check:1002981211708325950> **Role updated successfully**\n\nRole: <@&${
-                        roleupdated.id
-                    }>\nRole Id: \`${roleupdated.id}\`\nColor: \`${
-                        options.color || role.color
-                    }\``
-                );
+                .setDescription(newmessage);
 
             if (options.uploadicon) {
                 embed.setThumbnail(options.uploadicon.attachment);
