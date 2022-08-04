@@ -353,20 +353,6 @@ module.exports = {
                 embeds.push(message_embed);
             }
 
-            function findbuttonstyle(style) {
-                if (style === "danger") {
-                    return ButtonStyle.Danger;
-                } else if (style === "primary") {
-                    return ButtonStyle.Primary;
-                } else if (style === "secondary") {
-                    return ButtonStyle.Secondary;
-                } else if (style === "success") {
-                    return ButtonStyle.Success;
-                } else {
-                    return ButtonStyle.Primary;
-                }
-            }
-
             const row = new ActionRowBuilder();
             const button_join = new ButtonBuilder()
                 .setCustomId(`giveaway_join`)

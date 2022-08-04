@@ -35,6 +35,7 @@ const embedTheme = {
     emoji_join: "<:smoothie:1003726574094397560>",
     emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
     emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
+    emoji_reroll: "<a:Hamster_Roll:927070245871566910>",
     dividerurl:
         "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
     button_style: 4,
@@ -247,7 +248,16 @@ module.exports = {
                                     .setEmoji(`${embedTheme.emoji_join}`)
                                     .setStyle(2)
                                     .setDisabled();
+                                const button_reroll = new ButtonBuilder()
+                                    .setCustomId(`giveaway_reroll`)
+                                    .setLabel(`reroll`)
+                                    .setEmoji(`${embedTheme.emoji_reroll}`)
+                                    .setStyle(2);
                                 row.addComponents(button_join);
+
+                                if (giveaway.winnersresults.length > 0) {
+                                    row.addComponents(button_reroll);
+                                }
 
                                 const sponsor =
                                     await message.guild.members.fetch(

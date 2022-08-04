@@ -17,6 +17,7 @@ const embedTheme = {
     emoji_join: "<:smoothie:1003726574094397560>",
     emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
     emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
+    emoji_reroll: "<a:Hamster_Roll:927070245871566910>",
     dividerurl:
         "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
     button_style: 4,
@@ -309,6 +310,73 @@ module.exports = {
                         ),
                     ],
                     ephemeral: true,
+                });
+            } else if (interaction.customId === "giveaway_reroll") {
+                const giveaway = await GiveawayModel.findOne({
+                    messageid: interaction.message.id,
+                });
+
+                if (giveaway.hostid !== interaction.user.id) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`You are not the host of this giveaway, therefore you cannot reroll winners\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                const choosewinner =
+                    giveaway.entries[
+                        Math.floor(Math.random() * giveaway.entries.length)
+                    ];
+
+                const results_embed = new EmbedBuilder().setDescription(
+                    `${embedTheme.emoji_reroll} \`re-roll activated\`\n${embedTheme.emoji_mainpoint} Congratulations, you have won the re-roll for the giveaway for **${giveaway.prize}**`
+                );
+                await interaction.message.reply({
+                    content: `**Host:** <@${giveaway.hostid}>\nRe-rolled Winner: <@${choosewinner}>`,
+                    embeds: [results_embed],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setLabel("Giveaway")
+                                .setStyle(ButtonStyle.Link)
+                                .setEmoji(embedTheme.emoji_join)
+                                .setURL(
+                                    `https://discord.com/channels/${giveaway.guildid}/${giveaway.channelid}/${giveaway.messageid}`
+                                )
+                        ),
+                    ],
+                });
+
+                const embed = new EmbedBuilder()
+                    .setTitle(
+                        `${embedTheme.emoji_reroll} You won the re-roll for a giveaway!`
+                    )
+                    .setDescription(
+                        `Please dm the host within their set claim duration (default: \`24 hours\`)\n\n${embedTheme.emoji_mainpoint}**Prize:** ${giveaway.prize}\n${embedTheme.emoji_mainpoint}**Host:** <@${giveaway.hostid}>`
+                    );
+                client.users.fetch(choosewinner, false).then((user) => {
+                    user.send({
+                        content: `<@${choosewinner}>`,
+                        embeds: [embed],
+                        components: [
+                            new ActionRowBuilder().addComponents(
+                                new ButtonBuilder()
+                                    .setLabel("Giveaway")
+                                    .setStyle(ButtonStyle.Link)
+                                    .setEmoji(embedTheme.emoji_join)
+                                    .setURL(
+                                        `https://discord.com/channels/${giveaway.guildid}/${giveaway.channelid}/${giveaway.messageid}`
+                                    )
+                            ),
+                        ],
+                    });
                 });
             }
         }
