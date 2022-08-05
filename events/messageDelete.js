@@ -13,7 +13,7 @@ module.exports = {
                 .setTitle("Giveaway has been deleted.")
                 .setDescription(`\`\`\`json\n${giveaway}\`\`\``);
             const channel = client.channels.cache
-                .get("909650135594729502")
+                .get("1003661988351709244")
                 .send({ embeds: [embed] });
             await GiveawayModel.findOneAndDelete({ messageid: message.id });
         }
