@@ -520,15 +520,27 @@ module.exports = {
                 .setStyle(embedTheme.button_style);
             row.addComponents(button_join);
 
+            interaction.reply({
+                content: "Giveaway started!",
+                ephemeral: true,
+            });
+
+            rows.push(row);
+
+            const send_msg = await interaction.channel.send({
+                content: mentions,
+                embeds: embeds,
+                components: rows,
+                allowedMentions: { parse: ["users", "roles"] },
+            });
+
             if (required_roles.roles.includes("922663821208879125")) {
                 const vote_row = new ActionRowBuilder();
-                embeds.push(
-                    new EmbedBuilder()
-                        .setColor(embedTheme.color)
-                        .setDescription(
-                            `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
-                        )
-                );
+                const vote_embed = new EmbedBuilder()
+                    .setColor(embedTheme.color)
+                    .setDescription(
+                        `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
+                    );
                 vote_row.addComponents([
                     new ButtonBuilder()
                         .setCustomId(`vote_perks`)
@@ -544,21 +556,11 @@ module.exports = {
                         ),
                 ]);
 
-                rows.push(vote_row);
+                await interaction.channel.send({
+                    embeds: [vote_embed],
+                    components: [vote_row],
+                });
             }
-            interaction.reply({
-                content: "Giveaway started!",
-                ephemeral: true,
-            });
-
-            rows.push(row);
-
-            const send_msg = await interaction.channel.send({
-                content: mentions,
-                embeds: embeds,
-                components: rows,
-                allowedMentions: { parse: ["users", "roles"] },
-            });
 
             return GiveawayModel.create({
                 guildid: interaction.guildId,
