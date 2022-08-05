@@ -511,6 +511,7 @@ module.exports = {
                 embeds.push(message_embed);
             }
 
+            const rows = [];
             const row = new ActionRowBuilder();
             const button_join = new ButtonBuilder()
                 .setCustomId(`giveaway_join`)
@@ -519,15 +520,43 @@ module.exports = {
                 .setStyle(embedTheme.button_style);
             row.addComponents(button_join);
 
+            if (required_roles.roles.includes("922663821208879125")) {
+                const vote_row = new ActionRowBuilder();
+                embeds.push(
+                    new EmbedBuilder()
+                        .setColor(embedTheme.color)
+                        .setDescription(
+                            `**How to be come a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
+                        )
+                );
+                vote_row.addComponents([
+                    new ButtonBuilder()
+                        .setCustomId(`vote_perks`)
+                        .setLabel(`Voting Perks`)
+                        .setEmoji(`<a:dankex:992270290027556885>`)
+                        .setStyle(embedTheme.button_style),
+                    new ButtonBuilder()
+                        .setLabel(`Vote here`)
+                        .setEmoji(`<a:dankex:992270290027556885>`)
+                        .setStyle(5)
+                        .setURL(
+                            "https://top.gg/servers/902334382939963402/vote"
+                        ),
+                ]);
+
+                rows.push(vote_row);
+            }
             interaction.reply({
                 content: "Giveaway started!",
                 ephemeral: true,
             });
 
+            rows.push(row);
+
             const send_msg = await interaction.channel.send({
                 content: mentions,
                 embeds: embeds,
-                components: [row],
+                components: rows,
                 allowedMentions: { parse: ["users", "roles"] },
             });
 
