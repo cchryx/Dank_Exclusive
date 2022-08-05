@@ -173,7 +173,23 @@ module.exports = {
                         .setStyle(embedTheme.button_style);
                     row.addComponents(button_join);
                     interaction.message.edit({
-                        components: [row],
+                        components: [
+                            new ActionRowBuilder().addComponents([
+                                new ButtonBuilder()
+                                    .setCustomId(`vote_perks`)
+                                    .setLabel(`Voting Perks`)
+                                    .setEmoji(`<a:dankex:992270290027556885>`)
+                                    .setStyle(embedTheme.button_style),
+                                new ButtonBuilder()
+                                    .setLabel(`Vote here`)
+                                    .setEmoji(`<a:dankex:992270290027556885>`)
+                                    .setStyle(5)
+                                    .setURL(
+                                        "https://top.gg/servers/902334382939963402/vote"
+                                    ),
+                            ]),
+                            row,
+                        ],
                     });
 
                     return interaction.reply({
@@ -325,7 +341,23 @@ module.exports = {
                     .setStyle(embedTheme.button_style);
                 row.addComponents(button_join);
                 await giveaway_msg.edit({
-                    components: [row],
+                    components: [
+                        new ActionRowBuilder().addComponents([
+                            new ButtonBuilder()
+                                .setCustomId(`vote_perks`)
+                                .setLabel(`Voting Perks`)
+                                .setEmoji(`<a:dankex:992270290027556885>`)
+                                .setStyle(embedTheme.button_style),
+                            new ButtonBuilder()
+                                .setLabel(`Vote here`)
+                                .setEmoji(`<a:dankex:992270290027556885>`)
+                                .setStyle(5)
+                                .setURL(
+                                    "https://top.gg/servers/902334382939963402/vote"
+                                ),
+                        ]),
+                        row,
+                    ],
                 });
 
                 return interaction.reply({
