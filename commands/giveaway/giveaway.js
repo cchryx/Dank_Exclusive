@@ -526,7 +526,7 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor(embedTheme.color)
                         .setDescription(
-                            `**How to be come a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
+                            `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
                         )
                 );
                 vote_row.addComponents([
