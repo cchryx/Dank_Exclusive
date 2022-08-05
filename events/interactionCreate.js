@@ -173,23 +173,7 @@ module.exports = {
                         .setStyle(embedTheme.button_style);
                     row.addComponents(button_join);
                     interaction.message.edit({
-                        components: [
-                            new ActionRowBuilder().addComponents([
-                                new ButtonBuilder()
-                                    .setCustomId(`vote_perks`)
-                                    .setLabel(`Voting Perks`)
-                                    .setEmoji(`<a:dankex:992270290027556885>`)
-                                    .setStyle(embedTheme.button_style),
-                                new ButtonBuilder()
-                                    .setLabel(`Vote here`)
-                                    .setEmoji(`<a:dankex:992270290027556885>`)
-                                    .setStyle(5)
-                                    .setURL(
-                                        "https://top.gg/servers/902334382939963402/vote"
-                                    ),
-                            ]),
-                            row,
-                        ],
+                        components: [row],
                     });
 
                     return interaction.reply({
