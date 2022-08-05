@@ -42,6 +42,17 @@ const guildSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        perkrole_head: {
+            type: String,
+            default: "",
+        },
+        giveaway: {
+            type: Object,
+            default: {
+                mentions: {},
+                blacklist: [],
+            },
+        },
     },
     { minimize: false }
 );

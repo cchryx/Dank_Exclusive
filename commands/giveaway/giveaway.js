@@ -22,6 +22,9 @@ const {
 } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
 
+const jsoncooldowns = require("../../giveaway-cooldowns.json");
+const fs = require("fs");
+
 const humantime = humanizeDuration.humanizer({
     language: "shortEn",
     delimiter: " ",
@@ -101,6 +104,14 @@ module.exports = {
                         .setName("mentions")
                         .setDescription(
                             "Id: Roles will get pinged for this giveaway"
+                        )
+                        .addChoices(
+                            {
+                                name: "Massive Giveaway",
+                                value: "giveaway_massive",
+                            },
+                            { name: "Giveaway", value: "giveaway" },
+                            { name: "Nitro Giveaway", value: "giveaway_nitro" }
                         );
                 })
                 .addStringOption((oi) => {
@@ -133,7 +144,7 @@ module.exports = {
                 })
         ),
     async execute(interaction, client) {
-        const guildData = guild_fetch(interaction.guildId);
+        const guildData = await guild_fetch(interaction.guildId);
         requiredperms = ["ManageChannels", "ManageGuild", "Administrator"];
         let message;
         let pass = await guild_checkperm_giveaway(interaction, requiredperms);
@@ -161,10 +172,157 @@ module.exports = {
                 reqrole: interaction.options.getString("reqroles"),
                 bypassroles: interaction.options.getString("bypassroles"),
                 blacklistroles: interaction.options.getString("blacklistroles"),
-
                 message: interaction.options.getString("message"),
                 mentions: interaction.options.getString("mentions"),
             };
+
+            let cooldown;
+            if (options.mentions) {
+                const userID = interaction.user.id;
+                if (!jsoncooldowns.hasOwnProperty(userID)) {
+                    jsoncooldowns[userID] = {};
+                }
+
+                if (options.mentions === "giveaway") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 180;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].giveaway = timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                } else if (options.mentions === "giveaway_massive") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 300;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].giveaway_massive =
+                            timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                } else if (options.mentions === "giveaway_nitro") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 300;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].giveaway_nitro =
+                            timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                }
+
+                options.mentions =
+                    guildData.giveaway.mentions[options.mentions];
+            }
+
             let typeurl;
             if (options.type === "dankmemer") {
                 typeurl =
