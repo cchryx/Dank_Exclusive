@@ -919,49 +919,49 @@ module.exports = {
 
             return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "selfremove") {
-            const options = {
-                role: interaction.options.getRole("role"),
-            };
+//             const options = {
+//                 role: interaction.options.getRole("role"),
+//             };
 
-            if (
-                !interaction.member.roles.cache.find(
-                    (r) => r.id === options.role.id
-                )
-            ) {
-                error_message = `\`You don't currently have that role\``;
-                return error_reply(interaction, error_message);
-            }
+//             if (
+//                 !interaction.member.roles.cache.find(
+//                     (r) => r.id === options.role.id
+//                 )
+//             ) {
+//                 error_message = `\`You don't currently have that role\``;
+//                 return error_reply(interaction, error_message);
+//             }
 
-            if (options.role.id === userData.customrole.id) {
-                error_message = `\`You are the owner of this role so you have to do the following\`\`\`fix\n/perkrole delete\`\`\``;
-                return error_reply(interaction, error_message);
-            }
+//             if (options.role.id === userData.customrole.id) {
+//                 error_message = `\`You are the owner of this role so you have to do the following\`\`\`fix\n/perkrole delete\`\`\``;
+//                 return error_reply(interaction, error_message);
+//             }
 
-            const ownerofrole = await UserModel.findOne({
-                "customrole.id": "1000887377499263116",
-            });
+//             const ownerofrole = await UserModel.findOne({
+//                 "customrole.id": "1000887377499263116",
+//             });
 
-            const user = await interaction.guild.members.fetch(
-                interaction.user.id
-            );
-            user.roles.remove(options.role.id);
+//             const user = await interaction.guild.members.fetch(
+//                 interaction.user.id
+//             );
+//             user.roles.remove(options.role.id);
 
-            let slots_used = ownerofrole.customrole.users.length;
-            const pullIndex = ownerofrole.customrole.users.indexOf(user.id);
-            ownerofrole.customrole.users.splice(pullIndex, 1);
-            slots_used = slots_used - 1;
+//             let slots_used = ownerofrole.customrole.users.length;
+//             const pullIndex = ownerofrole.customrole.users.indexOf(user.id);
+//             ownerofrole.customrole.users.splice(pullIndex, 1);
+//             slots_used = slots_used - 1;
 
-            await UserModel.findOneAndUpdate(
-                { userid: ownerofrole.id },
-                ownerofrole
-            );
+//             await UserModel.findOneAndUpdate(
+//                 { userid: ownerofrole.id },
+//                 ownerofrole
+//             );
 
-            message = `<a:ravena_check:1002981211708325950> **Role removed successfully**\nRole: <@&${options.role.id}>\nUser: <@${ownerofrole.userid}>`;
+//             message = `<a:ravena_check:1002981211708325950> **Role removed successfully**\nRole: <@&${options.role.id}>\Owner: <@${ownerofrole.userid}>`;
 
-            const embed = new EmbedBuilder()
-                .setColor("Green")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
-        }
+//             const embed = new EmbedBuilder()
+//                 .setColor("Green")
+//                 .setDescription(message);
+//             return interaction.reply({ embeds: [embed] });
+//         }
     },
 };
