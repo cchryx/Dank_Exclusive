@@ -362,16 +362,29 @@ module.exports = {
                 slots_used = userData.customrole.users.length;
             }
 
+            let slots_display_i;
             if (slots_used === 0) {
                 slots_display = `\`no slots\``;
             } else {
-                slots_display = userData.customrole.users
-                    .map((user) => {
-                        const slot_location =
-                            userData.customrole.users.indexOf(user) + 1;
-                        return `Slot ${slot_location}: <@${user}>`;
-                    })
-                    .join("\n");
+                if (userData.customrole.users.length > 10) {
+                    slots_display_i = userData.customrole.users
+                        .map((user) => {
+                            const slot_location =
+                                userData.customrole.users.indexOf(user) + 1;
+                            return `<@${user}>`;
+                        })
+                        .join(" ");
+
+                    slots_display = `\`You have more than 10 slots, therefore they have been compressed in the embed bellow\``;
+                } else {
+                    slots_display = userData.customrole.users
+                        .map((user) => {
+                            const slot_location =
+                                userData.customrole.users.indexOf(user) + 1;
+                            return `Slot ${slot_location}: <@${user}>`;
+                        })
+                        .join("\n");
+                }
             }
 
             if (guildData.perkrole_roles) {
@@ -419,7 +432,14 @@ module.exports = {
                     }
                 );
 
-            return interaction.reply({ embeds: [show_embed, sub_embed] });
+            const embeds = [show_embed];
+
+            if (slots_display_i) {
+                embeds.push(new EmbedBuilder().setDescription(slots_display_i));
+            } else {
+                embed.push(sub_embed);
+            }
+            return interaction.reply({ embeds: embeds });
         } else if (interaction.options.getSubcommand() === "edit") {
             if (!guildData.perkrole_head) {
                 error_message = `\`This server doesn't have a head role where the perkroles can be put under\``;
