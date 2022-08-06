@@ -51,6 +51,7 @@ const guildSchema = new mongoose.Schema(
             default: {
                 mentions: {},
                 blacklist: [],
+                bypass: [],
             },
         },
     },

@@ -9,6 +9,7 @@ const {
 
 const { user_fetch } = require("../utils/user");
 const { error_reply } = require("../utils/error");
+const { guild_fetch } = require("../utils/guild");
 
 const GiveawayModel = require("../models/giveawaySchema");
 
@@ -46,6 +47,8 @@ module.exports = {
                 });
             }
         } else if (interaction.isButton()) {
+            const guildData = await guild_fetch(interaction.guildId);
+
             if (interaction.customId === "vote_perks") {
                 interaction.reply({
                     embeds: [
@@ -125,9 +128,21 @@ module.exports = {
                     });
                 }
 
-                if (giveaway.blacklist.length > 0) {
+                if (
+                    giveaway.blacklist.length > 0 ||
+                    guildData.giveaway.blacklist.length > 0
+                ) {
                     let blacklisted_roles = [];
                     giveaway.blacklist.forEach((id) => {
+                        if (
+                            interaction.member.roles.cache.find(
+                                (r) => r.id === id
+                            )
+                        ) {
+                            blacklisted_roles.push(id);
+                        }
+                    });
+                    guildData.giveaway.blacklist.forEach((id) => {
                         if (
                             interaction.member.roles.cache.find(
                                 (r) => r.id === id
@@ -197,9 +212,23 @@ module.exports = {
                     });
                 }
 
-                if (giveaway.bypass.length > 0) {
+                if (
+                    giveaway.bypass.length > 0 ||
+                    guildData.giveaway.bypass.length > 0
+                ) {
                     let joined = false;
                     giveaway.bypass.forEach((id) => {
+                        if (
+                            interaction.member.roles.cache.find(
+                                (r) => r.id === id
+                            )
+                        ) {
+                            joined = true;
+                            return giveaway_join();
+                        }
+                    });
+
+                    guildData.giveaway.bypass.forEach((id) => {
                         if (
                             interaction.member.roles.cache.find(
                                 (r) => r.id === id
