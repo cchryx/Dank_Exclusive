@@ -534,32 +534,34 @@ module.exports = {
                 allowedMentions: { parse: ["users", "roles"] },
             });
 
-            if (required_roles.roles.includes("922663821208879125")) {
-                const vote_row = new ActionRowBuilder();
-                const vote_embed = new EmbedBuilder()
-                    .setColor(embedTheme.color)
-                    .setDescription(
-                        `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
-                    );
-                vote_row.addComponents([
-                    new ButtonBuilder()
-                        .setCustomId(`vote_perks`)
-                        .setLabel(`Voting Perks`)
-                        .setEmoji(`<a:dankex:992270290027556885>`)
-                        .setStyle(embedTheme.button_style),
-                    new ButtonBuilder()
-                        .setLabel(`Vote here`)
-                        .setEmoji(`<a:dankex:992270290027556885>`)
-                        .setStyle(5)
-                        .setURL(
-                            "https://top.gg/servers/902334382939963402/vote"
-                        ),
-                ]);
+            if (required_roles) {
+                if (required_roles.roles.includes("922663821208879125")) {
+                    const vote_row = new ActionRowBuilder();
+                    const vote_embed = new EmbedBuilder()
+                        .setColor(embedTheme.color)
+                        .setDescription(
+                            `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
+                        );
+                    vote_row.addComponents([
+                        new ButtonBuilder()
+                            .setCustomId(`vote_perks`)
+                            .setLabel(`Voting Perks`)
+                            .setEmoji(`<a:dankex:992270290027556885>`)
+                            .setStyle(embedTheme.button_style),
+                        new ButtonBuilder()
+                            .setLabel(`Vote here`)
+                            .setEmoji(`<a:dankex:992270290027556885>`)
+                            .setStyle(5)
+                            .setURL(
+                                "https://top.gg/servers/902334382939963402/vote"
+                            ),
+                    ]);
 
-                await interaction.channel.send({
-                    embeds: [vote_embed],
-                    components: [vote_row],
-                });
+                    await interaction.channel.send({
+                        embeds: [vote_embed],
+                        components: [vote_row],
+                    });
+                }
             }
 
             return GiveawayModel.create({
