@@ -48,10 +48,6 @@ module.exports = {
     once: false,
     async execute(client) {
         mainCounter++;
-        setTimeout(() => {
-            client.emit("tick");
-            nowTimestamp = new Date();
-        }, 1000);
 
         const giveaway_query = await GiveawayModel.find({
             hasEnded: false,
@@ -294,5 +290,10 @@ module.exports = {
                 } catch (_) {}
             }
         }
+
+        setTimeout(() => {
+            client.emit("tick");
+            nowTimestamp = new Date();
+        }, 1000);
     },
 };

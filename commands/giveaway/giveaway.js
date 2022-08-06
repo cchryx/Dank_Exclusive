@@ -383,6 +383,10 @@ module.exports = {
                 message = `\`Couldn't parse ${timeargs[0]}\nExample: 1d1h12m\``;
                 return error_reply(interaction, message);
             }
+            if (time < 1000) {
+                message = `\`Minimum timer is 1s\``;
+                return error_reply(interaction, message);
+            }
             const endtime = Date.now() + time;
             const giveaway_embed = new EmbedBuilder()
                 .setTitle(`${options.prize}`)
