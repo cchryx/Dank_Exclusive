@@ -256,7 +256,7 @@ module.exports = {
                                     .setDisabled();
                                 const button_reroll = new ButtonBuilder()
                                     .setCustomId(`giveaway_reroll`)
-                                    .setLabel(`reroll`)
+                                    .setLabel(`Reroll`)
                                     .setEmoji(`${embedTheme.emoji_reroll}`)
                                     .setStyle(2);
                                 row.addComponents(button_join);

@@ -254,7 +254,7 @@ module.exports = {
                 roleinfo.icon = options.emojiicon;
             }
             roleinfo.reason = "creating perk role";
-            roleinfo.position = headrole.rawPosition - 1;
+            roleinfo.position = headrole.rawPosition + 1;
 
             const rolecreated = await interaction.guild.roles
                 .create(roleinfo)

@@ -6,6 +6,7 @@ const {
     ButtonBuilder,
     ButtonStyle,
 } = require("discord.js");
+const humanizeDuration = require("humanize-duration");
 
 const { user_fetch } = require("../utils/user");
 const { error_reply } = require("../utils/error");
@@ -24,6 +25,23 @@ const embedTheme = {
     button_style: 4,
 };
 
+const humantime = humanizeDuration.humanizer({
+    language: "shortEn",
+    delimiter: " ",
+    spacer: "",
+    languages: {
+        shortEn: {
+            y: () => "y",
+            mo: () => "mo",
+            w: () => "w",
+            d: () => "d",
+            h: () => "h",
+            m: () => "m",
+            s: () => "s",
+            ms: () => "ms",
+        },
+    },
+});
 module.exports = {
     name: "interactionCreate",
     async execute(interaction, client) {
@@ -186,7 +204,14 @@ module.exports = {
                         .setLabel(`${giveaway.entriescount}`)
                         .setEmoji(`${embedTheme.emoji_join}`)
                         .setStyle(embedTheme.button_style);
-                    row.addComponents(button_join);
+                    row.addComponents(
+                        button_join,
+                        new ButtonBuilder()
+                            .setCustomId(`giveaway_end`)
+                            .setLabel(`End`)
+                            .setEmoji(`<a:ravena_uncheck:1002983318565965885>`)
+                            .setStyle(2)
+                    );
                     interaction.message.edit({
                         components: [row],
                     });
@@ -352,7 +377,14 @@ module.exports = {
                     .setLabel(`${giveaway.entriescount}`)
                     .setEmoji(`${embedTheme.emoji_join}`)
                     .setStyle(embedTheme.button_style);
-                row.addComponents(button_join);
+                row.addComponents(
+                    button_join,
+                    new ButtonBuilder()
+                        .setCustomId(`giveaway_end`)
+                        .setLabel(`End`)
+                        .setEmoji(`<a:ravena_uncheck:1002983318565965885>`)
+                        .setStyle(2)
+                );
                 await giveaway_msg.edit({
                     components: [row],
                 });
@@ -445,6 +477,286 @@ module.exports = {
                         ],
                     });
                 });
+            } else if (interaction.customId === "giveaway_end") {
+                const giveaway = await GiveawayModel.findOne({
+                    messageid: interaction.message.id,
+                });
+                if (giveaway.hostid !== interaction.user.id) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`You are not the host of this giveaway, therefore you cannot reroll winners\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+                if (!giveaway) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(`\`Giveaway no longer exists\``)
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                if (giveaway.hasEnded === true) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`Giveaway ended, so you can no longer interact with it\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                let winners = [];
+                if (giveaway.winnersamount > 1) {
+                    for (i = 0; i < giveaway.winnersamount; i++) {
+                        winners.push(
+                            giveaway.entries.filter(
+                                (val) => !winners.includes(val)
+                            )[
+                                Math.floor(
+                                    Math.random() *
+                                        giveaway.entries.filter(
+                                            (val) => !winners.includes(val)
+                                        ).length
+                                )
+                            ]
+                        );
+                    }
+                } else if (giveaway.winnersamount === 1) {
+                    winners = [
+                        giveaway.entries[
+                            Math.floor(Math.random() * giveaway.entries.length)
+                        ],
+                    ];
+                }
+
+                winners = winners.filter(function (element) {
+                    return element !== undefined;
+                });
+
+                try {
+                    const channel = client.channels.cache.get(
+                        giveaway.channelid
+                    );
+                    giveaway.winnersresults = winners;
+                    giveaway.hasEnded = true;
+                    await GiveawayModel.findOneAndUpdate(
+                        {
+                            messageid: giveaway.messageid,
+                        },
+                        giveaway
+                    );
+
+                    if (channel) {
+                        try {
+                            const message = await channel.messages.fetch(
+                                giveaway.messageid
+                            );
+                            const winners_map = giveaway.winnersresults
+                                .map((id) => {
+                                    const embed = new EmbedBuilder()
+                                        .setTitle("You won a giveaway!")
+                                        .setDescription(
+                                            `Please dm the host within their set claim duration (default: \`24 hours\`)\n\n${embedTheme.emoji_mainpoint}**Prize:** ${giveaway.prize}\n${embedTheme.emoji_mainpoint}**Host:** <@${giveaway.hostid}>`
+                                        );
+                                    client.users
+                                        .fetch(id, false)
+                                        .then((user) => {
+                                            user.send({
+                                                content: `<@${id}>`,
+                                                embeds: [embed],
+                                                components: [
+                                                    new ActionRowBuilder().addComponents(
+                                                        new ButtonBuilder()
+                                                            .setLabel(
+                                                                "Giveaway"
+                                                            )
+                                                            .setStyle(
+                                                                ButtonStyle.Link
+                                                            )
+                                                            .setEmoji(
+                                                                embedTheme.emoji_join
+                                                            )
+                                                            .setURL(
+                                                                `https://discord.com/channels/${giveaway.guildid}/${giveaway.channelid}/${giveaway.messageid}`
+                                                            )
+                                                    ),
+                                                ],
+                                            });
+                                        });
+                                    return `<@${id}>`;
+                                })
+                                .join(", ");
+
+                            const host_embed = new EmbedBuilder()
+                                .setTitle("Your giveaway ended!")
+                                .setDescription(
+                                    `Please payout when the winners dm you and send you the link to the giveaway, you can get a claim time (default: \`24 hours\`)\n\n${
+                                        embedTheme.emoji_mainpoint
+                                    }**Prize:** ${giveaway.prize}\n${
+                                        embedTheme.emoji_mainpoint
+                                    }**Winners:** ${
+                                        giveaway.winnersresults.length > 0
+                                            ? `${winners_map}`
+                                            : `*there was no entries to determine a winner*`
+                                    }`
+                                );
+                            client.users
+                                .fetch(giveaway.hostid, false)
+                                .then((user) => {
+                                    user.send({
+                                        content: `<@${giveaway.hostid}>`,
+                                        embeds: [host_embed],
+                                        components: [
+                                            new ActionRowBuilder().addComponents(
+                                                new ButtonBuilder()
+                                                    .setLabel("Giveaway")
+                                                    .setStyle(ButtonStyle.Link)
+                                                    .setEmoji(
+                                                        embedTheme.emoji_join
+                                                    )
+                                                    .setURL(
+                                                        `https://discord.com/channels/${giveaway.guildid}/${giveaway.channelid}/${giveaway.messageid}`
+                                                    )
+                                            ),
+                                        ],
+                                    });
+                                });
+                            const results_embed =
+                                new EmbedBuilder().setDescription(
+                                    `${embedTheme.emoji_mainpoint} ${
+                                        giveaway.winnersresults.length > 0
+                                            ? `Congratulations, you have won the giveaway for **${giveaway.prize}**`
+                                            : `There was no winners in the giveaway for **${giveaway.prize}**`
+                                    }`
+                                );
+                            const result_msg = await message.reply({
+                                content: `**Host:** <@${giveaway.hostid}>\n${
+                                    giveaway.winnersresults.length > 0
+                                        ? `Winners: ${winners_map}`
+                                        : `*there was no entries to determine a winner*`
+                                }`,
+                                embeds: [results_embed],
+                                components: [
+                                    new ActionRowBuilder().addComponents(
+                                        new ButtonBuilder()
+                                            .setLabel("Giveaway")
+                                            .setStyle(ButtonStyle.Link)
+                                            .setEmoji(embedTheme.emoji_join)
+                                            .setURL(
+                                                `https://discord.com/channels/${giveaway.guildid}/${giveaway.channelid}/${giveaway.messageid}`
+                                            )
+                                    ),
+                                ],
+                            });
+
+                            if (message) {
+                                const giveaway_embed = new EmbedBuilder()
+                                    .setTitle(`${giveaway.prize}`)
+                                    .setThumbnail(giveaway.typeurl)
+                                    .setDescription(
+                                        `Click ${
+                                            embedTheme.emoji_join
+                                        } to enter\n\n${
+                                            embedTheme.emoji_mainpoint
+                                        }**Winners:** ${
+                                            giveaway.winnersresults.length > 0
+                                                ? `[**giveaway results**](https://discord.com/channels/${result_msg.guildId}/${result_msg.channelId}/${result_msg.id})`
+                                                : `*there was no entries to determine a winner*`
+                                        }\n${
+                                            embedTheme.emoji_mainpoint
+                                        }**Ended:** <t:${Math.floor(
+                                            giveaway.endsAt / 1000
+                                        )}:R>\n${
+                                            embedTheme.emoji_mainpoint
+                                        }**Lasted For:** \`${humantime(
+                                            giveaway.duration
+                                        )}\`\n${
+                                            embedTheme.emoji_mainpoint
+                                        }**Host:** <@${giveaway.hostid}>\n${
+                                            embedTheme.emoji_mainpoint
+                                        }**Donator:** <@${giveaway.sponsorid}>`
+                                    )
+                                    .setImage(
+                                        `https://media.discordapp.net/attachments/1003715669059178626/1004459806972723260/output-onlinepngtools_2.png`
+                                    )
+                                    .setFooter({
+                                        text: `Winners: ${giveaway.winnersamount.toLocaleString()}`,
+                                    });
+
+                                if (giveaway.infodisplay) {
+                                    giveaway_embed.setFields({
+                                        name: "Information:",
+                                        value: giveaway.infodisplay,
+                                    });
+                                }
+
+                                const row = new ActionRowBuilder();
+                                const button_join = new ButtonBuilder()
+                                    .setCustomId(`giveaway_join`)
+                                    .setLabel(`${giveaway.entriescount}`)
+                                    .setEmoji(`${embedTheme.emoji_join}`)
+                                    .setStyle(2)
+                                    .setDisabled();
+                                const button_reroll = new ButtonBuilder()
+                                    .setCustomId(`giveaway_reroll`)
+                                    .setLabel(`Reroll`)
+                                    .setEmoji(`${embedTheme.emoji_reroll}`)
+                                    .setStyle(2);
+                                row.addComponents(button_join);
+
+                                if (giveaway.winnersresults.length > 0) {
+                                    row.addComponents(button_reroll);
+                                }
+
+                                const sponsor =
+                                    await message.guild.members.fetch(
+                                        giveaway.sponsorid
+                                    );
+
+                                const embeds = [giveaway_embed];
+                                if (giveaway.sponsormessage) {
+                                    const message_embed = new EmbedBuilder()
+                                        .setDescription(
+                                            `**Message:** ${giveaway.sponsormessage}`
+                                        )
+                                        .setFooter({
+                                            url: sponsor.user.displayAvatarURL(),
+                                            text: `-${sponsor.user.tag}`,
+                                        });
+                                    embeds.push(message_embed);
+                                }
+
+                                interaction.reply({
+                                    content: "Successfully ended that giveaway",
+                                    ephemeral: true,
+                                });
+
+                                message.edit({
+                                    content: "`Giveaway has ended`",
+                                    embeds: embeds,
+                                    components: [row],
+                                });
+                            }
+                        } catch (_) {
+                            console.log(_);
+                        }
+                    }
+                } catch (_) {}
             }
         }
     },

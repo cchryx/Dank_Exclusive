@@ -518,7 +518,12 @@ module.exports = {
                 .setLabel(`0`)
                 .setEmoji(`${embedTheme.emoji_join}`)
                 .setStyle(embedTheme.button_style);
-            row.addComponents(button_join);
+            const button_end = new ButtonBuilder()
+                .setCustomId(`giveaway_end`)
+                .setLabel(`End`)
+                .setEmoji(`<a:ravena_uncheck:1002983318565965885>`)
+                .setStyle(2);
+            row.addComponents(button_join, button_end);
 
             interaction.reply({
                 content: "Giveaway started!",
