@@ -437,7 +437,7 @@ module.exports = {
             if (slots_display_i) {
                 embeds.push(new EmbedBuilder().setDescription(slots_display_i));
             } else {
-                embed.push(sub_embed);
+                embeds.push(sub_embed);
             }
             return interaction.reply({ embeds: embeds });
         } else if (interaction.options.getSubcommand() === "edit") {
