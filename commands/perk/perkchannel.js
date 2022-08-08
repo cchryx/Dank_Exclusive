@@ -1,0 +1,191 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
+const {
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ComponentType,
+} = require("discord.js");
+
+const UserModel = require("../../models/userSchema");
+
+const { user_fetch } = require("../../utils/user");
+const { guild_fetch } = require("../../utils/guild");
+const { error_reply } = require("../../utils/error");
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName("perkchannel")
+        .setDescription(
+            "Perk command: create a private channel and add/remove users"
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("show")
+                .setDescription(
+                    "Show who is currently who has access to you private channel"
+                )
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("userrmove")
+                .setDescription(
+                    "Choose a user to remove from your private channel"
+                )
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("user")
+                        .setDescription(
+                            "Valid user within the server or id for a user that has left"
+                        )
+                        .setRequired(true);
+                })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("useradd")
+                .setDescription("Choose a user to add to your private channel")
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("user")
+                        .setDescription("Valid user within the server")
+                        .setRequired(true);
+                })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("create")
+                .setDescription("Create private channel")
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("emoji")
+                        .setDescription("Valid user within the server")
+                        .setRequired(true);
+                })
+        ),
+    async execute(interaction, client) {
+        const guildData = await guild_fetch(interaction.guildId);
+        let userData = await user_fetch(interaction.user.id);
+
+        if (interaction.options.getSubcommand() !== "create") {
+            if (!userData.privatechannel.id) {
+                error_message = `\`You do not have your own channel\`\n\`\`\`fix\n/perkchannel create\`\`\``;
+                return error_reply(interaction, error_message);
+            }
+        }
+
+        let slots_max = 0;
+        let slots_used = userData.privatechannel.users.length;
+        let hasroles_display;
+        let slots_display;
+
+        let hasroles = [];
+        Object.keys(guildData.perkchannel_roles).forEach((key) => {
+            if (interaction.member.roles.cache.find((r) => r.id === key)) {
+                slots_max = slots_max + guildData.perkchannel_roles[key];
+                hasroles.push(key);
+            }
+        });
+
+        if (slots_used > slots_max) {
+            const removedusers = userData.privatechannel.users.slice(slots_max);
+            removedusers.forEach(async (removedid) => {
+                const user = await interaction.guild.members.fetch(removedid);
+                user.roles.remove(userData.privatechannel.id);
+            });
+            userData.privatechannel.users = userData.privatechannel.users.slice(
+                0,
+                slots_max
+            );
+            await UserModel.findOneAndUpdate(
+                { userid: interaction.user.id },
+                userData
+            );
+            slots_used = userData.privatechannel.users.length;
+        }
+
+        let slots_display_i;
+        if (slots_used === 0) {
+            slots_display = `\`no slots\``;
+        } else {
+            if (userData.privatechannel.users.length > 10) {
+                slots_display_i = userData.privatechannel.users
+                    .map((user) => {
+                        const slot_location =
+                            userData.privatechannel.users.indexOf(user) + 1;
+                        return `<@${user}>`;
+                    })
+                    .join(" ");
+
+                slots_display = `\`You have more than 10 slots, therefore they have been compressed in the embed bellow\``;
+            } else {
+                slots_display = userData.privatechannel.users
+                    .map((user) => {
+                        const slot_location =
+                            userData.privatechannel.users.indexOf(user) + 1;
+                        return `Slot ${slot_location}: <@${user}>`;
+                    })
+                    .join("\n");
+            }
+        }
+
+        if (guildData.perkchannel_roles) {
+            hasroles_display = Object.keys(guildData.perkchannel_roles)
+                .map((key) => {
+                    let status = "<a:ravena_uncheck:1002983318565965885>";
+
+                    if (
+                        interaction.member.roles.cache.find((r) => r.id === key)
+                    ) {
+                        status = "<a:ravena_check:1002981211708325950>";
+                    }
+                    return `${status}<@&${key}>\`+ ${guildData.perkchannel_roles[key]}\``;
+                })
+                .join("\n");
+        } else {
+            hasroles_display = `\`server has no perkrole roles\``;
+        }
+
+        if (interaction.options.getSubcommand() === "show") {
+            const sub_embed = new EmbedBuilder().setDescription(
+                `\`\`\`diff\nSubcommands:\n- /perkchannel userremove\n+ /perkchannel useradd\`\`\``
+            );
+            const show_embed = new EmbedBuilder()
+                .setColor("Random")
+                .setTitle(
+                    "Perk Channels <:discord_hashtag:1005987413161680936>"
+                )
+                .setDescription(
+                    `\`Slots is the number of users you are permitted to add\`\nRole: <@&${
+                        userData.privatechannel.id
+                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
+                        slots_max - slots_used
+                    ).toLocaleString()}\``
+                )
+                .addFields(
+                    {
+                        name: "Your Slots ↭",
+                        value: `${slots_display}`,
+                        inline: true,
+                    },
+                    {
+                        name: "Perkrole Roles ↭",
+                        value: `${hasroles_display}`,
+                        inline: true,
+                    }
+                );
+
+            const embeds = [show_embed];
+
+            if (slots_display_i) {
+                embeds.push(new EmbedBuilder().setDescription(slots_display_i));
+            } else {
+                embeds.push(sub_embed);
+            }
+            return interaction.reply({ embeds: embeds });
+        } else if (interaction.options.getSubcommand() === "create") {
+        } else if (interaction.options.getSubcommand() === "useradd") {
+        } else if (interaction.options.getSubcommand() === "userremove") {
+        }
+    },
+};
