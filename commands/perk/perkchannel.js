@@ -56,10 +56,10 @@ module.exports = {
             subcommand
                 .setName("create")
                 .setDescription("Create private channel")
-                .addUserOption((oi) => {
+                .addStringOption((oi) => {
                     return oi
-                        .setName("emoji")
-                        .setDescription("Valid user within the server")
+                        .setName("name")
+                        .setDescription("Valid channel name")
                         .setRequired(true);
                 })
         ),
@@ -184,6 +184,51 @@ module.exports = {
             }
             return interaction.reply({ embeds: embeds });
         } else if (interaction.options.getSubcommand() === "create") {
+            if (!guildData.perkchannel_head) {
+                error_message = `\`This server doesn't have a parent channel where the perkchannels can be created under\``;
+                return error_reply(interaction, error_message);
+            }
+
+            let allowtocreate = false;
+            const allowedroles = [];
+            Object.keys(guildData.perkchannel_head).forEach((key) => {
+                if (interaction.member.roles.cache.find((r) => r.id === key)) {
+                    return (allowtocreate = true);
+                }
+                allowedroles.push(key);
+            });
+            const allowedroles_mapped = allowedroles
+                .map((element) => {
+                    return `<@&${element}>\`+ ${guildData.perkchannel_head[element]}\``;
+                })
+                .join("\n");
+
+            if (allowtocreate === false) {
+                // if (userData.privatechannel.id) {
+                //     interaction.guild.roles.delete(
+                //         userData.privatechannel.id,
+                //         "Didn't fulfill perkrole requirements"
+                //     );
+                // }
+                userData.privatechannel.id = null;
+                userData.privatechannel.users = [];
+                await UserModel.findOneAndUpdate(
+                    { userid: userData.userid },
+                    userData
+                );
+
+                error_message = `\`You don't fulfill the requirements to have your own channel\`\n\n**Perkchannel roles:**\n${allowedroles_mapped}`;
+                return error_reply(interaction, error_message);
+            }
+            if (userData.privatechannel.id) {
+                error_message = `\`You already have your own channel\`\n\`\`\`fix\n/channel edit\`\`\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const channelcreated = await interaction.guild.channels.create({
+                name: "tee",
+                parent: "1006004207154896967",
+            });
         } else if (interaction.options.getSubcommand() === "useradd") {
         } else if (interaction.options.getSubcommand() === "userremove") {
         }

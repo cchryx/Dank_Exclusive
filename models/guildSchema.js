@@ -46,6 +46,10 @@ const guildSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        perkchannel_head: {
+            type: String,
+            default: "",
+        },
         giveaway: {
             type: Object,
             default: {
