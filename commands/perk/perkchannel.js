@@ -224,7 +224,7 @@ module.exports = {
             }
 
             if (userData.privatechannel.id) {
-                error_message = `\`You already have your own channel\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n# /perkchannel delete\`\`\``;
+                error_message = `\`You already have your own channel\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n- /perkchannel delete\`\`\``;
                 return error_reply(interaction, error_message);
             }
 
@@ -295,7 +295,7 @@ module.exports = {
                                 channelcreated.id
                             }>\nChannel Id: \`${
                                 channelcreated.id
-                            }\`\nSlots Avaliable: \`${slots_max.toLocaleString()}\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n# /perkchannel delete\`\`\``
+                            }\`\nSlots Avaliable: \`${slots_max.toLocaleString()}\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n- /perkchannel delete\`\`\``
                         ),
                 ],
             });
