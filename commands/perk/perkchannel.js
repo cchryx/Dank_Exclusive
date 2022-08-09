@@ -190,7 +190,7 @@ module.exports = {
                     "Perk Channels <:discord_hashtag:1005987413161680936>"
                 )
                 .setDescription(
-                    `\`Slots is the number of users you are permitted to add\`\nRole: <@&${
+                    `\`Slots is the number of users you are permitted to add\`\nChannel: <#${
                         userData.privatechannel.id
                     }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
                         slots_max - slots_used
