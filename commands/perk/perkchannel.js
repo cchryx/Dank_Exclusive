@@ -5,6 +5,8 @@ const {
     ButtonBuilder,
     ButtonStyle,
     ComponentType,
+    ChannelType,
+    PermissionsBitField,
 } = require("discord.js");
 
 const UserModel = require("../../models/userSchema");
@@ -146,6 +148,38 @@ module.exports = {
             hasroles_display = `\`server has no perkrole roles\``;
         }
 
+        let allowtocreate = false;
+        const allowedroles = [];
+        Object.keys(guildData.perkchannel_roles).forEach((key) => {
+            if (interaction.member.roles.cache.find((r) => r.id === key)) {
+                return (allowtocreate = true);
+            }
+            allowedroles.push(key);
+        });
+        const allowedroles_mapped = allowedroles
+            .map((element) => {
+                return `<@&${element}>\`+ ${guildData.perkchannel_roles[element]}\``;
+            })
+            .join("\n");
+
+        if (allowtocreate === false) {
+            if (userData.privatechannel.id) {
+                interaction.guild.channels.delete(
+                    userData.privatechannel.id,
+                    "Didn't fulfill perkchannel requirements"
+                );
+            }
+            userData.privatechannel.id = null;
+            userData.privatechannel.users = [];
+            await UserModel.findOneAndUpdate(
+                { userid: userData.userid },
+                userData
+            );
+
+            error_message = `\`You don't fulfill the requirements to have your own channel\`\n\n**Perkchannel roles:**\n${allowedroles_mapped}`;
+            return error_reply(interaction, error_message);
+        }
+
         if (interaction.options.getSubcommand() === "show") {
             const sub_embed = new EmbedBuilder().setDescription(
                 `\`\`\`diff\nSubcommands:\n- /perkchannel userremove\n+ /perkchannel useradd\`\`\``
@@ -189,46 +223,100 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            let allowtocreate = false;
-            const allowedroles = [];
-            Object.keys(guildData.perkchannel_head).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    return (allowtocreate = true);
-                }
-                allowedroles.push(key);
-            });
-            const allowedroles_mapped = allowedroles
-                .map((element) => {
-                    return `<@&${element}>\`+ ${guildData.perkchannel_head[element]}\``;
-                })
-                .join("\n");
-
-            if (allowtocreate === false) {
-                // if (userData.privatechannel.id) {
-                //     interaction.guild.roles.delete(
-                //         userData.privatechannel.id,
-                //         "Didn't fulfill perkrole requirements"
-                //     );
-                // }
-                userData.privatechannel.id = null;
-                userData.privatechannel.users = [];
-                await UserModel.findOneAndUpdate(
-                    { userid: userData.userid },
-                    userData
-                );
-
-                error_message = `\`You don't fulfill the requirements to have your own channel\`\n\n**Perkchannel roles:**\n${allowedroles_mapped}`;
-                return error_reply(interaction, error_message);
-            }
             if (userData.privatechannel.id) {
-                error_message = `\`You already have your own channel\`\n\`\`\`fix\n/channel edit\`\`\``;
+                error_message = `\`You already have your own channel\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n# /perkchannel delete\`\`\``;
                 return error_reply(interaction, error_message);
             }
 
-            const channelcreated = await interaction.guild.channels.create({
-                name: "tee",
-                parent: "1006004207154896967",
+            const options = {
+                name: interaction.options.getString("name"),
+            };
+
+            const channelinfo = {};
+            channelinfo.name = options.name;
+            channelinfo.parent = guildData.perkchannel_head;
+            channelinfo.type = ChannelType.GuildText;
+            const permissionoverwrites = [
+                {
+                    id: interaction.guild.id,
+                    deny: [PermissionsBitField.Flags.ViewChannel],
+                },
+                {
+                    id: interaction.user.id,
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.ReadMessageHistory,
+                        PermissionsBitField.Flags.UseApplicationCommands,
+                        PermissionsBitField.Flags.EmbedLinks,
+                        PermissionsBitField.Flags.AttachFiles,
+                        PermissionsBitField.Flags.UseExternalEmojis,
+                        PermissionsBitField.Flags.UseExternalStickers,
+                        PermissionsBitField.Flags.ManageMessages,
+                        PermissionsBitField.Flags.AddReactions,
+                    ],
+                },
+            ];
+            if (guildData.roles.bots) {
+                permissionoverwrites.push({
+                    id: guildData.roles.bots,
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.ReadMessageHistory,
+                        PermissionsBitField.Flags.UseApplicationCommands,
+                        PermissionsBitField.Flags.EmbedLinks,
+                        PermissionsBitField.Flags.AttachFiles,
+                        PermissionsBitField.Flags.UseExternalEmojis,
+                        PermissionsBitField.Flags.UseExternalStickers,
+                        PermissionsBitField.Flags.ManageMessages,
+                        PermissionsBitField.Flags.AddReactions,
+                    ],
+                });
+            }
+            channelinfo.permissionOverwrites = permissionoverwrites;
+
+            const channelcreated = await interaction.guild.channels
+                .create(channelinfo)
+                .catch((error) => {
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+
+            if (channelcreated === false) return;
+            channelcreated.send({
+                content: `<@${interaction.user.id}>`,
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("Random")
+                        .setDescription(
+                            `**Private Channel Created Successfully**\n\nChannel: <#${
+                                channelcreated.id
+                            }>\nChannel Id: \`${
+                                channelcreated.id
+                            }\`\nSlots Avaliable: \`${slots_max.toLocaleString()}\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n# /perkchannel delete\`\`\``
+                        ),
+                ],
             });
+
+            userData.privatechannel.id = channelcreated.id;
+            await UserModel.findOneAndUpdate(
+                { userid: userData.userid },
+                userData
+            );
+
+            let newmessage = `<a:ravena_check:1002981211708325950> **Private Channel Created Successfully**\n\nChannel: <#${
+                channelcreated.id
+            }>\nChannel Id: \`${
+                channelcreated.id
+            }\`\nSlots Avaliable: \`${slots_max.toLocaleString()}\``;
+
+            const embed = new EmbedBuilder()
+                .setColor("Random")
+                .setDescription(newmessage);
+
+            return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "useradd") {
         } else if (interaction.options.getSubcommand() === "userremove") {
         }

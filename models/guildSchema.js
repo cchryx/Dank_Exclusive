@@ -58,6 +58,10 @@ const guildSchema = new mongoose.Schema(
                 bypass: [],
             },
         },
+        roles: {
+            type: Object,
+            default: {},
+        },
     },
     { minimize: false }
 );
