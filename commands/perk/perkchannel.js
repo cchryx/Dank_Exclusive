@@ -103,6 +103,21 @@ module.exports = {
           userData.privatechannel.id
         );
         await privatechannel.permissionOverwrites.delete(removedid);
+        slots_used = slots_used - 1
+        privatechannel.send({
+          content: `\`A user has been removed from this private channel\``,
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#f2b079")
+              .setDescription(
+                `User: <@${removedid}>\nChannel: <#${
+                  privatechannel.id
+                }>\nChannel Id: \`${
+                  privatechannel.id
+                }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+              )
+          ]
+        });
       });
       userData.privatechannel.users = userData.privatechannel.users.slice(
         0,
@@ -113,20 +128,7 @@ module.exports = {
         userData
       );
       slots_used = userData.privatechannel.users.length;
-      privatechannel.send({
-        content: `\`A user has been removed from this private channel\``,
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#f2b079")
-            .setDescription(
-              `User: <@${removedid}>\nChannel: <#${
-                privatechannel.id
-              }>\nChannel Id: \`${
-                privatechannel.id
-              }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
-            )
-        ]
-      });
+      
     }
 
     let slots_display_i;
