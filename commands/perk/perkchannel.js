@@ -445,7 +445,7 @@ module.exports = {
       ).toLocaleString()}\``;
 
       channelupdated.send({
-        content: `<@${options.user.id}>`,
+        content: `${options.user}`,
         embeds: [
           new EmbedBuilder()
             .setColor("Random")
@@ -509,7 +509,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor("#f2b079")
             .setDescription(
-              `User: <@${options.user}>\nChannel: <#${
+              `User: ${options.user}\nChannel: <#${
                 channelupdated.id
               }>\nChannel Id: \`${
                 channelupdated.id
