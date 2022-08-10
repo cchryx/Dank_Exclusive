@@ -429,6 +429,21 @@ module.exports = {
         slots_max - slots_used
       ).toLocaleString()}\``;
 
+      channelupdated.send({
+        content: `<@${options.user.id}>`,
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Random")
+            .setDescription(
+              `**You have been invited to this private channel**\n\nChannel: <#${
+                channelcreated.id
+              }>\nChannel Id: \`${
+                channelcreated.id
+              }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+            )
+        ]
+      });
+
       const embed = new EmbedBuilder()
         .setColor("#96ffa1")
         .setDescription(message);
@@ -472,6 +487,21 @@ module.exports = {
       }>\nUser: ${user}\nAvaliable Slots: \`${(
         slots_max - slots_used
       ).toLocaleString()}\``;
+
+      channelupdated.send({
+        content: `\`A user has been removed from this private channel\``,
+        embeds: [
+          new EmbedBuilder()
+            .setColor("#f2b079")
+            .setDescription(
+              `User: <@${options.user}>\nChannel: <#${
+                channelcreated.id
+              }>\nChannel Id: \`${
+                channelcreated.id
+              }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+            )
+        ]
+      });
 
       const embed = new EmbedBuilder()
         .setColor("#96ffa1")
