@@ -92,6 +92,7 @@ module.exports = {
       if (interaction.member.roles.cache.find((r) => r.id === key)) {
         slots_max = slots_max + guildData.perkchannel_roles[key];
         hasroles.push(key);
+        
       }
     });
 
@@ -112,6 +113,20 @@ module.exports = {
         userData
       );
       slots_used = userData.privatechannel.users.length;
+      privatechannel.send({
+        content: `\`A user has been removed from this private channel\``,
+        embeds: [
+          new EmbedBuilder()
+            .setColor("#f2b079")
+            .setDescription(
+              `User: <@${removedid}>\nChannel: <#${
+                privatechannel.id
+              }>\nChannel Id: \`${
+                privatechannel.id
+              }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+            )
+        ]
+      });
     }
 
     let slots_display_i;
@@ -436,9 +451,9 @@ module.exports = {
             .setColor("Random")
             .setDescription(
               `**You have been invited to this private channel**\n\nChannel: <#${
-                channelcreated.id
+                channelupdated.id
               }>\nChannel Id: \`${
-                channelcreated.id
+                channelupdated.id
               }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
             )
         ]
@@ -495,9 +510,9 @@ module.exports = {
             .setColor("#f2b079")
             .setDescription(
               `User: <@${options.user}>\nChannel: <#${
-                channelcreated.id
+                channelupdated.id
               }>\nChannel Id: \`${
-                channelcreated.id
+                channelupdated.id
               }\`\nOwner: <@${interaction.user.id}>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
             )
         ]
