@@ -114,7 +114,9 @@ module.exports = {
                     privatechannel.id
                   }>\nChannel Id: \`${privatechannel.id}\`\nOwner: <@${
                     interaction.user.id
-                  }>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+                  }>\nSlots Avaliable: \`${(
+                    slots_max - slots_used
+                  ).toLocaleString()}\``
                 )
             ]
           });
@@ -456,7 +458,9 @@ module.exports = {
                 channelupdated.id
               }>\nChannel Id: \`${channelupdated.id}\`\nOwner: <@${
                 interaction.user.id
-              }>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+              }>\nSlots Avaliable: \`${(
+                slots_max - slots_used
+              ).toLocaleString()}\``
             )
         ]
       });
@@ -515,7 +519,9 @@ module.exports = {
                 channelupdated.id
               }>\nChannel Id: \`${channelupdated.id}\`\nOwner: <@${
                 interaction.user.id
-              }>\nSlots Avaliable: \`${slots_max.toLocaleString()}\``
+              }>\nSlots Avaliable: \`${(
+                slots_max - slots_used
+              ).toLocaleString()}\``
             )
         ]
       });
