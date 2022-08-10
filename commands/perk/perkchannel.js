@@ -30,7 +30,7 @@ module.exports = {
         )
         .addSubcommand((subcommand) =>
             subcommand
-                .setName("userrmove")
+                .setName("userremove")
                 .setDescription(
                     "Choose a user to remove from your private channel"
                 )
@@ -63,6 +63,16 @@ module.exports = {
                         .setName("name")
                         .setDescription("Valid channel name")
                         .setRequired(true);
+                })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("edit")
+                .setDescription("Edit private channel")
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("name")
+                        .setDescription("Valid channel name");
                 })
         ),
     async execute(interaction, client) {
@@ -317,8 +327,168 @@ module.exports = {
                 .setDescription(newmessage);
 
             return interaction.reply({ embeds: [embed] });
+        } else if (interaction.options.getSubcommand() === "edit") {
+            const options = {
+                name: interaction.options.getString("name"),
+            };
+
+            const privatechannel = interaction.guild.channels.cache.get(
+                userData.privatechannel.id
+            );
+
+            let updatedesc = `\`nothing has updated or changed\``;
+            let successdesc_head = `<a:ravena_check:1002981211708325950> **Channel updated successfully**\n\n`;
+
+            if (options.name) {
+                privatechannel.setName(options.name);
+                updatedesc =
+                    successdesc_head +
+                    `Channel: <#${privatechannel.id}>\nChannel Id: \`${privatechannel.id}\``;
+            } else {
+                updatedesc =
+                    updatedesc +
+                    `\n\n` +
+                    `Channel: <#${privatechannel.id}>\nChannel Id: \`${privatechannel.id}\``;
+            }
+            const update_embed = new EmbedBuilder()
+                .setDescription(updatedesc)
+                .setColor("#96ffa1");
+
+            return interaction.reply({ embeds: [update_embed] });
         } else if (interaction.options.getSubcommand() === "useradd") {
+            options = {
+                user: interaction.options.getMember("user"),
+            };
+
+            if (!options.user) {
+                error_message = `\`That user doesn't exist in the server\``;
+                return error_reply(interaction, error_message);
+            }
+
+            if (options.user.id === interaction.user.id) {
+                error_message = `\`You own the channel so why give to yourself?\``;
+                return error_reply(interaction, error_message);
+            }
+
+            if (slots_used >= slots_max) {
+                const sub_embed = new EmbedBuilder().setDescription(
+                    `\`\`\`diff\nSubcommands:\n- /perkchannel userremove\n# /perkchannel show\`\`\``
+                );
+                message = `**You have reached you max amount of user slots of \`${slots_max.toLocaleString()}\`, so you aren't able to add more**`;
+                const error_embed = new EmbedBuilder()
+                    .setColor("Red")
+                    .setDescription(message)
+                    .addFields(
+                        {
+                            name: "Your Slots ↭",
+                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
+                                slots_max - slots_used
+                            ).toLocaleString()}\``,
+                            inline: true,
+                        },
+                        {
+                            name: "Perkrole Roles ↭",
+                            value: `${hasroles_display}`,
+                            inline: true,
+                        }
+                    );
+                return interaction.reply({
+                    embeds: [error_embed, sub_embed],
+                    ephemeral: true,
+                });
+            }
+
+            let user = options.user;
+
+            if (userData.privatechannel.users.includes(`${options.user.id}`)) {
+                error_message = `**That user already exist in one of your user slots**\nUser: ${user}`;
+                return error_reply(interaction, error_message);
+            }
+
+            userData.privatechannel.users.push(user.id);
+            slots_used = slots_used + 1;
+            const privatechannel = interaction.guild.channels.cache.get(
+                userData.privatechannel.id
+            );
+            const channelupdated = await privatechannel.permissionOverwrites
+                .edit(options.user.id, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    ReadMessageHistory: true,
+                    UseApplicationCommands: true,
+                    EmbedLinks: true,
+                    AttachFiles: true,
+                    UseExternalEmojis: true,
+                    ManageMessages: true,
+                    AddReactions: true,
+                })
+                .catch((error) => {
+                    console.log(error);
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+            if (channelupdated === false) return;
+
+            await UserModel.findOneAndUpdate(
+                { userid: interaction.user.id },
+                userData
+            );
+
+            message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Channel: <#${
+                channelupdated.id
+            }>\nUser: ${user}\nAvaliable Slots: \`${(
+                slots_max - slots_used
+            ).toLocaleString()}\``;
+
+            const embed = new EmbedBuilder()
+                .setColor("#96ffa1")
+                .setDescription(message);
+            return interaction.reply({ embeds: [embed] });
         } else if (interaction.options.getSubcommand() === "userremove") {
+            options = {
+                user: interaction.options.getUser("user"),
+            };
+
+            let user = options.user;
+
+            if (!userData.privatechannel.users.includes(`${options.user.id}`)) {
+                error_message = `**That user doesn't exist in one of your user slots**\nUser: ${user}`;
+                return error_reply(interaction, error_message);
+            }
+
+            const privatechannel = interaction.guild.channels.cache.get(
+                userData.privatechannel.id
+            );
+            const channelupdated = await privatechannel.permissionOverwrites
+                .delete(options.user)
+                .catch((error) => {
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+
+            if (channelupdated === false) return;
+
+            const pullIndex = userData.privatechannel.users.indexOf(user.id);
+            userData.privatechannel.users.splice(pullIndex, 1);
+            slots_used = slots_used - 1;
+
+            await UserModel.findOneAndUpdate(
+                { userid: interaction.user.id },
+                userData
+            );
+
+            message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Channel: <#${
+                channelupdated.id
+            }>\nUser: ${user}\nAvaliable Slots: \`${(
+                slots_max - slots_used
+            ).toLocaleString()}\``;
+
+            const embed = new EmbedBuilder()
+                .setColor("#96ffa1")
+                .setDescription(message);
+            return interaction.reply({ embeds: [embed] });
         }
     },
 };
