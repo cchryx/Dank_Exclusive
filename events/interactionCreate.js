@@ -11,7 +11,7 @@ const humanizeDuration = require("humanize-duration");
 const { user_fetch } = require("../utils/user");
 const { error_reply } = require("../utils/error");
 const { guild_fetch } = require("../utils/guild");
-
+const TimerModel = require("../models/timerSchema");
 const GiveawayModel = require("../models/giveawaySchema");
 
 const embedTheme = {
@@ -757,6 +757,191 @@ module.exports = {
                         }
                     }
                 } catch (_) {}
+            }
+            if (interaction.customId === "timer_join") {
+                const timer = await TimerModel.findOne({
+                    messageid: interaction.message.id,
+                });
+
+                if (!timer) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(`\`Timer no longer exists\``)
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                if (timer.mentions.includes(interaction.user.id)) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`You already joined this timer\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+                        components: [
+                            new ActionRowBuilder().addComponents(
+                                new ButtonBuilder()
+                                    .setLabel("Leave timer")
+                                    .setCustomId("timer_leave")
+                                    .setEmoji("<a:X_:964313029732872242>")
+                                    .setStyle(4)
+                            ),
+                        ],
+                        ephemeral: true,
+                    });
+                }
+
+                async function timer_join() {
+                    timer.mentions.push(interaction.user.id);
+                    await TimerModel.findOneAndUpdate(
+                        {
+                            messageid: timer.messageid,
+                        },
+                        timer
+                    );
+
+                    interaction.message.edit({
+                        components: [
+                            new ActionRowBuilder().setComponents(
+                                new ButtonBuilder()
+                                    .setCustomId(`timer_join`)
+                                    .setLabel(`${timer.mentions.length}`)
+                                    .setEmoji(`${embedTheme.emoji_join}`)
+                                    .setStyle(embedTheme.button_style)
+                            ),
+                        ],
+                    });
+
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`You successfullly joined this timer\``
+                                )
+                                .setColor("#69ff6e"),
+                        ],
+                        components: [
+                            new ActionRowBuilder().addComponents(
+                                new ButtonBuilder()
+                                    .setLabel("Leave timer")
+                                    .setCustomId("timer_leave")
+                                    .setEmoji("<a:X_:964313029732872242>")
+                                    .setStyle(4)
+                            ),
+                        ],
+                        ephemeral: true,
+                    });
+                }
+
+                timer_join();
+            } else if (interaction.customId === "timer_leave") {
+                if (!interaction.message) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`Couldn't find timer message, this could be that the timer has been deleted\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                const timer_msg = await interaction.channel.messages.fetch(
+                    interaction.message.reference.messageId
+                );
+
+                const timer = await TimerModel.findOne({
+                    messageid: interaction.message.reference.messageId,
+                });
+
+                if (!timer) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(`\`Timer no longer exists\``)
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                if (!timer.mentions.includes(interaction.user.id)) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`You didn't join this timer\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+                        components: [
+                            new ActionRowBuilder().addComponents(
+                                new ButtonBuilder()
+                                    .setLabel("Timer")
+                                    .setStyle(ButtonStyle.Link)
+                                    .setEmoji(embedTheme.emoji_join)
+                                    .setURL(
+                                        `https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/${interaction.message.reference.messageId}`
+                                    )
+                            ),
+                        ],
+                        ephemeral: true,
+                    });
+                }
+
+                const pullIndex = timer.mentions.indexOf(interaction.user.id);
+                timer.mentions.splice(pullIndex, 1);
+
+                await TimerModel.findOneAndUpdate(
+                    {
+                        messageid: timer.messageid,
+                    },
+                    timer
+                );
+
+                timer_msg.edit({
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`timer_join`)
+                                .setLabel(`${timer.mentions.length}`)
+                                .setEmoji(`${embedTheme.emoji_join}`)
+                                .setStyle(embedTheme.button_style)
+                        ),
+                    ],
+                });
+
+                return interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription(
+                                `\`You successfully left the timer\``
+                            )
+                            .setColor("#80a2ff"),
+                    ],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new ButtonBuilder()
+                                .setLabel("Timer")
+                                .setStyle(ButtonStyle.Link)
+                                .setEmoji(embedTheme.emoji_join)
+                                .setURL(
+                                    `https://discord.com/channels/${interaction.guildId}/${interaction.channelId}/${interaction.message.reference.messageId}`
+                                )
+                        ),
+                    ],
+                    ephemeral: true,
+                });
             }
         }
     },

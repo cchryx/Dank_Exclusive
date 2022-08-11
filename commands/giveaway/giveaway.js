@@ -530,7 +530,7 @@ module.exports = {
             row.addComponents(button_join, button_end);
 
             interaction.reply({
-                content: "Giveaway started!",
+                content: "`Giveaway started!`",
                 ephemeral: true,
             });
 

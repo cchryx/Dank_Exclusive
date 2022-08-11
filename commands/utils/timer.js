@@ -9,6 +9,7 @@ const {
     ComponentType,
 } = require("discord.js");
 
+const TimerModel = require("../../models/timerSchema");
 const { guild_checkperm_mod } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
 
@@ -85,18 +86,49 @@ module.exports = {
         }
         const endtime = Date.now() + time;
 
+        let display = `${embedTheme.emoji_mainpoint}**Ending:** <t:${Math.floor(
+            endtime / 1000
+        )}:R> (\`duration: ${humantime(time)}\`)\n${
+            embedTheme.emoji_mainpoint
+        }**Host:** ${interaction.user}`;
+
+        if (options.description) {
+            display = display + `\n\n` + `${options.description}`;
+        }
+
         const giveaway_embed = new EmbedBuilder()
             .setTitle(`Timer`)
             .setColor(embedTheme.color)
-            .setDescription(
-                `${embedTheme.emoji_mainpoint}**Ending:** <t:${Math.floor(
-                    endtime / 1000
-                )}:R> (\`duration: ${humantime(time)}\`)\n${
-                    embedTheme.emoji_mainpoint
-                }**Host:** ${interaction.user}`
-            )
+            .setDescription(display)
             .setImage(embedTheme.dividerurl);
 
-        interaction.reply({ embeds: [giveaway_embed] });
+        interaction.reply({
+            content: "`Timer started!`",
+            ephemeral: true,
+        });
+
+        const send_msg = await interaction.channel.send({
+            embeds: [giveaway_embed],
+            components: [
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setStyle(embedTheme.button_style)
+                        .setLabel(`1`)
+                        .setCustomId("timer_join")
+                        .setEmoji(embedTheme.emoji_join)
+                ),
+            ],
+        });
+
+        return TimerModel.create({
+            guildid: interaction.guildId,
+            channelid: interaction.channelId,
+            messageid: send_msg.id,
+            hostid: interaction.user.id,
+            duration: time,
+            endsAt: endtime,
+            mentions: [interaction.user.id],
+            description: options.description,
+        });
     },
 };

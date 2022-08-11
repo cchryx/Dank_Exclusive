@@ -11,6 +11,7 @@ const {
 const humanizeDuration = require("humanize-duration");
 
 const GiveawayModel = require("../models/giveawaySchema");
+const TimerModel = require("../models/timerSchema");
 
 const humantime = humanizeDuration.humanizer({
     language: "shortEn",
@@ -227,7 +228,7 @@ module.exports = {
                                             embedTheme.emoji_mainpoint
                                         }**Host:** <@${giveaway.hostid}>\n${
                                             embedTheme.emoji_mainpoint
-                                        }**Donator:** <@${giveaway.sponsorid}>`
+                                        }**Sponsor:** <@${giveaway.sponsorid}>`
                                     )
                                     .setImage(
                                         `https://media.discordapp.net/attachments/1003715669059178626/1004459806972723260/output-onlinepngtools_2.png`
@@ -286,6 +287,103 @@ module.exports = {
                                 });
                             }
                         } catch (_) {}
+                    }
+                } catch (_) {}
+            }
+        }
+
+        const timer_query = await TimerModel.find({
+            endsAt: {
+                $lt: new Date().getTime(),
+            },
+        });
+
+        for (const timer of timer_query) {
+            if (Date.now() >= timer.endsAt) {
+                try {
+                    const channel = client.channels.cache.get(timer.channelid);
+                    await TimerModel.findOneAndDelete({
+                        messageid: timer.messageid,
+                    });
+
+                    if (channel) {
+                        try {
+                            const message = await channel.messages.fetch(
+                                timer.messageid
+                            );
+                            if (message) {
+                                let display = `${
+                                    embedTheme.emoji_mainpoint
+                                }**Ended:** <t:${Math.floor(
+                                    timer.endsAt / 1000
+                                )}:R>\n${
+                                    embedTheme.emoji_mainpoint
+                                }**Lasted For:** \`${humantime(
+                                    timer.duration
+                                )}\`\n${
+                                    embedTheme.emoji_mainpoint
+                                }**Host:** <@${timer.hostid}>`;
+
+                                if (timer.description) {
+                                    display =
+                                        display +
+                                        `\n\n` +
+                                        `${timer.description}`;
+                                }
+                                const timer_embed = new EmbedBuilder()
+                                    .setTitle(`Timer Ended`)
+                                    .setDescription(display)
+                                    .setImage(
+                                        `https://media.discordapp.net/attachments/1003715669059178626/1004459806972723260/output-onlinepngtools_2.png`
+                                    );
+
+                                message.edit({
+                                    content: "`Timer has ended`",
+                                    embeds: [timer_embed],
+                                    components: [
+                                        new ActionRowBuilder().setComponents(
+                                            new ButtonBuilder()
+                                                .setCustomId(`timer_join`)
+                                                .setLabel(
+                                                    `${timer.mentions.length}`
+                                                )
+                                                .setEmoji(
+                                                    `${embedTheme.emoji_join}`
+                                                )
+                                                .setStyle(2)
+                                                .setDisabled()
+                                        ),
+                                    ],
+                                });
+
+                                const permessagetheshold = 75;
+                                const numberofmessages =
+                                    timer.mentions.length / permessagetheshold;
+
+                                for (let i = 0; i < numberofmessages; i++) {
+                                    const mentionschunck = timer.mentions.slice(
+                                        permessagetheshold * i,
+                                        permessagetheshold * (i + 1)
+                                    );
+                                    mentionschunck_map = mentionschunck
+                                        .map((element) => {
+                                            return `<@${element}>`;
+                                        })
+                                        .join(" ");
+
+                                    const mentions_msg =
+                                        await message.channel.send({
+                                            content: `${mentionschunck_map}`,
+                                        });
+
+                                    setTimeout(function () {
+                                        mentions_msg.delete();
+                                    }, 500);
+                                }
+                            }
+                        } catch (_) {
+                            console.log(_);
+                        }
                     }
                 } catch (_) {}
             }
