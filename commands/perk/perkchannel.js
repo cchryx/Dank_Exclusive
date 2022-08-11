@@ -74,6 +74,17 @@ module.exports = {
                         .setName("name")
                         .setDescription("Valid channel name");
                 })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("selfremove")
+                .setDescription("remove yourself from a perkchannel")
+                .addChannelOption((oi) => {
+                    return oi
+                        .setName("channel")
+                        .setDescription("Valid channel within the server")
+                        .setRequired(true);
+                })
         ),
     async execute(interaction, client) {
         const guildData = await guild_fetch(interaction.guildId);
@@ -484,6 +495,56 @@ module.exports = {
             }>\nUser: ${user}\nAvaliable Slots: \`${(
                 slots_max - slots_used
             ).toLocaleString()}\``;
+
+            const embed = new EmbedBuilder()
+                .setColor("#96ffa1")
+                .setDescription(message);
+            return interaction.reply({ embeds: [embed] });
+        } else if (interaction.options.getSubcommand() === "selfremove") {
+            options = {
+                channel: interaction.options.getChannel("channel"),
+            };
+            const channelData = await UserModel.findOne({
+                "privatechannel.id": options.channel.id,
+            });
+
+            if (!channelData) {
+                error_message = `\`This channel is not registered as a private perkchannel, if you believe this is a mistake please direct message the bot developer\``;
+                return error_reply(interaction, error_message);
+            }
+
+            if (
+                !channelData.privatechannel.users.includes(interaction.user.id)
+            ) {
+                error_message = `\`You do not have access to this channel, so you cannot remove yourslf from it\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const privatechannel = interaction.guild.channels.cache.get(
+                channelData.privatechannel.id
+            );
+            const channelupdated = await privatechannel.permissionOverwrites
+                .delete(interaction.user.id)
+                .catch((error) => {
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+
+            if (channelupdated === false) return;
+
+            const pullIndex = userData.privatechannel.users.indexOf(
+                interaction.user.id
+            );
+            userData.privatechannel.users.splice(pullIndex, 1);
+            slots_used = slots_used - 1;
+
+            await UserModel.findOneAndUpdate(
+                { userid: interaction.user.id },
+                userData
+            );
+
+            message = `<a:ravena_check:1002981211708325950> **Left channel successfully**\nChannel: <#${channelupdated.id}>\nOwner: ${channelData.userid}`;
 
             const embed = new EmbedBuilder()
                 .setColor("#96ffa1")
