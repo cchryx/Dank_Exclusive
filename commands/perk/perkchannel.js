@@ -78,7 +78,7 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("selfremove")
-                .setDescription("remove yourself from a perkchannel")
+                .setDescription("Remove a perkchannel from yourself")
                 .addChannelOption((oi) => {
                     return oi
                         .setName("channel")
@@ -113,8 +113,31 @@ module.exports = {
         if (slots_used > slots_max) {
             const removedusers = userData.privatechannel.users.slice(slots_max);
             removedusers.forEach(async (removedid) => {
-                const user = await interaction.guild.members.fetch(removedid);
-                user.roles.remove(userData.privatechannel.id);
+                const privatechannel = interaction.guild.channels.cache.get(
+                    userData.privatechannel.id
+                );
+                if (privatechannel) {
+                    await privatechannel.permissionOverwrites.delete(removedid);
+                    slots_used = slots_used - 1;
+                    privatechannel.send({
+                        content: `\`A user has been removed from this private channel\``,
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor("#f2b079")
+                                .setDescription(
+                                    `User: <@${removedid}>\nChannel: <#${
+                                        privatechannel.id
+                                    }>\nChannel Id: \`${
+                                        privatechannel.id
+                                    }\`\nOwner: <@${
+                                        interaction.user.id
+                                    }>\nSlots Avaliable: \`${(
+                                        slots_max - slots_used
+                                    ).toLocaleString()}\``
+                                ),
+                        ],
+                    });
+                }
             });
             userData.privatechannel.users = userData.privatechannel.users.slice(
                 0,
@@ -452,6 +475,25 @@ module.exports = {
                 slots_max - slots_used
             ).toLocaleString()}\``;
 
+            channelupdated.send({
+                content: `${options.user}`,
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("Random")
+                        .setDescription(
+                            `**You have been invited to this private channel**\n\nChannel: <#${
+                                channelupdated.id
+                            }>\nChannel Id: \`${
+                                channelupdated.id
+                            }\`\nOwner: <@${
+                                interaction.user.id
+                            }>\nSlots Avaliable: \`${(
+                                slots_max - slots_used
+                            ).toLocaleString()}\``
+                        ),
+                ],
+            });
+
             const embed = new EmbedBuilder()
                 .setColor("#96ffa1")
                 .setDescription(message);
@@ -495,6 +537,94 @@ module.exports = {
             }>\nUser: ${user}\nAvaliable Slots: \`${(
                 slots_max - slots_used
             ).toLocaleString()}\``;
+
+            channelupdated.send({
+                content: `\`A user has been removed from this private channel\``,
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("#f2b079")
+                        .setDescription(
+                            `User: ${options.user}\nChannel: <#${
+                                channelupdated.id
+                            }>\nChannel Id: \`${
+                                channelupdated.id
+                            }\`\nOwner: <@${
+                                interaction.user.id
+                            }>\nSlots Avaliable: \`${(
+                                slots_max - slots_used
+                            ).toLocaleString()}\``
+                        ),
+                ],
+            });
+
+            const embed = new EmbedBuilder()
+                .setColor("#96ffa1")
+                .setDescription(message);
+            return interaction.reply({ embeds: [embed] });
+        } else if (interaction.options.getSubcommand() === "selfremove") {
+            options = {
+                channel: interaction.options.getChannel("channel"),
+            };
+            const channelData = await UserModel.findOne({
+                "privatechannel.id": options.channel.id,
+            });
+
+            if (!channelData) {
+                error_message = `\`This channel is not registered as a private perkchannel, if you believe this is a mistake please direct message the bot developer\``;
+                return error_reply(interaction, error_message);
+            }
+
+            if (
+                !channelData.privatechannel.users.includes(interaction.user.id)
+            ) {
+                error_message = `\`You do not have access to this channel, so you cannot remove yourslf from it\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const privatechannel = interaction.guild.channels.cache.get(
+                channelData.privatechannel.id
+            );
+            const channelupdated = await privatechannel.permissionOverwrites
+                .delete(interaction.user.id)
+                .catch((error) => {
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+
+            if (channelupdated === false) return;
+
+            const pullIndex = channelData.privatechannel.users.indexOf(
+                interaction.user.id
+            );
+            channelData.privatechannel.users.splice(pullIndex, 1);
+            slots_used = slots_used - 1;
+
+            await UserModel.findOneAndUpdate(
+                { userid: channelData.userid },
+                channelData
+            );
+
+            channelupdated.send({
+                content: `\`A user has left this private channel\``,
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("#f2b079")
+                        .setDescription(
+                            `User: <@${interaction.user.id}>\nChannel: <#${
+                                channelupdated.id
+                            }>\nChannel Id: \`${
+                                channelupdated.id
+                            }\`\nOwner: <@${
+                                channelData.userid
+                            }>\nSlots Avaliable: \`${(
+                                slots_max - slots_used
+                            ).toLocaleString()}\``
+                        ),
+                ],
+            });
+
+            message = `<a:ravena_check:1002981211708325950> **Left channel successfully**\nChannel: <#${channelupdated.id}>\nOwner: <@${channelData.userid}>`;
 
             const embed = new EmbedBuilder()
                 .setColor("#96ffa1")
