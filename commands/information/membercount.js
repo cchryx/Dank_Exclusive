@@ -34,7 +34,7 @@ module.exports = {
         });
 
         const collector = membercount_msg.createMessageComponentCollector({
-            time: 10 * 1000,
+            time: 30 * 1000,
         });
 
         let closed = false;
