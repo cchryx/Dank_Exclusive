@@ -23,21 +23,18 @@ module.exports = {
                 `<a:wave_fast:973778295395074120>Humans: \`${membercount.toLocaleString()}\`\n<a:Bear_Waddle:912101291826749520>Bots: \`${botcount.toLocaleString()}\`\n<:greentick:909691152180080670>Verified: \`${verifiedcount.length.toLocaleString()}\``
             );
 
+        const close_button = new ButtonBuilder()
+            .setCustomId("membercount_close")
+            .setEmoji("<a:X_:964313029732872242>")
+            .setStyle(4);
         const membercount_msg = await interaction.reply({
             embeds: [embed],
-            components: [
-                new ActionRowBuilder().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId("membercount_close")
-                        .setEmoji("<a:X_:964313029732872242>")
-                        .setStyle(4)
-                ),
-            ],
+            components: [new ActionRowBuilder().addComponents(close_button)],
             fetchReply: true,
         });
 
         const collector = membercount_msg.createMessageComponentCollector({
-            time: 120 * 1000,
+            time: 10 * 1000,
         });
 
         let closed = false;
@@ -58,11 +55,12 @@ module.exports = {
 
         collector.on("end", (collected) => {
             if (closed === false) {
-                membercount_msg.components[0].components.forEach((c) => {
-                    c.setDisabled();
-                });
-                shop_msg.edit({
-                    components: membercount_msg.components,
+                close_button.setDisabled();
+
+                membercount_msg.edit({
+                    components: [
+                        new ActionRowBuilder().addComponents(close_button),
+                    ],
                 });
             }
             return;
