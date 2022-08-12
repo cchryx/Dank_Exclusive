@@ -341,7 +341,7 @@ module.exports = {
                   content: `\`Timer has ended\``,
                   embeds: [
                     new EmbedBuilder().setDescription(
-                      `Host: <@${timer.hostid}>\n\n${timer.description}`
+                      `Host: <@${timer.hostid}>${timer.description ? `\n\n${timer.description}` : ``}`
                     )
                   ],
                   components: [
