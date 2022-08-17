@@ -131,7 +131,7 @@ module.exports = {
                                         privatechannel.id
                                     }\`\nOwner: <@${
                                         interaction.user.id
-                                    }>\nSlots Avaliable: \`${(
+                                    }>\nSlots Available: \`${(
                                         slots_max - slots_used
                                     ).toLocaleString()}\``
                                 ),
@@ -236,7 +236,7 @@ module.exports = {
                 .setDescription(
                     `\`Slots is the number of users you are permitted to add\`\nChannel: <#${
                         userData.privatechannel.id
-                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
+                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
                         slots_max - slots_used
                     ).toLocaleString()}\``
                 )
@@ -339,7 +339,7 @@ module.exports = {
                                 channelcreated.id
                             }>\nChannel Id: \`${
                                 channelcreated.id
-                            }\`\nSlots Avaliable: \`${slots_max.toLocaleString()}\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n- /perkchannel delete\`\`\``
+                            }\`\nSlots Available: \`${slots_max.toLocaleString()}\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n- /perkchannel delete\`\`\``
                         ),
                 ],
             });
@@ -354,7 +354,7 @@ module.exports = {
                 channelcreated.id
             }>\nChannel Id: \`${
                 channelcreated.id
-            }\`\nSlots Avaliable: \`${slots_max.toLocaleString()}\``;
+            }\`\nSlots Available: \`${slots_max.toLocaleString()}\``;
 
             const embed = new EmbedBuilder()
                 .setColor("Random")
@@ -415,7 +415,7 @@ module.exports = {
                     .addFields(
                         {
                             name: "Your Slots ↭",
-                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
+                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
                                 slots_max - slots_used
                             ).toLocaleString()}\``,
                             inline: true,
@@ -471,7 +471,7 @@ module.exports = {
 
             message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Channel: <#${
                 channelupdated.id
-            }>\nUser: ${user}\nAvaliable Slots: \`${(
+            }>\nUser: ${user}\nAvailable Slots: \`${(
                 slots_max - slots_used
             ).toLocaleString()}\``;
 
@@ -487,7 +487,7 @@ module.exports = {
                                 channelupdated.id
                             }\`\nOwner: <@${
                                 interaction.user.id
-                            }>\nSlots Avaliable: \`${(
+                            }>\nSlots Available: \`${(
                                 slots_max - slots_used
                             ).toLocaleString()}\``
                         ),
@@ -534,7 +534,7 @@ module.exports = {
 
             message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Channel: <#${
                 channelupdated.id
-            }>\nUser: ${user}\nAvaliable Slots: \`${(
+            }>\nUser: ${user}\nAvailable Slots: \`${(
                 slots_max - slots_used
             ).toLocaleString()}\``;
 
@@ -550,7 +550,7 @@ module.exports = {
                                 channelupdated.id
                             }\`\nOwner: <@${
                                 interaction.user.id
-                            }>\nSlots Avaliable: \`${(
+                            }>\nSlots Available: \`${(
                                 slots_max - slots_used
                             ).toLocaleString()}\``
                         ),
@@ -617,7 +617,7 @@ module.exports = {
                                 channelupdated.id
                             }\`\nOwner: <@${
                                 channelData.userid
-                            }>\nSlots Avaliable: \`${(
+                            }>\nSlots Available: \`${(
                                 slots_max - slots_used
                             ).toLocaleString()}\``
                         ),
