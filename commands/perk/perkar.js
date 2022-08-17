@@ -111,7 +111,7 @@ module.exports = {
                 .setColor("Random")
                 .setTitle("Perk Autoreactions <a:alert:945455886187503686>")
                 .setDescription(
-                    `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                    `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
                         slots_max - slots_used
                     }\``
                 )
@@ -203,7 +203,7 @@ module.exports = {
                     .addFields(
                         {
                             name: "Your Slots ↭",
-                            value: `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                            value: `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
                                 slots_max - slots_used
                             }\``,
                             inline: true,
@@ -271,7 +271,7 @@ module.exports = {
                     { userid: interaction.user.id },
                     userData
                 );
-                message = `<a:ravena_check:1002981211708325950> **Autoreaction updated successfully**\nEmoji: ${emoji}\nAvaliable Slots: \`${
+                message = `<a:ravena_check:1002981211708325950> **Autoreaction updated successfully**\nEmoji: ${emoji}\nAvailable Slots: \`${
                     slots_max - slots_used
                 }\``;
                 embed.setColor("Green").setDescription(message);
@@ -348,7 +348,7 @@ module.exports = {
                         slots_used > 0
                             ? `\`You have 15 seconds of idle time before timeout\`\n`
                             : ``
-                    }\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                    }\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
                         slots_max - slots_used
                     }\``
                 )
@@ -448,7 +448,7 @@ module.exports = {
                         .setColor("Random")
                         .setTitle("Perk Autoreactions")
                         .setDescription(
-                            `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${
+                            `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
                                 slots_max - slots_used
                             }\``
                         )
