@@ -415,7 +415,7 @@ module.exports = {
                 .setDescription(
                     `\`Slots is the number of users you are permitted to add\`\nRole: <@&${
                         userData.customrole.id
-                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
+                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
                         slots_max - slots_used
                     ).toLocaleString()}\``
                 )
@@ -741,7 +741,7 @@ module.exports = {
 
             message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Role: <@&${
                 userData.customrole.id
-            }>\nUser: ${user}\nAvaliable Slots: \`${(
+            }>\nUser: ${user}\nAvailable Slots: \`${(
                 slots_max - slots_used
             ).toLocaleString()}\``;
 
@@ -869,7 +869,7 @@ module.exports = {
                     .addFields(
                         {
                             name: "Your Slots ↭",
-                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Avaliable Slots:** \`${(
+                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
                                 slots_max - slots_used
                             ).toLocaleString()}\``,
                             inline: true,
@@ -911,7 +911,7 @@ module.exports = {
                 .roles.add(userData.customrole.id);
             message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Role: <@&${
                 userData.customrole.id
-            }>\nUser: ${user}\nAvaliable Slots: \`${(
+            }>\nUser: ${user}\nAvailable Slots: \`${(
                 slots_max - slots_used
             ).toLocaleString()}\``;
 
