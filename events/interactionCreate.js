@@ -946,18 +946,117 @@ module.exports = {
                 (r) => r.id === interaction.customId
             );
             if (isrole) {
+                const colorroles = [
+                    "954593618969128970",
+                    "953822186832015441",
+                    "902346605653532672",
+                    "902346604189724713",
+                    "902346606668550244",
+                    "902346605208944651",
+                    "902346605976506419",
+                    "902346605963931718",
+                    "902346603988406293",
+                ];
+                const pronounroles = [
+                    "909552802362179605",
+                    "909552712855728128",
+                    "909552894372638780",
+                ];
                 const user = await interaction.guild.members.fetch(
                     interaction.user.id
                 );
+                let hascolorrole = false;
+                let hascolor;
+                let haspronounroles = false;
+                let haspronoun;
+
+                colorroles.forEach((role) => {
+                    if (interaction.member.roles.cache.has(role)) {
+                        hascolor = role;
+                        return (hascolorrole = true);
+                    }
+                });
+
+                pronounroles.forEach((role) => {
+                    if (interaction.member.roles.cache.has(role)) {
+                        haspronoun = role;
+                        return (haspronounroles = true);
+                    }
+                });
+
+                if (
+                    hascolorrole === true &&
+                    colorroles.includes(interaction.customId)
+                ) {
+                    user.roles.remove(hascolor);
+                    user.roles.add(interaction.customId);
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor(`#f5ca93`)
+                                .setDescription(
+                                    `**\`Successfully changed your color role\`**\nRemoved Role: <@&${hascolor}>\nAdded Role: <@&${interaction.customId}>`
+                                ),
+                        ],
+                        components: [
+                            new ActionRowBuilder().setComponents(
+                                new ButtonBuilder()
+                                    .setStyle(5)
+                                    .setLabel(`Menu`)
+                                    .setURL(
+                                        `https://discord.com/channels/${interaction.guildId}/${interaction.channel.id}/${interaction.message.id}`
+                                    )
+                            ),
+                        ],
+                        ephemeral: true,
+                    });
+                } else if (
+                    haspronoun === true &&
+                    pronounroles.includes(interaction.customId)
+                ) {
+                    user.roles.remove(haspronoun);
+                    user.roles.add(interaction.customId);
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor(`#f5ca93`)
+                                .setDescription(
+                                    `**\`Successfully changed your pronoun role\`**\nRemoved Role: <@&${haspronoun}>\nAdded Role: <@&${interaction.customId}>`
+                                ),
+                        ],
+                        components: [
+                            new ActionRowBuilder().setComponents(
+                                new ButtonBuilder()
+                                    .setStyle(5)
+                                    .setLabel(`Menu`)
+                                    .setURL(
+                                        `https://discord.com/channels/${interaction.guildId}/${interaction.channel.id}/${interaction.message.id}`
+                                    )
+                            ),
+                        ],
+                        ephemeral: true,
+                    });
+                }
+
                 if (interaction.member.roles.cache.has(interaction.customId)) {
                     user.roles.remove(interaction.customId);
                     return interaction.reply({
                         embeds: [
                             new EmbedBuilder()
-                                .setColor(`#93f5b7`)
+                                .setColor(`#f5ca93`)
                                 .setDescription(
                                     `**\`Successfully removed a role from you\`**\nRole: <@&${interaction.customId}>`
                                 ),
+                        ],
+                        components: [
+                            new ActionRowBuilder().setComponents(
+                                new ButtonBuilder()
+                                    .setStyle(5)
+                                    .setLabel(`Menu`)
+                                    .setURL(
+                                        `https://discord.com/channels/${interaction.guildId}/${interaction.channel.id}/${interaction.message.id}`
+                                    )
+                            ),
                         ],
                         ephemeral: true,
                     });
@@ -966,10 +1065,20 @@ module.exports = {
                     return interaction.reply({
                         embeds: [
                             new EmbedBuilder()
-                                .setColor(`#f5ca93`)
+                                .setColor(`#93f5b7`)
                                 .setDescription(
-                                    `**\`Successfully removed a role from you\`**\nRole: <@&${interaction.customId}>`
+                                    `**\`Successfully added a role to you\`**\nRole: <@&${interaction.customId}>`
                                 ),
+                        ],
+                        components: [
+                            new ActionRowBuilder().setComponents(
+                                new ButtonBuilder()
+                                    .setStyle(5)
+                                    .setLabel(`Menu`)
+                                    .setURL(
+                                        `https://discord.com/channels/${interaction.guildId}/${interaction.guildId}/${interaction.message.id}`
+                                    )
+                            ),
                         ],
                         ephemeral: true,
                     });
