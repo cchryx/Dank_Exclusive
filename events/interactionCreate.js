@@ -52,7 +52,6 @@ module.exports = {
             if (!command) return;
 
             const userid = interaction.user.id;
-
             const userData = user_fetch(userid);
 
             try {
@@ -757,8 +756,7 @@ module.exports = {
                         }
                     }
                 } catch (_) {}
-            }
-            if (interaction.customId === "timer_join") {
+            } else if (interaction.customId === "timer_join") {
                 const timer = await TimerModel.findOne({
                     messageid: interaction.message.id,
                 });
@@ -942,6 +940,40 @@ module.exports = {
                     ],
                     ephemeral: true,
                 });
+            }
+
+            const isrole = interaction.guild.roles.cache.find(
+                (r) => r.id === interaction.customId
+            );
+            if (isrole) {
+                const user = await interaction.guild.members.fetch(
+                    interaction.user.id
+                );
+                if (interaction.member.roles.cache.has(interaction.customId)) {
+                    user.roles.remove(interaction.customId);
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor(`#93f5b7`)
+                                .setDescription(
+                                    `**\`Successfully removed a role from you\`**\nRole: <@&${interaction.customId}>`
+                                ),
+                        ],
+                        ephemeral: true,
+                    });
+                } else {
+                    user.roles.add(interaction.customId);
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor(`#f5ca93`)
+                                .setDescription(
+                                    `**\`Successfully removed a role from you\`**\nRole: <@&${interaction.customId}>`
+                                ),
+                        ],
+                        ephemeral: true,
+                    });
+                }
             }
         }
     },

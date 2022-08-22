@@ -289,14 +289,12 @@ module.exports = {
                     id: interaction.user.id,
                     allow: [
                         PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages,
                         PermissionsBitField.Flags.ReadMessageHistory,
                         PermissionsBitField.Flags.UseApplicationCommands,
                         PermissionsBitField.Flags.EmbedLinks,
                         PermissionsBitField.Flags.AttachFiles,
                         PermissionsBitField.Flags.UseExternalEmojis,
                         PermissionsBitField.Flags.UseExternalStickers,
-                        PermissionsBitField.Flags.ManageMessages,
                         PermissionsBitField.Flags.AddReactions,
                     ],
                 },
@@ -447,13 +445,11 @@ module.exports = {
             const channelupdated = await privatechannel.permissionOverwrites
                 .edit(options.user.id, {
                     ViewChannel: true,
-                    SendMessages: true,
                     ReadMessageHistory: true,
                     UseApplicationCommands: true,
                     EmbedLinks: true,
                     AttachFiles: true,
                     UseExternalEmojis: true,
-                    ManageMessages: true,
                     AddReactions: true,
                 })
                 .catch((error) => {
