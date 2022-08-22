@@ -986,7 +986,8 @@ module.exports = {
 
                 if (
                     hascolorrole === true &&
-                    colorroles.includes(interaction.customId)
+                    colorroles.includes(interaction.customId) &&
+                    hascolor !== interaction.customId
                 ) {
                     user.roles.remove(hascolor);
                     user.roles.add(interaction.customId);
@@ -1012,7 +1013,8 @@ module.exports = {
                     });
                 } else if (
                     haspronoun === true &&
-                    pronounroles.includes(interaction.customId)
+                    pronounroles.includes(interaction.customId) &&
+                    haspronoun !== interaction.customId
                 ) {
                     user.roles.remove(haspronoun);
                     user.roles.add(interaction.customId);
