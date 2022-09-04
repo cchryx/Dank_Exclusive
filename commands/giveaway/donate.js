@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
+const { error_reply } = require("../../utils/error");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -63,7 +64,12 @@ module.exports = {
     // ),
     cooldown: 10,
     async execute(interaction, client) {
+        let error_message;
         if (interaction.options.getSubcommand() === "giveaway") {
+            if (interaction.channelId !== "902344172294537257") {
+                error_message = `You are only allowed to use this command in <#902344172294537257>`;
+                return error_reply(interaction, error_message);
+            }
             const options = {
                 requirements: interaction.options.getString("requirements"),
                 prize: interaction.options.getString("prize"),
