@@ -10,6 +10,7 @@ const {
 } = require("discord.js");
 
 const TimerModel = require("../../models/timerSchema");
+const GuildModel = require("../../models/guildSchema");
 const { guild_checkperm_mod } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
 
@@ -57,15 +58,10 @@ module.exports = {
             return error_reply(interaction, message);
         }
 
-        const embedTheme = {
-            color: "#f7cb8d",
-            emoji_join: "<:smoothie:1003726574094397560>",
-            emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
-            emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
-            dividerurl:
-                "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
-            button_style: 4,
-        };
+        const dankexData = await GuildModel.findOne({
+            guildId: "902334382939963402",
+        });
+        const embedTheme = dankexData.theme;
 
         const options = {
             time: interaction.options.getString("time"),
@@ -96,7 +92,7 @@ module.exports = {
             display = display + `\n\n` + `${options.description}`;
         }
 
-        const giveaway_embed = new EmbedBuilder()
+        const timer_embed = new EmbedBuilder()
             .setTitle(`Timer`)
             .setColor(embedTheme.color)
             .setDescription(display)
@@ -108,7 +104,7 @@ module.exports = {
         });
 
         const send_msg = await interaction.channel.send({
-            embeds: [giveaway_embed],
+            embeds: [timer_embed],
             components: [
                 new ActionRowBuilder().addComponents(
                     new ButtonBuilder()

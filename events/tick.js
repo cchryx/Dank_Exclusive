@@ -12,6 +12,7 @@ const humanizeDuration = require("humanize-duration");
 
 const GiveawayModel = require("../models/giveawaySchema");
 const TimerModel = require("../models/timerSchema");
+const GuildModel = require("../models/guildSchema");
 
 const humantime = humanizeDuration.humanizer({
     language: "shortEn",
@@ -31,23 +32,17 @@ const humantime = humanizeDuration.humanizer({
     },
 });
 
-const embedTheme = {
-    color: "#f7cb8d",
-    emoji_join: "<:smoothie:1003726574094397560>",
-    emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
-    emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
-    emoji_reroll: "<a:Hamster_Roll:927070245871566910>",
-    dividerurl:
-        "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
-    button_style: 4,
-};
-
 let mainCounter = 0;
 
 module.exports = {
     name: "tick",
     once: false,
     async execute(client) {
+        const dankexData = await GuildModel.findOne({
+            guildId: "902334382939963402",
+        });
+        const embedTheme = dankexData.theme;
+
         mainCounter++;
 
         const giveaway_query = await GiveawayModel.find({
@@ -384,7 +379,7 @@ module.exports = {
                                     content: `\`Timer has ended\``,
                                     embeds: [
                                         new EmbedBuilder().setDescription(
-                                            `Host: <@${timer.hostid}>${
+                                            `**Host:** <@${timer.hostid}>${
                                                 timer.description
                                                     ? `\n\n${timer.description}`
                                                     : ``

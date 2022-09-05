@@ -13,17 +13,7 @@ const { error_reply } = require("../utils/error");
 const { guild_fetch } = require("../utils/guild");
 const TimerModel = require("../models/timerSchema");
 const GiveawayModel = require("../models/giveawaySchema");
-
-const embedTheme = {
-    color: "#f7cb8d",
-    emoji_join: "<:smoothie:1003726574094397560>",
-    emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
-    emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
-    emoji_reroll: "<a:Hamster_Roll:927070245871566910>",
-    dividerurl:
-        "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
-    button_style: 4,
-};
+const GuildModel = require("../models/guildSchema");
 
 const humantime = humanizeDuration.humanizer({
     language: "shortEn",
@@ -45,7 +35,18 @@ const humantime = humanizeDuration.humanizer({
 module.exports = {
     name: "interactionCreate",
     async execute(interaction, client) {
+        const dankexData = await GuildModel.findOne({
+            guildId: "902334382939963402",
+        });
+        const embedTheme = dankexData.theme;
+
         if (interaction.type === InteractionType.ApplicationCommand) {
+            if (interaction.guildId !== "902334382939963402") {
+                return interaction.reply({
+                    content: "This server has no permission to use this bot.",
+                    ephemeral: true,
+                });
+            }
             const commandname = interaction.commandName;
             const command = client.commands.get(commandname);
 

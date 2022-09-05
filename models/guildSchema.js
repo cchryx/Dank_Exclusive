@@ -62,6 +62,18 @@ const guildSchema = new mongoose.Schema(
             type: Object,
             default: {},
         },
+        theme: {
+            type: Object,
+            default: {
+                color: "#f7cb8d",
+                emoji_join: "<:smoothie:1003726574094397560>",
+                emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
+                emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
+                dividerurl:
+                    "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
+                button_style: 4,
+            },
+        },
     },
     { minimize: false }
 );
