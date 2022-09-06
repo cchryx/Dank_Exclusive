@@ -626,12 +626,21 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            if (
-                interaction.channelId !== "902344036659118130" ||
-                interaction.channelId !== "902344122650734622" ||
-                interaction.channelId !== "902344060281430016" ||
-                interaction.channelId !== "960370004384165908"
-            ) {
+            const allowedchannels = [
+                "902344036659118130",
+                "902344122650734622",
+                "902344060281430016",
+                "960370004384165908",
+            ];
+            let allowedchannels_pass = false;
+
+            allowedchannels.forEach((channel) => {
+                if (interaction.channelId === channel) {
+                    allowedchannels_pass = true;
+                }
+            });
+
+            if (allowedchannels_pass === false) {
                 error_message = `You are only allowed to use this command in <#902344036659118130>, <#902344122650734622>, <#902344060281430016>, and <#960370004384165908>`;
                 return error_reply(interaction, error_message);
             }
