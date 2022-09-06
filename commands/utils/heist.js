@@ -60,6 +60,11 @@ module.exports = {
         ),
     cooldown: 10,
     async execute(interaction, client) {
+        const dankexData = await GuildModel.findOne({
+            guildId: "902334382939963402",
+        });
+        const embedTheme = dankexData.theme;
+        
         if (interaction.options.getSubcommand() === "timer") {
             let message;
 
