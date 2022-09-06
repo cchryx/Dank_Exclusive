@@ -618,23 +618,23 @@ module.exports = {
             });
         } else if (interaction.options.getSubcommand() === "show") {
         } else if (interaction.options.getSubcommand() === "mention") {
-            // if (
-            //     !interaction.member.roles.cache.has("902372521213587456") ===
-            //     true
-            // ) {
-            //     error_message = `\`You don't have the required permissions to preform this action\``;
-            //     return error_reply(interaction, error_message);
-            // }
+            if (
+                !interaction.member.roles.cache.has("902372521213587456") ===
+                true
+            ) {
+                error_message = `\`You don't have the required permissions to preform this action\``;
+                return error_reply(interaction, error_message);
+            }
 
-            // if (
-            //     interaction.channelId !== "902344036659118130" ||
-            //     interaction.channelId !== "902344122650734622" ||
-            //     interaction.channelId !== "902344060281430016" ||
-            //     interaction.channelId !== "960370004384165908"
-            // ) {
-            //     error_message = `You are only allowed to use this command in <#902344036659118130>, <#902344122650734622>, <#902344060281430016>, and <#960370004384165908>`;
-            //     return error_reply(interaction, error_message);
-            // }
+            if (
+                interaction.channelId !== "902344036659118130" ||
+                interaction.channelId !== "902344122650734622" ||
+                interaction.channelId !== "902344060281430016" ||
+                interaction.channelId !== "960370004384165908"
+            ) {
+                error_message = `You are only allowed to use this command in <#902344036659118130>, <#902344122650734622>, <#902344060281430016>, and <#960370004384165908>`;
+                return error_reply(interaction, error_message);
+            }
 
             const options = {
                 message: interaction.options.getString("message"),
