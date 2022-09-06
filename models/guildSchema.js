@@ -74,6 +74,10 @@ const guildSchema = new mongoose.Schema(
                 button_style: 4,
             },
         },
+        data: {
+            type: Object,
+            default: {},
+        },
     },
     { minimize: false }
 );

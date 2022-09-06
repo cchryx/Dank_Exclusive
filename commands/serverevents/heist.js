@@ -64,7 +64,7 @@ module.exports = {
             guildId: "902334382939963402",
         });
         const embedTheme = dankexData.theme;
-        
+
         if (interaction.options.getSubcommand() === "timer") {
             let message;
 
@@ -76,7 +76,6 @@ module.exports = {
                 return error_reply(interaction, message);
             }
 
-            const TimerModel = require("../../models/timerSchema");
             const options = {
                 time: interaction.options.getString("time"),
                 amount: interaction.options.getNumber("amount"),
