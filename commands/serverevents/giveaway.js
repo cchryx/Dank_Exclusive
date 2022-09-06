@@ -142,6 +142,40 @@ module.exports = {
                             "Message that will be attached to the giveaway"
                         );
                 })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("mention")
+                .setDescription("Mention a giveaway")
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("sponsor")
+                        .setDescription("Who sponsored to this giveaway")
+                        .setRequired(true);
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("mentions")
+                        .setDescription(
+                            "Roles will get pinged for this giveaway"
+                        )
+                        .addChoices(
+                            {
+                                name: "Massive Giveaway",
+                                value: "giveaway_massive",
+                            },
+                            { name: "Giveaway", value: "giveaway" },
+                            { name: "Nitro Giveaway", value: "giveaway_nitro" }
+                        )
+                        .setRequired(true);
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("message")
+                        .setDescription(
+                            "Message that will be attached to the giveaway"
+                        );
+                })
         ),
     async execute(interaction, client) {
         const guildData = await guild_fetch(interaction.guildId);
@@ -153,10 +187,7 @@ module.exports = {
             message = `\`You don't have the required permissions to preform this action\``;
             return error_reply(interaction, message);
         }
-        const dankexData = await GuildModel.findOne({
-            guildId: "902334382939963402",
-        });
-        const embedTheme = dankexData.theme;
+        const embedTheme = guildData.theme;
         if (interaction.options.getSubcommand() === "start") {
             const options = {
                 type: interaction.options.getString("type"),
@@ -586,6 +617,233 @@ module.exports = {
                 bypass: info_arry_raw.bypass,
             });
         } else if (interaction.options.getSubcommand() === "show") {
+        } else if (interaction.options.getSubcommand() === "mention") {
+            // if (
+            //     !interaction.member.roles.cache.has("902372521213587456") ===
+            //     true
+            // ) {
+            //     error_message = `\`You don't have the required permissions to preform this action\``;
+            //     return error_reply(interaction, error_message);
+            // }
+
+            // if (
+            //     interaction.channelId !== "902344036659118130" ||
+            //     interaction.channelId !== "902344122650734622" ||
+            //     interaction.channelId !== "902344060281430016" ||
+            //     interaction.channelId !== "960370004384165908"
+            // ) {
+            //     error_message = `You are only allowed to use this command in <#902344036659118130>, <#902344122650734622>, <#902344060281430016>, and <#960370004384165908>`;
+            //     return error_reply(interaction, error_message);
+            // }
+
+            const options = {
+                message: interaction.options.getString("message"),
+                sponsor: interaction.options.getMember("sponsor"),
+                mentions: interaction.options.getString("mentions"),
+            };
+
+            let cooldown;
+            if (options.mentions) {
+                const userID = interaction.user.id;
+                if (!jsoncooldowns.hasOwnProperty(userID)) {
+                    jsoncooldowns[userID] = {};
+                }
+
+                if (options.mentions === "giveaway") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 180;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].giveaway = timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                } else if (options.mentions === "giveaway_massive") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 300;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].giveaway_massive =
+                            timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                } else if (options.mentions === "giveaway_nitro") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 300;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].giveaway_nitro =
+                            timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                }
+
+                options.mentions =
+                    guildData.giveaway.mentions[options.mentions];
+            }
+
+            let mentions;
+            if (options.mentions) {
+                const mention_args = options.mentions.split(" ");
+                mentionedrole = [];
+                mention_args.forEach((element) => {
+                    if (
+                        interaction.guild.roles.cache.find(
+                            (role) => role.id === element
+                        )
+                    ) {
+                        const fetchedrole = interaction.guild.roles.cache.find(
+                            (role) => role.id === element
+                        );
+                        mentionedrole.push(fetchedrole);
+                    }
+                });
+                const mentionedrole_map = mentionedrole
+                    .map((element) => {
+                        return element;
+                    })
+                    .join(" ");
+
+                if (mentionedrole.length <= 0) {
+                    mentions = `\`No mentions for this giveaway\``;
+                } else {
+                    mentions = mentionedrole_map;
+                }
+            } else {
+                mentions = `\`No mentions for this giveaway\``;
+            }
+
+            const mention_embed = new EmbedBuilder()
+                .setColor(embedTheme.color)
+                .setDescription(
+                    `${embedTheme.emoji_mainpoint}**Sponsor:** ${
+                        options.sponsor.user
+                    }\n${embedTheme.emoji_mainpoint}**Message:** ${
+                        options.message ? options.message : `\`none\``
+                    }\n${
+                        embedTheme.emoji_subpoint
+                    }**Thank the sponsor in <#908201143660859433>**`
+                )
+                .setThumbnail(
+                    "https://images-ext-1.discordapp.net/external/2y7jsoXk5r9GJEvoiA0tHNpYhzD9s7S6zeHEFnaelKQ/%3Fsize%3D1024/https/cdn.discordapp.com/icons/902334382939963402/a_a0b58c0fa37eab6c37f4b6310e300a99.gif?width=299&height=299"
+                );
+
+            interaction.reply({
+                content: "Successfully mentioned this giveaway.",
+                ephemeral: true,
+            });
+
+            await interaction.channel.send({
+                content: mentions,
+                embeds: [mention_embed],
+            });
         }
     },
 };
