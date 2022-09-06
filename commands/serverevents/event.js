@@ -75,10 +75,10 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            // if (interaction.channelId !== "902733103380975616") {
-            //     error_message = `You are only allowed to use this command in <#902733103380975616>`;
-            //     return error_reply(interaction, error_message);
-            // }
+            if (interaction.channelId !== "902733103380975616") {
+                error_message = `You are only allowed to use this command in <#902733103380975616>`;
+                return error_reply(interaction, error_message);
+            }
 
             const options = {
                 event: interaction.options.getString("event"),
