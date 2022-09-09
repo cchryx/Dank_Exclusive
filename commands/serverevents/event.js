@@ -127,13 +127,25 @@ module.exports = {
                 ephemeral: true,
             });
 
-            let content = `<@&902413856104648754>`;
+            let content = ``;
+            if (options.event.toLowerCase().includes("minigame")) {
+                content += `<@&902413856104648754>`;
+            }
+
             if (options.event.toLowerCase().includes("rumble")) {
                 content += `\n<@&954577139208957983>`;
             }
 
             if (options.event.toLowerCase().includes("xenon")) {
                 content += `\n<@&1010047390939619348>`;
+            }
+
+            if (options.event.toLowerCase().includes("mafia")) {
+                content += `\n<@&1017619948232785964>`;
+            }
+
+            if (content === "") {
+                content = "<@&902413856104648754>";
             }
 
             await interaction.channel.send({
