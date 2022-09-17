@@ -57,6 +57,16 @@ module.exports = {
                         .setName("description")
                         .setDescription("Timer description");
                 })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("requirements")
+                        .setDescription("Timer requirements");
+                })
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("sponsor")
+                        .setDescription("Timer sponsor");
+                })
         ),
     cooldown: 10,
     async execute(interaction, client) {
@@ -80,6 +90,8 @@ module.exports = {
                 time: interaction.options.getString("time"),
                 amount: interaction.options.getNumber("amount"),
                 description: interaction.options.getString("description"),
+                requirements: interaction.options.getString("requirements"),
+                sponsor: interaction.options.getUser("sponsor"),
             };
 
             const etime = `time: ` + options.time;
@@ -104,7 +116,11 @@ module.exports = {
                 endtime / 1000
             )}:R> (\`duration: ${humantime(time)}\`)\n${
                 embedTheme.emoji_mainpoint
-            }**Host:** ${interaction.user}`;
+            }**Requirements:** ${
+                options.requirements ? options.requirements : "`none`"
+            }\n${embedTheme.emoji_mainpoint}**Sponsor:** ${
+                options.sponsor ? options.sponsor : "`none`"
+            }\n${embedTheme.emoji_mainpoint}**Host:** ${interaction.user}`;
 
             if (options.description) {
                 display = display + `\n\n` + `${options.description}`;
@@ -143,9 +159,13 @@ module.exports = {
                 duration: time,
                 endsAt: endtime,
                 mentions: [interaction.user.id],
-                description: `**Heist Amount:** **\`⏣ ${options.amount.toLocaleString()}\`**${
-                    options.description ? `\n${options.description}` : ""
-                }`,
+                description: `**Heist Amount:** **\`⏣ ${options.amount.toLocaleString()}\`**\n${
+                    embedTheme.emoji_mainpoint
+                }**Requirements:** ${
+                    options.requirements ? options.requirements : "`none`"
+                }\n${embedTheme.emoji_mainpoint}**Sponsor:** ${
+                    options.sponsor ? options.sponsor : "`none`"
+                }\n${options.description ? `\n${options.description}` : ""}`,
             });
         }
     },
