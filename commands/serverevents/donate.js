@@ -268,7 +268,7 @@ module.exports = {
                 .setTitle("New Heist Donation")
                 .setColor("#deebff")
                 .setDescription(
-                    `n<:aqua_dash:959862042515341423> **Sponsor:** ${
+                    `<:aqua_dash:959862042515341423> **Sponsor:** ${
                         interaction.user
                     }\n<:aqua_dash:959862042515341423> **Amount:** \`${options.amount.toLocaleString()}\`\n<:aqua_dash:959862042515341423> **Requirements:** \`${
                         options.requirements || "none"
