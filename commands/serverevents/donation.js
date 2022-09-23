@@ -13,7 +13,14 @@ module.exports = {
         .setName("donation")
         .setDescription("Add, remove, set a user's donations")
         .addSubcommand((subcommand) =>
-            subcommand.setName("show").setDescription("Show your donations")
+            subcommand
+                .setName("show")
+                .setDescription("Show your donations")
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("user")
+                        .setDescription("User's donations");
+                })
         )
         .addSubcommand((subcommand) =>
             subcommand
@@ -199,7 +206,11 @@ module.exports = {
 
             interaction.reply({ embeds: [donation_embed] });
         } else if (interaction.options.getSubcommand() === "show") {
-            const donationData = await dono_fetch(interaction.user.id);
+            const options = {
+                user: interaction.options.getMember("user"),
+            };
+            const target = options.user || interaction.user;
+            const donationData = await dono_fetch(target.id);
 
             let donations_map = Object.keys(donationData)
                 .map((key) => {
@@ -218,7 +229,7 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor("#FFFEFC")
                         .setDescription(
-                            `**User:** ${interaction.user}\n\n__**Donations:**__\n${donations_map}`
+                            `**User:** ${target}\n\n__**Donations:**__\n${donations_map}`
                         ),
                 ],
             });
