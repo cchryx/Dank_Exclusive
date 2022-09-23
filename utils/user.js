@@ -46,23 +46,23 @@ class Userfunctions {
 
             if (!userData.autoreaction) return;
 
-//             if (
-//                 guildData.boostroles[0] &&
-//                 guildData.boostroles[1] &&
-//                 guildData.boostroles[2]
-//             ) {
-//                 if (
-//                     !mention.roles.cache.find(
-//                         (r) => r.id === guildData.boostroles[0]
-//                     )
-//                 ) {
-//                     const user = message.guild.members.cache.get(mention.id);
-//                     user.roles.remove([
-//                         guildData.boostroles[1],
-//                         guildData.boostroles[2],
-//                     ]);
-//                 }
-//             }
+            //             if (
+            //                 guildData.boostroles[0] &&
+            //                 guildData.boostroles[1] &&
+            //                 guildData.boostroles[2]
+            //             ) {
+            //                 if (
+            //                     !mention.roles.cache.find(
+            //                         (r) => r.id === guildData.boostroles[0]
+            //                     )
+            //                 ) {
+            //                     const user = message.guild.members.cache.get(mention.id);
+            //                     user.roles.remove([
+            //                         guildData.boostroles[1],
+            //                         guildData.boostroles[2],
+            //                     ]);
+            //                 }
+            //             }
 
             let slots_max = 0;
             let slots_used = userData.autoreaction.length;

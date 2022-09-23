@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema(
         userid: {
             type: String,
             required: true,
+            unique: true,
         },
         privatechannel: {
             type: Object,
@@ -24,13 +25,9 @@ const userSchema = new mongoose.Schema(
             type: Array,
             default: [],
         },
-        dankdonations: {
-            type: Number,
-            default: 0,
-        },
-        boostamount: {
-            type: Number,
-            default: 0,
+        donations: {
+            type: Object,
+            default: {},
         },
     },
     { minimize: false }
