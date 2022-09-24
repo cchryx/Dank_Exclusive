@@ -1079,7 +1079,7 @@ module.exports = {
                                     .setStyle(5)
                                     .setLabel(`Menu`)
                                     .setURL(
-                                        `https://discord.com/channels/${interaction.guildId}/${interaction.guildId}/${interaction.message.id}`
+                                        `https://discord.com/channels/${interaction.guildId}/${interaction.channel.id}/${interaction.message.id}`
                                     )
                             ),
                         ],
