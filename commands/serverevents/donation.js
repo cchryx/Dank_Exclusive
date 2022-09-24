@@ -186,7 +186,7 @@ module.exports = {
                           ).toLocaleString()
                 }\``;
                 donation_roles_edit = await donation_role_check(
-                    options.amount + donationData.dankmemer
+                    options.amount + donationData.dankmemer || options.amount
                 );
             } else if (options.action === "remove") {
                 await dono_remove(
@@ -202,7 +202,7 @@ module.exports = {
                           ).toLocaleString()
                 }\``;
                 donation_roles_edit = await donation_role_check(
-                    donationData.dankmemer - options.amount
+                    donationData.dankmemer - options.amount || options.amount
                 );
             }
 
