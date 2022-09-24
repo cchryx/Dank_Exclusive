@@ -178,9 +178,13 @@ module.exports = {
                     "dankmemer",
                     options.amount
                 );
-                description = `**Added:** \`⏣ ${options.amount.toLocaleString()}\`\n**Total Donations:** \`⏣ ${(
-                    options.amount + donationData.dankmemer
-                ).toLocaleString()}\``;
+                description = `**Added:** \`⏣ ${options.amount.toLocaleString()}\`\n**Total Donations:** \`⏣ ${
+                    isNaN(options.amount + donationData.dankmemer)
+                        ? options.amount.toLocaleString()
+                        : (
+                              options.amount + donationData.dankmemer
+                          ).toLocaleString()
+                }\``;
                 donation_roles_edit = await donation_role_check(
                     options.amount + donationData.dankmemer
                 );
@@ -190,9 +194,13 @@ module.exports = {
                     "dankmemer",
                     options.amount
                 );
-                description = `**Removed:** \`⏣ ${options.amount.toLocaleString()}\`\n**Total Donations:** \`⏣ ${(
-                    donationData.dankmemer - options.amount
-                ).toLocaleString()}\``;
+                description = `**Removed:** \`⏣ ${options.amount.toLocaleString()}\`\n**Total Donations:** \`⏣ ${
+                    isNaN(donationData.dankmemer - options.amount)
+                        ? options.amount.toLocaleString()
+                        : (
+                              donationData.dankmemer - options.amount
+                          ).toLocaleString()
+                }\``;
                 donation_roles_edit = await donation_role_check(
                     donationData.dankmemer - options.amount
                 );
