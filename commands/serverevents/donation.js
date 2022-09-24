@@ -166,7 +166,7 @@ module.exports = {
             let donation_roles_edit;
             if (options.action === "set") {
                 await dono_set(
-                    interaction.user.id,
+                    options.user.id,
                     "dankmemer",
                     options.amount
                 );
@@ -174,7 +174,7 @@ module.exports = {
                 donation_roles_edit = await donation_role_check(options.amount);
             } else if (options.action === "add") {
                 await dono_add(
-                    interaction.user.id,
+                    options.user.id,
                     "dankmemer",
                     options.amount
                 );
@@ -190,7 +190,7 @@ module.exports = {
                 );
             } else if (options.action === "remove") {
                 await dono_remove(
-                    interaction.user.id,
+                    options.user.id,
                     "dankmemer",
                     options.amount
                 );
