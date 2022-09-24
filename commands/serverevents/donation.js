@@ -205,6 +205,9 @@ module.exports = {
                 );
 
             interaction.reply({ embeds: [donation_embed] });
+            const channel = client.channels.cache
+                .get("1003661988351709244")
+                .send({ embeds: [donation_embed] });
         } else if (interaction.options.getSubcommand() === "show") {
             const options = {
                 user: interaction.options.getMember("user"),
