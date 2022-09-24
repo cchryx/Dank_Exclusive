@@ -5,8 +5,8 @@ const {
     dono_fetch,
     dono_add,
     dono_remove,
-} = require("../../../utils/donations");
-const { error_reply } = require("../../../utils/error");
+} = require("../../utils/donations");
+const { error_reply } = require("../../utils/error");
 
 module.exports = {
     data: new SlashCommandBuilder()
