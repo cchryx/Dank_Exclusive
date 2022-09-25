@@ -15,12 +15,9 @@ const GuildModel = require("../../models/guildSchema");
 const GiveawayModel = require("../../models/giveawaySchema");
 
 const { user_fetch } = require("../../utils/user");
-const {
-    guild_fetch,
-    guild_checkperm_giveaway,
-    guild_checkrole,
-} = require("../../utils/guild");
+const { guild_fetch, guild_checkperm_giveaway } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
+const { roles_dissect } = require("../../utils/utils");
 
 const jsoncooldowns = require("../../giveaway-cooldowns.json");
 const fs = require("fs");
@@ -51,6 +48,13 @@ module.exports = {
             subcommand
                 .setName("show")
                 .setDescription("Show your current active giveaways")
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("deleteall")
+                .setDescription(
+                    "Delete all giveawys that have ended from databse"
+                )
         )
         .addSubcommand((subcommand) =>
             subcommand
@@ -439,7 +443,7 @@ module.exports = {
 
             let required_roles;
             if (options.reqrole) {
-                required_roles = await guild_checkrole(
+                required_roles = await roles_dissect(
                     interaction,
                     options.reqrole
                 );
@@ -451,7 +455,7 @@ module.exports = {
 
             let bypass_roles;
             if (options.bypassroles) {
-                bypass_roles = await guild_checkrole(
+                bypass_roles = await roles_dissect(
                     interaction,
                     options.bypassroles
                 );
@@ -463,7 +467,7 @@ module.exports = {
 
             let blacklist_roles;
             if (options.blacklistroles) {
-                blacklist_roles = await guild_checkrole(
+                blacklist_roles = await roles_dissect(
                     interaction,
                     options.blacklistroles
                 );
@@ -852,6 +856,37 @@ module.exports = {
             await interaction.channel.send({
                 content: mentions,
                 embeds: [mention_embed],
+            });
+        } else if (interaction.options.getSubcommand() === "deleteall") {
+            if (
+                !interaction.member.roles.cache.has("938372143853502494") ===
+                true
+            ) {
+                error_message = `\`You don't have the required permissions to preform this action\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const giveaways_ended = await GiveawayModel.find({
+                hasEnded: true,
+            });
+
+            if (giveaways_ended.length <= 0) {
+                error_message = `\`There are no ended giveaways to be cleared\``;
+                return error_reply(interaction, error_message);
+            }
+
+            await GiveawayModel.deleteMany({
+                hasEnded: true,
+            });
+
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(`#D8CCFF`)
+                        .setDescription(
+                            `<a:ravena_check:1002981211708325950> **Successfully cleared up all giveaways that have ended**\nCleared Up: \`${giveaways_ended.length.toLocaleString()} giveaways\``
+                        ),
+                ],
             });
         }
     },

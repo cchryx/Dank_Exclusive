@@ -292,7 +292,7 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor("#FAFFFC")
                         .setDescription(
-                            ` <a:ravena_check:1002981211708325950> **Channel has been heist unlocked, everyone can now view this channel**`
+                            `<a:ravena_check:1002981211708325950> **Channel has been heist unlocked, everyone can now view this channel**`
                         ),
                     new EmbedBuilder()
                         .setColor("#FAFFFC")

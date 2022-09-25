@@ -117,40 +117,6 @@ class Guildfunctions {
             console.log(error);
         }
     }
-
-    static async guild_checkrole(interaction, string) {
-        const roles_array_fromstring = [];
-        const roles_args = string.split(" ");
-        let roles_mapstring;
-
-        roles_args.forEach((roleid) => {
-            if (
-                interaction.guild.roles.cache.find((role) => role.id === roleid)
-            ) {
-                const fetchedrole = interaction.guild.roles.cache.find(
-                    (r) => r.id === roleid
-                );
-                roles_array_fromstring.push(fetchedrole.id);
-            }
-        });
-
-        const roles_array = [...new Set(roles_array_fromstring)];
-
-        roles_mapstring = roles_array
-            .map((element) => {
-                return `<@&${element}>`;
-            })
-            .join(", ");
-
-        if (roles_array.length <= 0) {
-            return null;
-        } else {
-            return {
-                mapstring: roles_mapstring,
-                roles: roles_array,
-            };
-        }
-    }
 }
 
 module.exports = Guildfunctions;
