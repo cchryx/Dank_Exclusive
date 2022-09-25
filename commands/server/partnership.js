@@ -76,7 +76,7 @@ module.exports = {
                 partneroffer: interaction.options.getString("partneroffer"),
             };
 
-            const partnershiplog_msg = client.channels.cache
+            const partnershiplog_msg = await client.channels.cache
                 .get("961728822208778260")
                 .send({
                     content: `**Server Invite:** ${options.serverinvite}`,
@@ -84,12 +84,15 @@ module.exports = {
                         new EmbedBuilder()
                             .setColor("#FAFFFC")
                             .setDescription(
-                                `**Server Id:** \`${options.serverid}\`\n**Their Partnership Manager:** ${options.user}\n\n__**Offers:**__\nOur Offer: \`${options.ouroffer}\`\nTheir Offer: \`${options.partneroffer}\`\n\nRemove respective reaction if offer is used up:\n:regional_indicator_o: - US\n:regional_indicator_t: - THEM`
+                                `**Server Id:** \`${options.serverid}\`\n**Their Partnership Manager:** ${options.user}\n\n__**Offers:**__\nOur Offer: \`${options.ouroffer}\`\nTheir Offer: \`${options.partneroffer}\`\n\nRemove respective reaction if offer is used up:\n<:mainpoint_fallblossom:1016418438194933870> - US\n<:mainpoint_summer:1004211052612944014> - THEM`
                             ),
                     ],
                 });
 
-            partnershiplog_msg;
+            partnershiplog_msg.react(
+                "<:mainpoint_fallblossom:1016418438194933870>"
+            );
+            partnershiplog_msg.react("<:mainpoint_summer:1004211052612944014>");
 
             interaction.reply({
                 content:
