@@ -115,7 +115,8 @@ module.exports = {
                                 value: "giveaway_massive",
                             },
                             { name: "Giveaway", value: "giveaway" },
-                            { name: "Nitro Giveaway", value: "giveaway_nitro" }
+                            { name: "Nitro Giveaway", value: "giveaway_nitro" },
+                            { name: "Bro Bot", value: "bro_bot" }
                         );
                 })
                 .addStringOption((oi) => {
@@ -337,6 +338,50 @@ module.exports = {
                         const timpstamp = Date.now() + cooldown_amount;
                         jsoncooldowns[interaction.user.id].giveaway_nitro =
                             timpstamp;
+                        fs.writeFile(
+                            "./giveaway-cooldowns.json",
+                            JSON.stringify(jsoncooldowns),
+                            (err) => {
+                                if (err) {
+                                    console.log(err);
+                                }
+                            }
+                        );
+                    }
+                } else if (options.mentions === "bro_bot") {
+                    let readytimestamp =
+                        jsoncooldowns[userID][options.mentions];
+
+                    if (!readytimestamp) {
+                        readytimestamp = 0;
+                    }
+
+                    const timeleft = new Date(readytimestamp);
+                    let check =
+                        timeleft - Date.now() >= timeleft ||
+                        timeleft - Date.now() <= 0;
+
+                    if (!check) {
+                        const cooldown_embed =
+                            new EmbedBuilder().setDescription(
+                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
+                                    readytimestamp / 1000
+                                )}:R>\nMention: <@&${
+                                    guildData.giveaway.mentions[
+                                        options.mentions
+                                    ]
+                                }>`
+                            );
+
+                        return interaction.reply({
+                            embeds: [cooldown_embed],
+                            ephemeral: true,
+                        });
+                    } else {
+                        cooldown = 300;
+                        const cooldown_amount = cooldown * 1000;
+                        const timpstamp = Date.now() + cooldown_amount;
+                        jsoncooldowns[interaction.user.id].bro_bot = timpstamp;
                         fs.writeFile(
                             "./giveaway-cooldowns.json",
                             JSON.stringify(jsoncooldowns),

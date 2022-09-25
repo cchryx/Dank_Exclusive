@@ -415,6 +415,18 @@ module.exports = {
                     messageid: interaction.message.id,
                 });
 
+                if (!giveaway) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(`\`Giveaway no longer exists\``)
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
                 if (giveaway.hostid !== interaction.user.id) {
                     return interaction.reply({
                         embeds: [
