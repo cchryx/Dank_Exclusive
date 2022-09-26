@@ -255,7 +255,7 @@ module.exports = {
             const donation_embed = new EmbedBuilder()
                 .setColor("#FFFEFC")
                 .setDescription(
-                    `**User:** ${options.user}\n${description}\n\n${donation_roles_edit}`
+                    `**Edited by:** ${interaction.user}\n**User:** ${options.user}\n${description}\n\n${donation_roles_edit}`
                 );
 
             interaction.reply({ embeds: [donation_embed] });
