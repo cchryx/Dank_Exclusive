@@ -241,6 +241,19 @@ module.exports = {
                     error_reply(interaction, error_message);
                     return false;
                 });
+            await interaction.channel.permissionOverwrites
+                .edit("902358680748568596", {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    AddReactions: true,
+                    UseApplicationCommands: true
+                })
+                .catch((error) => {
+                    console.log(error);
+                    error_message = `\`${error.rawError.message}\``;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
 
             const roles_map = roles
                 .map((role) => {
@@ -279,6 +292,14 @@ module.exports = {
                         PermissionsBitField.Flags.CreatePublicThreads,
                         PermissionsBitField.Flags.CreatePrivateThreads,
                         PermissionsBitField.Flags.AddReactions,
+                    ],
+                },
+                 {
+                    id: "902358680748568596",
+                    allow: [
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.AddReactions,
+                        PermissionsBitField.Flags.UseApplicationCommands,                        
                     ],
                 },
                 {
