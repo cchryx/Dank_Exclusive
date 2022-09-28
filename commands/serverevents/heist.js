@@ -321,7 +321,7 @@ module.exports = {
                             `**Freeloaders are banned for 21 days <a:cat_sip:979941878403313664>**`
                         )
                         .setDescription(
-                            `<a:blue_heart:964357388771663953> Massive giveaways [\`here\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612)\n<a:blue_heart:964357388771663953> Thank you [\`grinders\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612) for making this heist possible`
+                            `<a:blue_heart:964357388771663953> Massive giveaways [\`here\`](https://canary.discord.com/channels/902334382939963402/902699081049182309)\n<a:blue_heart:964357388771663953> Thank you [\`grinders\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612) for making this heist possible`
                         ),
                 ],
             });
@@ -334,7 +334,7 @@ module.exports = {
                             `**Freeloaders are banned for 21 days <a:cat_sip:979941878403313664>**`
                         )
                         .setDescription(
-                            `<a:blue_heart:964357388771663953> Massive giveaways [\`here\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612)\n<a:blue_heart:964357388771663953> Thank you [\`grinders\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612) for making this heist possible`
+                            `<a:blue_heart:964357388771663953> Massive giveaways [\`here\`](https://canary.discord.com/channels/902334382939963402/902699081049182309)\n<a:blue_heart:964357388771663953> Thank you [\`grinders\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612) for making this heist possible`
                         ),
                 ],
             });
