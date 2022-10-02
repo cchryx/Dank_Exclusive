@@ -787,8 +787,8 @@ module.exports = {
             };
 
             if (options.user.user.bot == true) {
-                error_message = `You can't give perkroles to bots.`;
-                return errorReply(interaction, error_message);
+                error_message = `You can't give perkroles to bots`;
+                return error_reply(interaction, error_message);
             }
 
             if (!options.user) {
