@@ -786,6 +786,11 @@ module.exports = {
                 user: interaction.options.getMember("user"),
             };
 
+            if (options.user.user.bot == true) {
+                error_message = `You can't give perkroles to bots.`;
+                return errorReply(interaction, error_message);
+            }
+
             if (!options.user) {
                 error_message = `\`That user doesn't exist in the server\``;
                 return error_reply(interaction, error_message);
