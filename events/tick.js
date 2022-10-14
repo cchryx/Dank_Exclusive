@@ -105,7 +105,7 @@ module.exports = {
                                     const embed = new EmbedBuilder()
                                         .setTitle("You won a giveaway!")
                                         .setDescription(
-                                            `Please dm the host within their set claim duration (default: \`24 hours\`)\n\n${embedTheme.emoji_mainpoint}**Prize:** ${giveaway.prize}\n${embedTheme.emoji_mainpoint}**Host:** <@${giveaway.hostid}>`
+                                            `Payouts are automatic, please check your Dank Memer notifications for payouts.\n\n${embedTheme.emoji_mainpoint}**Prize:** ${giveaway.prize}\n${embedTheme.emoji_mainpoint}**Host:** <@${giveaway.hostid}>`
                                         );
                                     client.users
                                         .fetch(id, false)
