@@ -226,7 +226,7 @@ module.exports = {
                                         }**Sponsor:** <@${giveaway.sponsorid}>`
                                     )
                                     .setImage(
-                                        `https://media.discordapp.net/attachments/1003715669059178626/1004459806972723260/output-onlinepngtools_2.png`
+                                        `https://media.discordapp.net/attachments/1001660282663337986/1030589604207796324/unknown.png?width=405&height=12`
                                     )
                                     .setFooter({
                                         text: `Winners: ${giveaway.winnersamount.toLocaleString()}`,
@@ -329,7 +329,7 @@ module.exports = {
                                     .setTitle(`Timer Ended`)
                                     .setDescription(display)
                                     .setImage(
-                                        `https://media.discordapp.net/attachments/1003715669059178626/1004459806972723260/output-onlinepngtools_2.png`
+                                        `https://media.discordapp.net/attachments/1001660282663337986/1030589604207796324/unknown.png?width=405&height=12`
                                     );
 
                                 message.edit({
