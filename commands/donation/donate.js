@@ -145,7 +145,7 @@ module.exports = {
                 donate_embed
                     .setTitle(`How to donate for a heist`)
                     .setDescription(
-                        `\`\`\`/donate heist\`\`\`\n<:yellowdot:959974563582718032> The minimum donation is **2 million (dank)**, **10 million (bro)**\n<:yellowdot:959974563582718032> Wait patiently for a <@&902358680748568596> to take your donations`
+                        `\`\`\`/donate heist\`\`\`\n<:yellowdot:959974563582718032> The minimum donation is **10 million (dank)**, **100 million (bro)**\n<:yellowdot:959974563582718032> Wait patiently for a <@&902358680748568596> to take your donations`
                     );
 
                 interaction.reply({
