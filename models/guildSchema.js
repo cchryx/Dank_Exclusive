@@ -78,6 +78,10 @@ const guildSchema = new mongoose.Schema(
             type: Object,
             default: {},
         },
+        speventtokens: {
+            type: Object,
+            default: {},
+        },
     },
     { minimize: false }
 );
