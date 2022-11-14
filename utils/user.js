@@ -92,7 +92,7 @@ class Userfunctions {
             userData.autoreaction.forEach((emoji) => {
                 return message.react(`${emoji}`).catch(async (error) => {
                     if (error.code === 10014) {
-                        userData.autoreaction = null;
+                        userData.autoreaction = [];
                         return await UserModel.findOneAndUpdate(
                             { userid: userData.userid },
                             userData

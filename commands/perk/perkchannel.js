@@ -30,6 +30,18 @@ module.exports = {
         )
         .addSubcommand((subcommand) =>
             subcommand
+                .setName("sync")
+                .setDescription("Sync your permissions to your private channel")
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("scan")
+                .setDescription(
+                    "Scan private channels to see which ones aren't valid anymore"
+                )
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
                 .setName("userremove")
                 .setDescription(
                     "Choose a user to remove from your private channel"
@@ -86,11 +98,15 @@ module.exports = {
                         .setRequired(true);
                 })
         ),
+
     async execute(interaction, client) {
         const guildData = await guild_fetch(interaction.guildId);
         let userData = await user_fetch(interaction.user.id);
 
-        if (interaction.options.getSubcommand() !== "create") {
+        if (
+            interaction.options.getSubcommand() !== "create" ||
+            interaction.options.getSubcommand() !== "scan"
+        ) {
             if (!userData.privatechannel.id) {
                 error_message = `\`You do not have your own channel\`\n\`\`\`fix\n/perkchannel create\`\`\``;
                 return error_reply(interaction, error_message);
@@ -626,6 +642,191 @@ module.exports = {
                 .setColor("#96ffa1")
                 .setDescription(message);
             return interaction.reply({ embeds: [embed] });
+        } else if (interaction.options.getSubcommand() === "sync") {
+            const privatechannel = interaction.guild.channels.cache.get(
+                userData.privatechannel.id
+            );
+
+            const channelupdatedowner =
+                await privatechannel.permissionOverwrites
+                    .edit(interaction.user.id, {
+                        ViewChannel: true,
+                        ReadMessageHistory: true,
+                        UseApplicationCommands: true,
+                        EmbedLinks: true,
+                        AttachFiles: true,
+                        UseExternalEmojis: true,
+                        UseExternalStickers: true,
+                        AddReactions: true,
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        error_message = `\`${error.rawError.message}\``;
+                        error_reply(interaction, error_message);
+                        return false;
+                    });
+            if (channelupdatedowner === false) return;
+
+            userData.privatechannel.users.forEach(async (user) => {
+                await privatechannel.permissionOverwrites.edit(user, {
+                    ViewChannel: true,
+                    ReadMessageHistory: true,
+                    UseApplicationCommands: true,
+                    EmbedLinks: true,
+                    AttachFiles: true,
+                    UseExternalEmojis: true,
+                    UseExternalStickers: true,
+                    AddReactions: true,
+                });
+            });
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("#42f563")
+                        .setDescription(
+                            `<a:ravena_check:1002981211708325950> **Successfully synced your channel's permissions**\nYour Channel: <#${privatechannel.id}>`
+                        ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "scan") {
+            if (
+                !interaction.member.roles.cache.has("938372143853502494") ===
+                true
+            ) {
+                error_message = `\`You don't have the required permissions to preform this action\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const scan_msg = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("Random")
+                        .setDescription(`Scanning private channels...`),
+                ],
+                fetchReply: true,
+            });
+
+            let usersArray = await UserModel.find({
+                "privatechannel.id": { $exists: true, $ne: null },
+            });
+
+            usersArray.forEach(async (user) => {
+                const channel = interaction.guild.channels.cache.get(
+                    user.privatechannel.id
+                );
+                if (!channel) {
+                    user.privatechannel.id = null;
+                    user.privatechannel.users = [];
+                    await UserModel.findOneAndUpdate(
+                        { userid: user.userid },
+                        user
+                    );
+                }
+                return;
+            });
+
+            usersArray = await UserModel.find({
+                "privatechannel.id": { $exists: true, $ne: null },
+            });
+
+            const flaggedUsersMap = Promise.all(
+                usersArray.map(async (user) => {
+                    const channel = interaction.guild.channels.cache.get(
+                        user.privatechannel.id
+                    );
+                    const userFetchedData =
+                        await interaction.guild.members.fetch(user.userid);
+
+                    let s_slots_max = 0;
+                    let s_slots_used = user.privatechannel.users.length;
+
+                    let hasroles = [];
+                    Object.keys(guildData.perkchannel_roles).forEach((key) => {
+                        if (
+                            userFetchedData.roles.cache.find(
+                                (r) => r.id === key
+                            )
+                        ) {
+                            s_slots_max =
+                                s_slots_max + guildData.perkchannel_roles[key];
+                            hasroles.push(key);
+                        }
+                    });
+
+                    if (s_slots_used > s_slots_max) {
+                        const removedusers =
+                            user.privatechannel.users.slice(s_slots_max);
+                        removedusers.forEach(async (removedid) => {
+                            if (channel) {
+                                await channel.permissionOverwrites.delete(
+                                    removedid
+                                );
+                                s_slots_used = s_slots_used - 1;
+                                privatechannel.send({
+                                    content: `\`A user has been removed from this private channel\``,
+                                    embeds: [
+                                        new EmbedBuilder()
+                                            .setColor("#f2b079")
+                                            .setDescription(
+                                                `User: <@${removedid}>\nChannel: <#${
+                                                    privatechannel.id
+                                                }>\nChannel Id: \`${
+                                                    privatechannel.id
+                                                }\`\nOwner: <@${
+                                                    interaction.user.id
+                                                }>\nSlots Available: \`${(
+                                                    s_slots_max - s_slots_used
+                                                ).toLocaleString()}\``
+                                            ),
+                                    ],
+                                });
+                            }
+                        });
+                        user.privatechannel.users =
+                            user.privatechannel.users.slice(0, s_slots_max);
+                        await UserModel.findOneAndUpdate(
+                            { userid: user.userid },
+                            user
+                        );
+                        s_slots_used = user.privatechannel.users.length;
+                    }
+
+                    if (s_slots_max <= 0) {
+                        return user;
+                    }
+                })
+            );
+            let flaggedUsers = await flaggedUsersMap;
+            flaggedUsers = flaggedUsers.filter(Boolean);
+            const flaggedUsersDisplay = flaggedUsers
+                .map((user) => {
+                    return `\`-\` <@${user}> <#${user.privatechannel.id}>`;
+                })
+                .join("\n");
+            flaggedUsers.forEach(async (user) => {
+                interaction.guild.channels.delete(
+                    user.privatechannel.id,
+                    "Didn't fulfill perkchannel requirements"
+                );
+                user.privatechannel.id = null;
+                user.privatechannel.users = [];
+                await UserModel.findOneAndUpdate({ userid: user.userid }, user);
+            });
+
+            return scan_msg.edit({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("#42f563")
+                        .setDescription(
+                            `<a:ravena_check:1002981211708325950> **Successfully scanned private channels...**\n\n__**Following Channels Deleted:**__\n\n${
+                                flaggedUsers.length > 0
+                                    ? flaggedUsersDisplay
+                                    : `\`none\``
+                            }`
+                        ),
+                ],
+            });
         }
     },
 };

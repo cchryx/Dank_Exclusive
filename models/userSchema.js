@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
             type: Object,
             default: {},
         },
+        miscdata: {
+            type: Object,
+            default: {},
+        },
     },
     { minimize: false }
 );
