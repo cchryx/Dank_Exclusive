@@ -801,7 +801,7 @@ module.exports = {
             flaggedUsers = flaggedUsers.filter(Boolean);
             const flaggedUsersDisplay = flaggedUsers
                 .map((user) => {
-                    return `\`-\` <@${user}> <#${user.privatechannel.id}>`;
+                    return `\`-\` <@${user.userid}> <#${user.privatechannel.id}>`;
                 })
                 .join("\n");
             flaggedUsers.forEach(async (user) => {
