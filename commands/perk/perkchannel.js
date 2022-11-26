@@ -737,10 +737,9 @@ module.exports = {
                     );
                     
                     const userFetchedData =
-                        await interaction.guild.members.fetch(user.userid)
+                        await interaction.guild.members.fetch(user.userid).catch(error => {
+                        console.log(error)})
                     
-                    return console.log(userFetchedData)
-
                     let s_slots_max = 0;
                     let s_slots_used = user.privatechannel.users.length;
 
