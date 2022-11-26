@@ -735,12 +735,13 @@ module.exports = {
                     const channel = interaction.guild.channels.cache.get(
                         user.privatechannel.id
                     );
+                    
+                    if (!interaction.guild.member(user.userid).exists){
+                       return;
+                    }
+                    
                     const userFetchedData =
                         await interaction.guild.members.fetch(user.userid)
-                    
-                    if (!userFetchedData) {
-                        return;
-                    }
 
                     let s_slots_max = 0;
                     let s_slots_used = user.privatechannel.users.length;
