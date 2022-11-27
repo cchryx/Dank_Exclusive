@@ -107,6 +107,7 @@ module.exports = {
             interaction.options.getSubcommand() !== "create" ||
             interaction.options.getSubcommand() !== "scan"
         ) {
+            console.log(interaction.options.getSubcommand())
             if (!userData.privatechannel.id) {
                 error_message = `\`You do not have your own channel\`\n\`\`\`fix\n/perkchannel create\`\`\``;
                 return error_reply(interaction, error_message);
