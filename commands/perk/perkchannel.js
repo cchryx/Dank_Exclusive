@@ -104,10 +104,12 @@ module.exports = {
         let userData = await user_fetch(interaction.user.id);
 
         if (
-            interaction.options.getSubcommand() !== "create" ||
-            interaction.options.getSubcommand() !== "scan"
+            interaction.options.getSubcommand() === "show" ||
+            interaction.options.getSubcommand() === "edit" ||
+            interaction.options.getSubcommand() === "useradd" ||
+            interaction.options.getSubcommand() === "userremove" ||
+            interaction.options.getSubcommand() === "sync"
         ) {
-            console.log(interaction.options.getSubcommand())
             if (!userData.privatechannel.id) {
                 error_message = `\`You do not have your own channel\`\n\`\`\`fix\n/perkchannel create\`\`\``;
                 return error_reply(interaction, error_message);
