@@ -13,6 +13,7 @@ const humanizeDuration = require("humanize-duration");
 const GiveawayModel = require("../models/giveawaySchema");
 const TimerModel = require("../models/timerSchema");
 const GuildModel = require("../models/guildSchema");
+const PartnershipChannelModel = require("../models/partnershipChannel");
 
 const humantime = humanizeDuration.humanizer({
     language: "shortEn",
@@ -401,6 +402,49 @@ module.exports = {
                                     ],
                                 });
                             }
+                        } catch (_) {
+                            console.log(_);
+                        }
+                    }
+                } catch (_) {}
+            }
+        }
+
+        const pchannel_query = await PartnershipChannelModel.find({
+            endsAt: {
+                $lt: new Date().getTime(),
+            },
+        });
+
+        for (const pchannel of pchannel_query) {
+            if (Date.now() >= pchannel.expire) {
+                try {
+                    const channel = client.channels.cache.get(
+                        pchannel.channelid
+                    );
+                    await PartnershipChannelModel.findOneAndDelete({
+                        messageid: pchannel.messageid,
+                    });
+
+                    if (channel) {
+                        try {
+                            await PartnershipChannelModel.deleteOne({
+                                channelid: pchannel.channelid,
+                            });
+                            channel.delete(
+                                pchannel.channelid,
+                                "Auto-delete partnership channel"
+                            );
+
+                            client.channels.cache
+                                .get("1003661988351709244")
+                                .send({
+                                    embeds: [
+                                        new EmbedBuilder().setDescription(
+                                            `Partnership Channel Deleted\n\nPartnership Manager: <@${pchannel.pmanid}>\nChannel Id: \`${pchannel.channelid}\``
+                                        ),
+                                    ],
+                                });
                         } catch (_) {
                             console.log(_);
                         }

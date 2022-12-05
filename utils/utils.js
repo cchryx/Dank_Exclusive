@@ -22,6 +22,12 @@ class Utilsfunctions {
             })
             .join(", ");
 
+        if (string.includes("@everyone")) {
+            roles.push("everyone");
+            roles_mapstring =
+                `@everyone${roles.length > 1 ? ", " : ""}` + roles_mapstring;
+        }
+
         if (roles.length <= 0) {
             return null;
         } else {
