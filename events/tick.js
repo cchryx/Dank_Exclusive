@@ -431,6 +431,11 @@ module.exports = {
                             await PartnershipChannelModel.deleteOne({
                                 channelid: pchannel.channelid,
                             });
+
+                            channel.guild.members.cache
+                                .get(pchannel.pmanid)
+                                .roles.remove("920192428915441724");
+
                             channel.delete(
                                 pchannel.channelid,
                                 "Auto-delete partnership channel"

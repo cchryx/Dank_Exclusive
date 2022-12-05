@@ -236,7 +236,9 @@ module.exports = {
                     return false;
                 });
 
-            await channelcreated.send({
+            if (channelcreated === false) return;
+
+            channelcreated.send({
                 content: `${options.partnermanager}`,
                 embeds: [
                     new EmbedBuilder()
@@ -270,6 +272,11 @@ module.exports = {
                         ),
                 ],
             });
+
+            interaction.guild.members.cache
+                .get(options.partnermanager.id)
+                .roles.add("920192428915441724");
+
             return PartnershipChannelModel.create({
                 channelid: channelcreated.id,
                 pmanid: options.partnermanager.id,
