@@ -110,6 +110,18 @@ module.exports = {
                         .setDescription("Mentions for posting ad.")
                         .setRequired(true);
                 })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("unhidden")
+                        .setDescription(
+                            "Will is be visible to everyone in the server."
+                        )
+                        .setRequired(true)
+                        .addChoices(
+                            { name: "True", value: "true" },
+                            { name: "False", value: "false" }
+                        );
+                })
         )
         .addSubcommand((subcommand) =>
             subcommand
@@ -174,6 +186,7 @@ module.exports = {
                 time: interaction.options.getString("time"),
                 mentions: interaction.options.getString("mentions"),
                 channelname: interaction.options.getString("channelname"),
+                unhidden: interaction.options.getString("unhidden"),
             };
 
             if (!options.partnermanager) {
@@ -208,7 +221,6 @@ module.exports = {
             const permissionoverwrites = [
                 {
                     id: interaction.guild.id,
-                    allow: [PermissionsBitField.Flags.ViewChannel],
                     deny: [PermissionsBitField.Flags.SendMessages],
                 },
                 {
@@ -225,6 +237,13 @@ module.exports = {
                     ],
                 },
             ];
+
+            if (options.unhidden === "false") {
+                permissionoverwrites.push({
+                    id: "920490576904851457",
+                    deny: [PermissionsBitField.Flags.ViewChannel],
+                });
+            }
 
             channelinfo.permissionOverwrites = permissionoverwrites;
 
