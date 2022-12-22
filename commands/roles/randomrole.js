@@ -101,7 +101,7 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor("Random")
             .setDescription(
-                `<a:loading:987196796549861376> Fetching getting ready to set <@&${
+                `Fetching...\nGetting ready to set <@&${
                     role.id
                 }> to \`${noofusers.toLocaleString()}\` random members in the server...`
             );
