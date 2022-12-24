@@ -830,7 +830,9 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor("#42f563")
                         .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully scanned private channels**\n\n__**Following Channels Deleted:**__\nChannels Deleted: \`${
+                            `<a:ravena_check:1002981211708325950> **Successfully scanned private channels**\n\n__**Following Channels Deleted:**__\nActive Channels: \`${
+                                usersArray.length - flaggedUsers.length
+                            }\`\nChannels Deleted: \`${
                                 flaggedUsers.length
                             }\`\n\n${
                                 flaggedUsers.length > 0

@@ -1119,9 +1119,9 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor("#42f563")
                         .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully scanned private roles**\n\n__**Following Roles Deleted:**__\nRoles Deleted: \`${
-                                flaggedUsers.length
-                            }\`\n\n${
+                            `<a:ravena_check:1002981211708325950> **Successfully scanned private roles**\n\n__**Following Roles Deleted:**__\nActive Channels: \`${
+                                usersArray.length - flaggedUsers.length
+                            }\`Roles Deleted: \`${flaggedUsers.length}\`\n\n${
                                 flaggedUsers.length > 0
                                     ? flaggedUsersDisplay
                                     : `\`none\``
