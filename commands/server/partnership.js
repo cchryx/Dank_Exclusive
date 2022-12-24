@@ -157,7 +157,7 @@ module.exports = {
                         new EmbedBuilder()
                             .setColor("#FAFFFC")
                             .setDescription(
-                                `**Server Id:** \`${options.serverid}\`\n**Their Partnership Manager:** ${options.user}\n\n__**Offers:**__\nOur Offer: \`${options.ouroffer}\`\nTheir Offer: \`${options.partneroffer}\`\n\nRemove respective reaction if offer is used up:\n<:mainpoint_fallblossom:1016418438194933870> - US\n<:mainpoint_summer:1004211052612944014> - THEM`
+                                `**Server Id:** \`${options.serverid}\`\n**Their Partnership Manager:** ${options.user}\n**Log Issued By:** ${interaction.user}\n\n__**Offers:**__\nOur Offer: \`${options.ouroffer}\`\nTheir Offer: \`${options.partneroffer}\`\n\nRemove respective reaction if offer is used up:\n<:mainpoint_fallblossom:1016418438194933870> - US\n<:mainpoint_summer:1004211052612944014> - THEM`
                             ),
                     ],
                 });
