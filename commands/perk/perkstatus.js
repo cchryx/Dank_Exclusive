@@ -43,7 +43,7 @@ module.exports = {
         let ar_slots_max = 0;
         let ar_slots_used = userData.autoreaction.length;
         Object.keys(guildData.perkar_roles).forEach((key) => {
-            if (interaction.member.roles.cache.find((r) => r.id === key)) {
+            if (options.user.roles.cache.find((r) => r.id === key)) {
                 ar_slots_max = ar_slots_max + guildData.perkar_roles[key];
             }
         });
@@ -55,7 +55,7 @@ module.exports = {
         let role_slots_max = 0;
         let role_slots_used = userData.customrole.users.length;
         Object.keys(guildData.perkrole_roles).forEach((key) => {
-            if (interaction.member.roles.cache.find((r) => r.id === key)) {
+            if (options.user.roles.cache.find((r) => r.id === key)) {
                 role_slots_max = role_slots_max + guildData.perkrole_roles[key];
             }
         });
@@ -63,7 +63,7 @@ module.exports = {
         let channel_slots_max = 0;
         let channel_slots_used = userData.privatechannel.users.length;
         Object.keys(guildData.perkchannel_roles).forEach((key) => {
-            if (interaction.member.roles.cache.find((r) => r.id === key)) {
+            if (options.user.roles.cache.find((r) => r.id === key)) {
                 channel_slots_max =
                     channel_slots_max + guildData.perkchannel_roles[key];
             }
