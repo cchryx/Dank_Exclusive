@@ -738,11 +738,17 @@ module.exports = {
                     const channel = interaction.guild.channels.cache.get(
                         user.privatechannel.id
                     );
-                    
-                    const userFetchedData =
-                        await interaction.guild.members.fetch(user.userid).catch(error => {
-                        console.log(error)})
-                    
+
+                    const userFetchedData = await interaction.guild.members
+                        .fetch(user.userid)
+                        .catch((error) => {
+                            return;
+                        });
+
+                    if (!userFetchedData) {
+                        return user;
+                    }
+
                     let s_slots_max = 0;
                     let s_slots_used = user.privatechannel.users.length;
 
@@ -806,7 +812,7 @@ module.exports = {
             flaggedUsers = flaggedUsers.filter(Boolean);
             const flaggedUsersDisplay = flaggedUsers
                 .map((user) => {
-                    return `\`-\` <@${user.userid}> <#${user.privatechannel.id}>`;
+                    return `\`-\` <@${user.userid}> \`${user.privatechannel.id}\``;
                 })
                 .join("\n");
             flaggedUsers.forEach(async (user) => {
@@ -824,7 +830,9 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor("#42f563")
                         .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully scanned private channels**\n\n__**Following Channels Deleted:**__\n\n${
+                            `<a:ravena_check:1002981211708325950> **Successfully scanned private channels**\n\n__**Following Channels Deleted:**__\nChannels Deleted: \`${
+                                flaggedUsers.length
+                            }\`\n\n${
                                 flaggedUsers.length > 0
                                     ? flaggedUsersDisplay
                                     : `\`none\``

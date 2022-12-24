@@ -114,6 +114,13 @@ module.exports = {
                         .setDescription("Valid role name within the server")
                         .setRequired(true);
                 })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("scan")
+                .setDescription(
+                    "Scan perkroles to see which ones aren't valid anymore"
+                )
         ),
     async execute(interaction, client) {
         const guildData = await guild_fetch(interaction.guildId);
@@ -502,7 +509,7 @@ module.exports = {
                     .catch(async (error) => {
                         if (error.code === 10014) {
                             message =
-                                "**You emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
+                                "**Your emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
                             embed.setColor("Red").setDescription(message);
                             verify_msg.edit({ embeds: [embed] });
                             options.emojiicon = null;
@@ -515,7 +522,7 @@ module.exports = {
                     if (verifyemoji._emoji.id) {
                         if (verifyemoji._emoji.animated === true) {
                             message =
-                                "**You emoji was not valid**\n`Role icon doesn't accept animated emojis`";
+                                "**Your emoji was not valid**\n`Role icon doesn't accept animated emojis`";
                             embed.setColor("Red").setDescription(message);
                             return verify_msg.edit({ embeds: [embed] });
                         } else {
@@ -525,7 +532,7 @@ module.exports = {
                         }
                     } else {
                         message =
-                            "**You emoji was not valid**\n`Couldn't find emoji id`";
+                            "**Your emoji was not valid**\n`Couldn't find emoji id`";
                         embed.setColor("Red").setDescription(message);
                         return verify_msg.edit({ embeds: [embed] });
                     }
@@ -537,7 +544,7 @@ module.exports = {
                     }
                 } else {
                     message =
-                        "**You emoji was not valid**\n`That emoji wasn't able to used as a role icon`";
+                        "**Your emoji was not valid**\n`That emoji wasn't able to used as a role icon`";
                     embed.setColor("Red").setDescription(message);
                     verify_msg.edit({ embeds: [embed] });
                 }
@@ -991,6 +998,137 @@ module.exports = {
                 .setColor("Green")
                 .setDescription(message);
             return interaction.reply({ embeds: [embed] });
+        } else if (interaction.options.getSubcommand() === "scan") {
+            if (
+                !interaction.member.roles.cache.has("938372143853502494") ===
+                true
+            ) {
+                error_message = `\`You don't have the required permissions to preform this action\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const scan_msg = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("Random")
+                        .setDescription(`Scanning perkroles...`),
+                ],
+                fetchReply: true,
+            });
+
+            let usersArray = await UserModel.find({
+                "customrole.id": { $exists: true, $ne: null },
+            });
+
+            usersArray.forEach(async (user) => {
+                const channel = interaction.guild.roles.cache.get(
+                    user.customrole.id
+                );
+                if (!channel) {
+                    user.customrole.id = null;
+                    user.customrole.users = [];
+                    await UserModel.findOneAndUpdate(
+                        { userid: user.userid },
+                        user
+                    );
+                }
+                return;
+            });
+
+            usersArray = await UserModel.find({
+                "customrole.id": { $exists: true, $ne: null },
+            });
+
+            const flaggedUsersMap = Promise.all(
+                usersArray.map(async (user) => {
+                    const channel = interaction.guild.roles.cache.get(
+                        user.customrole.id
+                    );
+
+                    const userFetchedData = await interaction.guild.members
+                        .fetch(user.userid)
+                        .catch((error) => {
+                            return;
+                        });
+
+                    if (!userFetchedData) {
+                        return user;
+                    }
+
+                    let s_slots_max = 0;
+                    let s_slots_used = user.customrole.users.length;
+
+                    let hasroles = [];
+                    Object.keys(guildData.perkrole_roles).forEach((key) => {
+                        if (
+                            interaction.member.roles.cache.find(
+                                (r) => r.id === key
+                            )
+                        ) {
+                            s_slots_max =
+                                s_slots_max + guildData.perkrole_roles[key];
+                            hasroles.push(key);
+                        }
+                    });
+
+                    if (s_slots_used > s_slots_max) {
+                        const removedusers =
+                            user.customrole.users.slice(s_slots_max);
+                        removedusers.forEach(async (removedid) => {
+                            const userfetch =
+                                await interaction.guild.members.fetch(
+                                    removedid
+                                );
+                            userfetch.roles.remove(user.customrole.id);
+                        });
+                        user.customrole.users = user.customrole.users.slice(
+                            0,
+                            s_slots_max
+                        );
+                        await UserModel.findOneAndUpdate(
+                            { userid: interaction.user.id },
+                            user
+                        );
+                        s_slots_used = user.customrole.users.length;
+                    }
+
+                    if (s_slots_max <= 0) {
+                        return user;
+                    }
+                })
+            );
+            let flaggedUsers = await flaggedUsersMap;
+            flaggedUsers = flaggedUsers.filter(Boolean);
+            const flaggedUsersDisplay = flaggedUsers
+                .map((user) => {
+                    return `\`-\` <@${user.userid}> \`${user.customrole.id}\``;
+                })
+                .join("\n");
+            flaggedUsers.forEach(async (user) => {
+                interaction.guild.roles.delete(
+                    user.customrole.id,
+                    "Didn't fulfill perkrole requirements"
+                );
+                user.customrole.id = null;
+                user.customrole.users = [];
+                await UserModel.findOneAndUpdate({ userid: user.userid }, user);
+            });
+
+            return scan_msg.edit({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor("#42f563")
+                        .setDescription(
+                            `<a:ravena_check:1002981211708325950> **Successfully scanned private roles**\n\n__**Following Roles Deleted:**__\nRoles Deleted: \`${
+                                flaggedUsers.length
+                            }\`\n\n${
+                                flaggedUsers.length > 0
+                                    ? flaggedUsersDisplay
+                                    : `\`none\``
+                            }`
+                        ),
+                ],
+            });
         }
     },
 };
