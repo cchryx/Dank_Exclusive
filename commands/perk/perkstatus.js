@@ -48,6 +48,10 @@ module.exports = {
             }
         });
 
+        if (ar_slots_max > 2) {
+            ar_slots_max = 2;
+        }
+
         let role_slots_max = 0;
         let role_slots_used = userData.customrole.users.length;
         Object.keys(guildData.perkrole_roles).forEach((key) => {
