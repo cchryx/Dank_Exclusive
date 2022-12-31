@@ -1,32 +1,3 @@
-
-Search
-Pulls
-Issues
-Codespaces
-Marketplace
-Explore
- 
-@Neiry6969 
-Neiry6969
-/
-dankexclusive
-Private
-Code
-Issues
-Pull requests
-Actions
-Projects
-Security
-Insights
-Settings
-dankexclusive/commands/roles/randomrole.js
-@Neiry6969
-Neiry6969 Update randomrole.js
-Latest commit c3dbe18 last week
- History
- 1 contributor
-177 lines (164 sloc)  6.86 KB
-
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 
