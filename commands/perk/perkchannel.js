@@ -9,48 +9,50 @@ const {
     PermissionsBitField,
 } = require("discord.js");
 
-const UserModel = require("../../models/userSchema");
+const PerkchannelModel = require("../../models/perkchannelSchema");
 
-const { user_fetch } = require("../../utils/user");
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
+const {
+    perk_channel_fetch,
+    perk_slots_max,
+    perk_channel_create,
+} = require("../../utils/perk");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("perkchannel")
         .setDescription(
-            "Perk command: create a private channel and add/remove users"
+            "Perk command: create a perk channel and add/remove users to or from it."
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("show")
-                .setDescription(
-                    "Show who is currently who has access to you private channel"
-                )
+                .setDescription("Show your perk channel information.")
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("sync")
-                .setDescription("Sync your permissions to your private channel")
+                .setDescription("Sync your permissions to your perk channel.")
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("scan")
                 .setDescription(
-                    "Scan private channels to see which ones aren't valid anymore"
+                    "Scan perk channels to see which ones aren't valid anymore."
                 )
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("userremove")
                 .setDescription(
-                    "Choose a user to remove from your private channel"
+                    "Choose a user to remove from your perk channel."
                 )
                 .addUserOption((oi) => {
                     return oi
                         .setName("user")
                         .setDescription(
-                            "Valid user within the server or id for a user that has left"
+                            "Valid user within the server or id for a user that has left the server."
                         )
                         .setRequired(true);
                 })
@@ -58,236 +60,142 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("useradd")
-                .setDescription("Choose a user to add to your private channel")
+                .setDescription("Choose a user to add to your perk channel.")
                 .addUserOption((oi) => {
                     return oi
                         .setName("user")
-                        .setDescription("Valid user within the server")
+                        .setDescription("Valid user within the server.")
                         .setRequired(true);
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("create")
-                .setDescription("Create private channel")
+                .setDescription("Create a perk channel.")
                 .addStringOption((oi) => {
                     return oi
                         .setName("name")
-                        .setDescription("Valid channel name")
+                        .setDescription("Valid channel name.")
                         .setRequired(true);
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("edit")
-                .setDescription("Edit private channel")
+                .setDescription("Edit perk channel.")
                 .addStringOption((oi) => {
                     return oi
                         .setName("name")
-                        .setDescription("Valid channel name");
+                        .setDescription("Valid channel name.")
+                        .setRequired(true);
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("selfremove")
-                .setDescription("Remove a perkchannel from yourself")
+                .setDescription("Remove a perk channel from yourself.")
                 .addChannelOption((oi) => {
                     return oi
                         .setName("channel")
-                        .setDescription("Valid channel within the server")
+                        .setDescription("Valid perk channel you are in.")
                         .setRequired(true);
                 })
         ),
 
     async execute(interaction, client) {
+        let error_message;
         const guildData = await guild_fetch(interaction.guildId);
-        let userData = await user_fetch(interaction.user.id);
+        let perkchannelData = await perk_channel_fetch(interaction.user.id);
+        const slots_max = await perk_slots_max(
+            interaction,
+            guildData.perk.channel
+        );
+        let perkchannel_discordData;
+        let slots_used = 0;
+        let slots_used_display;
 
-        if (
-            interaction.options.getSubcommand() === "show" ||
-            interaction.options.getSubcommand() === "edit" ||
-            interaction.options.getSubcommand() === "useradd" ||
-            interaction.options.getSubcommand() === "userremove" ||
-            interaction.options.getSubcommand() === "sync"
-        ) {
-            if (!userData.privatechannel.id) {
-                error_message = `\`You do not have your own channel\`\n\`\`\`fix\n/perkchannel create\`\`\``;
-                return error_reply(interaction, error_message);
+        if (perkchannelData) {
+            perkchannel_discordData = interaction.guild.channels.cache.get(
+                perkchannelData.channelId
+            );
+
+            if (slots_max.slots_max === 0) {
+                await PerkchannelModel.findOneAndDelete({
+                    userId: perkchannelData.userId,
+                });
+
+                interaction.guild.channels.delete(perkchannelData.channelId);
             }
-        }
 
-        let slots_max = 0;
-        let slots_used = userData.privatechannel.users.length;
-        let hasroles_display;
-        let slots_display;
+            slots_used = perkchannelData.users.length;
 
-        let hasroles = [];
-        Object.keys(guildData.perkchannel_roles).forEach((key) => {
-            if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                slots_max = slots_max + guildData.perkchannel_roles[key];
-                hasroles.push(key);
+            if (slots_max.slots_max > 80) {
+                slots_max.slots_max = 80;
             }
-        });
 
-        if (slots_used > slots_max) {
-            const removedusers = userData.privatechannel.users.slice(slots_max);
-            removedusers.forEach(async (removedid) => {
-                const privatechannel = interaction.guild.channels.cache.get(
-                    userData.privatechannel.id
+            if (slots_used > slots_max.slots_max) {
+                const perkchannel_users_flagged = perkchannelData.users.slice(
+                    slots_max.slots_max
                 );
-                if (privatechannel) {
-                    await privatechannel.permissionOverwrites.delete(removedid);
-                    slots_used = slots_used - 1;
-                    privatechannel.send({
-                        content: `\`A user has been removed from this private channel\``,
-                        embeds: [
-                            new EmbedBuilder()
-                                .setColor("#f2b079")
-                                .setDescription(
-                                    `User: <@${removedid}>\nChannel: <#${
-                                        privatechannel.id
+                perkchannelData.users = perkchannelData.users.slice(
+                    0,
+                    slots_max.slots_max
+                );
+                slots_used = perkchannelData.users.length;
+
+                for (const user of perkchannel_users_flagged) {
+                    await perkchannel_discordData.permissionOverwrites.delete(
+                        user
+                    );
+                    perkchannel_discordData
+                        .send({
+                            content: `<@${user}>`,
+                            embeds: [
+                                new EmbedBuilder().setDescription(
+                                    `**Remove user from perk channel: COMPLETED**\n*User was over the limit of users in this perk channel.*\n\nChannel: <#${
+                                        perkchannelData.channelId
                                     }>\nChannel Id: \`${
-                                        privatechannel.id
+                                        perkchannelData.channelId
                                     }\`\nOwner: <@${
-                                        interaction.user.id
-                                    }>\nSlots Available: \`${(
-                                        slots_max - slots_used
-                                    ).toLocaleString()}\``
+                                        perkchannelData.userId
+                                    }>\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
                                 ),
-                        ],
-                    });
+                            ],
+                        })
+                        .catch((error) => {});
                 }
-            });
-            userData.privatechannel.users = userData.privatechannel.users.slice(
-                0,
-                slots_max
-            );
-            await UserModel.findOneAndUpdate(
-                { userid: interaction.user.id },
-                userData
-            );
-            slots_used = userData.privatechannel.users.length;
-        }
 
-        let slots_display_i;
-        if (slots_used === 0) {
-            slots_display = `\`no slots\``;
-        } else {
-            if (userData.privatechannel.users.length > 10) {
-                slots_display_i = userData.privatechannel.users
-                    .map((user) => {
-                        const slot_location =
-                            userData.privatechannel.users.indexOf(user) + 1;
-                        return `<@${user}>`;
-                    })
-                    .join(" ");
-
-                slots_display = `\`You have more than 10 slots, therefore they have been compressed in the embed bellow\``;
-            } else {
-                slots_display = userData.privatechannel.users
-                    .map((user) => {
-                        const slot_location =
-                            userData.privatechannel.users.indexOf(user) + 1;
-                        return `Slot ${slot_location}: <@${user}>`;
-                    })
-                    .join("\n");
-            }
-        }
-
-        if (guildData.perkchannel_roles) {
-            hasroles_display = Object.keys(guildData.perkchannel_roles)
-                .map((key) => {
-                    let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                    if (
-                        interaction.member.roles.cache.find((r) => r.id === key)
-                    ) {
-                        status = "<a:ravena_check:1002981211708325950>";
-                    }
-                    return `${status}<@&${key}>\`+ ${guildData.perkchannel_roles[key]}\``;
-                })
-                .join("\n");
-        } else {
-            hasroles_display = `\`server has no perkrole roles\``;
-        }
-
-        let allowtocreate = false;
-        const allowedroles = [];
-        Object.keys(guildData.perkchannel_roles).forEach((key) => {
-            if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                return (allowtocreate = true);
-            }
-            allowedroles.push(key);
-        });
-        const allowedroles_mapped = allowedroles
-            .map((element) => {
-                return `<@&${element}>\`+ ${guildData.perkchannel_roles[element]}\``;
-            })
-            .join("\n");
-
-        if (allowtocreate === false) {
-            if (userData.privatechannel.id) {
-                interaction.guild.channels.delete(
-                    userData.privatechannel.id,
-                    "Didn't fulfill perkchannel requirements"
+                await PerkchannelModel.findOneAndUpdate(
+                    { userId: interaction.user.id },
+                    perkchannelData
                 );
+                slots_used = perkchannelData.users.length;
             }
-            userData.privatechannel.id = null;
-            userData.privatechannel.users = [];
-            await UserModel.findOneAndUpdate(
-                { userid: userData.userid },
-                userData
-            );
 
-            error_message = `\`You don't fulfill the requirements to have your own channel\`\n\n**Perkchannel roles:**\n${allowedroles_mapped}`;
-            return error_reply(interaction, error_message);
+            if (slots_used === 0) {
+                slots_used_display = `\`No slots used\``;
+            } else {
+                slots_used_display = perkchannelData.users
+                    .map((userId) => {
+                        return `<@${userId}>`;
+                    })
+                    .join(", ");
+            }
         }
 
-        if (interaction.options.getSubcommand() === "show") {
-            const sub_embed = new EmbedBuilder().setDescription(
-                `\`\`\`diff\nSubcommands:\n- /perkchannel userremove\n+ /perkchannel useradd\`\`\``
-            );
-            const show_embed = new EmbedBuilder()
-                .setColor("Random")
-                .setTitle(
-                    "Perk Channels <:discord_hashtag:1005987413161680936>"
-                )
-                .setDescription(
-                    `\`Slots is the number of users you are permitted to add\`\nChannel: <#${
-                        userData.privatechannel.id
-                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
-                        slots_max - slots_used
-                    ).toLocaleString()}\``
-                )
-                .addFields(
-                    {
-                        name: "Your Slots ↭",
-                        value: `${slots_display}`,
-                        inline: true,
-                    },
-                    {
-                        name: "Perkrole Roles ↭",
-                        value: `${hasroles_display}`,
-                        inline: true,
-                    }
-                );
-
-            const embeds = [show_embed];
-
-            if (slots_display_i) {
-                embeds.push(new EmbedBuilder().setDescription(slots_display_i));
-            } else {
-                embeds.push(sub_embed);
-            }
-            return interaction.reply({ embeds: embeds });
-        } else if (interaction.options.getSubcommand() === "create") {
-            if (!guildData.perkchannel_head) {
-                error_message = `\`This server doesn't have a parent channel where the perkchannels can be created under\``;
+        if (interaction.options.getSubcommand() === "create") {
+            if (perkchannelData) {
+                error_message = `You already own a perk channel, you can't create another one!\n\nChannel: <#${perkchannelData.channelId}>`;
                 return error_reply(interaction, error_message);
             }
 
-            if (userData.privatechannel.id) {
-                error_message = `\`You already have your own channel\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n- /perkchannel delete\`\`\``;
+            if (slots_max.slots_max === 0) {
+                error_message = `You don't have any perk channel slots to create a perk channel.`;
+                return error_reply(interaction, error_message);
+            }
+
+            if (!guildData.perk.placement.channelCategory) {
+                error_message = `Server has not set a channel category to place perk channels in.`;
                 return error_reply(interaction, error_message);
             }
 
@@ -295,11 +203,12 @@ module.exports = {
                 name: interaction.options.getString("name"),
             };
 
-            const channelinfo = {};
-            channelinfo.name = options.name;
-            channelinfo.parent = guildData.perkchannel_head;
-            channelinfo.type = ChannelType.GuildText;
-            const permissionoverwrites = [
+            const perkchannel_information = {};
+            perkchannel_information.name = options.name;
+            perkchannel_information.parent =
+                guildData.perk.placement.channelCategory;
+            perkchannel_information.type = ChannelType.GuildText;
+            perkchannel_information.permissionoverwrites = [
                 {
                     id: interaction.guild.id,
                     deny: [PermissionsBitField.Flags.ViewChannel],
@@ -318,9 +227,10 @@ module.exports = {
                     ],
                 },
             ];
-            if (guildData.roles.bots) {
-                permissionoverwrites.push({
-                    id: guildData.roles.bots,
+
+            if (guildData.miscData.roles.bots) {
+                perkchannel_information.permissionoverwrites.push({
+                    id: guildData.miscData.roles.bots,
                     allow: [
                         PermissionsBitField.Flags.ViewChannel,
                         PermissionsBitField.Flags.SendMessages,
@@ -335,323 +245,316 @@ module.exports = {
                     ],
                 });
             }
-            channelinfo.permissionOverwrites = permissionoverwrites;
 
-            const channelcreated = await interaction.guild.channels
-                .create(channelinfo)
+            perkchannel_discordData = await interaction.guild.channels
+                .create(perkchannel_information)
                 .catch((error) => {
-                    error_message = `\`${error.rawError.message}\``;
+                    error_message = `${error.rawError.message}`;
                     error_reply(interaction, error_message);
-                    return false;
+                    return null;
                 });
 
-            if (channelcreated === false) return;
-            channelcreated.send({
+            if (perkchannel_discordData === null) return;
+
+            slots_used = 0;
+
+            perkchannel_discordData.send({
                 content: `<@${interaction.user.id}>`,
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("Random")
-                        .setDescription(
-                            `**Private Channel Created Successfully**\n\nChannel: <#${
-                                channelcreated.id
-                            }>\nChannel Id: \`${
-                                channelcreated.id
-                            }\`\nSlots Available: \`${slots_max.toLocaleString()}\`\n\`\`\`diff\n+ /perkchannel useradd\n- /perkchannel userremove\n# /perkchannel show\n# /perkchannel edit\n- /perkchannel delete\`\`\``
-                        ),
+                    new EmbedBuilder().setDescription(
+                        `**Create perk channel: SUCCESSFUL**\n*I have made a perk channel for you! Enjoy it!*\n\nChannel: <#${
+                            perkchannel_discordData.id
+                        }>\nChannel Id: \`${
+                            perkchannel_discordData.id
+                        }\`\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
+                    ),
                 ],
             });
 
-            userData.privatechannel.id = channelcreated.id;
-            await UserModel.findOneAndUpdate(
-                { userid: userData.userid },
-                userData
+            await perk_channel_create(
+                interaction.user.id,
+                perkchannel_discordData.id
             );
 
-            let newmessage = `<a:ravena_check:1002981211708325950> **Private Channel Created Successfully**\n\nChannel: <#${
-                channelcreated.id
-            }>\nChannel Id: \`${
-                channelcreated.id
-            }\`\nSlots Available: \`${slots_max.toLocaleString()}\``;
-
-            const embed = new EmbedBuilder()
-                .setColor("Random")
-                .setDescription(newmessage);
-
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Create perk channel: SUCCESSFUL**\n*I have made a perk channel for you! Enjoy it!*\n\nChannel: <#${
+                            perkchannel_discordData.id
+                        }>\nChannel Id: \`${
+                            perkchannel_discordData.id
+                        }\`\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "show") {
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle(`Perk: Channel`)
+                        .setDescription(
+                            `*Slots is the number of users you are permitted to add to your perk channel in accordance to the roles you have.*\n\nPerk Channel: ${
+                                perkchannelData
+                                    ? `<#${perkchannelData.channelId}>`
+                                    : "`null`"
+                            }\nSlots Occupied: \`${slots_used}/${
+                                slots_max.slots_max
+                            }\``
+                        )
+                        .setFields(
+                            {
+                                name: "Perk-channel Roles ↭",
+                                value: slots_max.slots_hasroles_display,
+                                inline: true,
+                            },
+                            {
+                                name: "Occupied Slots ↭",
+                                value: `${
+                                    slots_used_display
+                                        ? slots_used_display
+                                        : `\`You don't own a perk channel\``
+                                }`,
+                                inline: true,
+                            }
+                        ),
+                ],
+            });
         } else if (interaction.options.getSubcommand() === "edit") {
+            if (!perkchannelData) {
+                error_message = `You don't own a perk channel, therefore you cannot edit its name.`;
+                return error_reply(interaction, error_message);
+            }
+
             const options = {
                 name: interaction.options.getString("name"),
             };
 
-            const privatechannel = interaction.guild.channels.cache.get(
-                userData.privatechannel.id
-            );
+            perkchannel_discordData.setName(options.name);
 
-            let updatedesc = `\`nothing has updated or changed\``;
-            let successdesc_head = `<a:ravena_check:1002981211708325950> **Channel updated successfully**\n\n`;
-
-            if (options.name) {
-                privatechannel.setName(options.name);
-                updatedesc =
-                    successdesc_head +
-                    `Channel: <#${privatechannel.id}>\nChannel Id: \`${privatechannel.id}\``;
-            } else {
-                updatedesc =
-                    updatedesc +
-                    `\n\n` +
-                    `Channel: <#${privatechannel.id}>\nChannel Id: \`${privatechannel.id}\``;
-            }
-            const update_embed = new EmbedBuilder()
-                .setDescription(updatedesc)
-                .setColor("#96ffa1");
-
-            return interaction.reply({ embeds: [update_embed] });
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Update perk channel: SUCCESSFUL**\n*I updated the name of you perk channel.*\n\nPerk Channel: <#${perkchannel_discordData.id}>`
+                    ),
+                ],
+            });
         } else if (interaction.options.getSubcommand() === "useradd") {
-            options = {
+            if (!perkchannelData) {
+                error_message = `You don't own a perk channel, therefore you cannot add it to users.`;
+                return error_reply(interaction, error_message);
+            }
+
+            if (slots_used >= slots_max.slots_max) {
+                error_message = `You have reached the maximum slots for your perk channel, therefore you cannot add any more users.\n\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``;
+                return error_reply(interaction, error_message);
+            }
+
+            const options = {
                 user: interaction.options.getMember("user"),
             };
 
             if (!options.user) {
-                error_message = `\`That user doesn't exist in the server\``;
+                error_message = `That user doesn't exist in the server.`;
+                return error_reply(interaction, error_message);
+            }
+
+            if (options.user.user.bot === true) {
+                error_message = `Bot permissions for this perk channel is defaulted.`;
                 return error_reply(interaction, error_message);
             }
 
             if (options.user.id === interaction.user.id) {
-                error_message = `\`You own the channel so why give to yourself?\``;
+                error_message = `You own the channel so why give to yourself?`;
                 return error_reply(interaction, error_message);
             }
 
-            if (slots_used >= slots_max) {
-                const sub_embed = new EmbedBuilder().setDescription(
-                    `\`\`\`diff\nSubcommands:\n- /perkchannel userremove\n# /perkchannel show\`\`\``
-                );
-                message = `**You have reached you max amount of user slots of \`${slots_max.toLocaleString()}\`, so you aren't able to add more**`;
-                const error_embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(message)
-                    .addFields(
-                        {
-                            name: "Your Slots ↭",
-                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
-                                slots_max - slots_used
-                            ).toLocaleString()}\``,
-                            inline: true,
-                        },
-                        {
-                            name: "Perkrole Roles ↭",
-                            value: `${hasroles_display}`,
-                            inline: true,
-                        }
-                    );
-                return interaction.reply({
-                    embeds: [error_embed, sub_embed],
-                    ephemeral: true,
-                });
-            }
-
-            let user = options.user;
-
-            if (userData.privatechannel.users.includes(`${options.user.id}`)) {
-                error_message = `**That user already exist in one of your user slots**\nUser: ${user}`;
+            if (perkchannelData.users.includes(options.user.id)) {
+                error_message = `That user already exist in one of your perk channel user slosts!\n\nUser: ${options.user}`;
                 return error_reply(interaction, error_message);
             }
 
-            userData.privatechannel.users.push(user.id);
-            slots_used = slots_used + 1;
-            const privatechannel = interaction.guild.channels.cache.get(
-                userData.privatechannel.id
+            perkchannelData.users.push(options.user.id);
+            slots_used = perkchannelData.users.length;
+            perkchannel_discordData =
+                await perkchannel_discordData.permissionOverwrites
+                    .edit(options.user.id, {
+                        ViewChannel: true,
+                        ReadMessageHistory: true,
+                        UseApplicationCommands: true,
+                        EmbedLinks: true,
+                        AttachFiles: true,
+                        UseExternalEmojis: true,
+                        AddReactions: true,
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return null;
+                    });
+
+            if (perkchannel_discordData === null) return;
+
+            await PerkchannelModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                perkchannelData
             );
-            const channelupdated = await privatechannel.permissionOverwrites
-                .edit(options.user.id, {
-                    ViewChannel: true,
-                    ReadMessageHistory: true,
-                    UseApplicationCommands: true,
-                    EmbedLinks: true,
-                    AttachFiles: true,
-                    UseExternalEmojis: true,
-                    AddReactions: true,
-                })
-                .catch((error) => {
-                    console.log(error);
-                    error_message = `\`${error.rawError.message}\``;
-                    error_reply(interaction, error_message);
-                    return false;
-                });
-            if (channelupdated === false) return;
 
-            await UserModel.findOneAndUpdate(
-                { userid: interaction.user.id },
-                userData
-            );
-
-            message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Channel: <#${
-                channelupdated.id
-            }>\nUser: ${user}\nAvailable Slots: \`${(
-                slots_max - slots_used
-            ).toLocaleString()}\``;
-
-            channelupdated.send({
+            perkchannel_discordData.send({
                 content: `${options.user}`,
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("Random")
-                        .setDescription(
-                            `**You have been invited to this private channel**\n\nChannel: <#${
-                                channelupdated.id
-                            }>\nChannel Id: \`${
-                                channelupdated.id
-                            }\`\nOwner: <@${
-                                interaction.user.id
-                            }>\nSlots Available: \`${(
-                                slots_max - slots_used
-                            ).toLocaleString()}\``
-                        ),
+                    new EmbedBuilder().setDescription(
+                        `*You have been invited to this perk channel.*\n\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nOwner: <@${interaction.user.id}>\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
                 ],
             });
 
-            const embed = new EmbedBuilder()
-                .setColor("#96ffa1")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Perk channel add user: SUCCESSFUL**\n*I added that user to your perk channel for you.*\n\nUser: ${options.user}\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
+                ],
+            });
         } else if (interaction.options.getSubcommand() === "userremove") {
-            options = {
+            if (!perkchannelData) {
+                error_message = `You don't own a perk channel, therefore you cannot remove it from users.`;
+                return error_reply(interaction, error_message);
+            }
+
+            if (perkchannelData.users.length <= 0) {
+                error_message = `You have no users occupying your perk channel slots, therefore you can't remove any users from you perk channel. Imagine being lonely.`;
+                return error_reply(interaction, error_message);
+            }
+
+            const options = {
                 user: interaction.options.getUser("user"),
             };
 
-            let user = options.user;
-
-            if (!userData.privatechannel.users.includes(`${options.user.id}`)) {
-                error_message = `**That user doesn't exist in one of your user slots**\nUser: ${user}`;
+            if (!perkchannelData.users.includes(options.user.id)) {
+                error_message = `That user doesn't exist in one of your perk channel user slots!\n\nUser: ${options.user}`;
                 return error_reply(interaction, error_message);
             }
 
-            const privatechannel = interaction.guild.channels.cache.get(
-                userData.privatechannel.id
+            if (options.user.id === interaction.user.id) {
+                error_message = `Thats your own perk channel so you can't remove yourself!`;
+                return error_reply(interaction, error_message);
+            }
+
+            perkchannel_discordData =
+                await perkchannel_discordData.permissionOverwrites
+                    .delete(options.user)
+                    .catch((error) => {
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return null;
+                    });
+
+            if (perkchannel_discordData === null) return;
+
+            perkchannelData.users.splice(
+                perkchannelData.users.indexOf(options.user.id),
+                1
             );
-            const channelupdated = await privatechannel.permissionOverwrites
-                .delete(options.user)
-                .catch((error) => {
-                    error_message = `\`${error.rawError.message}\``;
-                    error_reply(interaction, error_message);
-                    return false;
-                });
 
-            if (channelupdated === false) return;
-
-            const pullIndex = userData.privatechannel.users.indexOf(user.id);
-            userData.privatechannel.users.splice(pullIndex, 1);
-            slots_used = slots_used - 1;
-
-            await UserModel.findOneAndUpdate(
-                { userid: interaction.user.id },
-                userData
+            await PerkchannelModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                perkchannelData
             );
 
-            message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Channel: <#${
-                channelupdated.id
-            }>\nUser: ${user}\nAvailable Slots: \`${(
-                slots_max - slots_used
-            ).toLocaleString()}\``;
+            slots_used = perkchannelData.users.length;
 
-            channelupdated.send({
-                content: `\`A user has been removed from this private channel\``,
+            perkchannel_discordData.send({
+                content: `${options.user}`,
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("#f2b079")
-                        .setDescription(
-                            `User: ${options.user}\nChannel: <#${
-                                channelupdated.id
-                            }>\nChannel Id: \`${
-                                channelupdated.id
-                            }\`\nOwner: <@${
-                                interaction.user.id
-                            }>\nSlots Available: \`${(
-                                slots_max - slots_used
-                            ).toLocaleString()}\``
-                        ),
+                    new EmbedBuilder().setDescription(
+                        `*User has been removed from this perk channel.*\n\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nOwner: <@${interaction.user.id}>\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
                 ],
             });
 
-            const embed = new EmbedBuilder()
-                .setColor("#96ffa1")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Perk channel remove user: SUCCESSFUL**\n*I removed that user from your perk channel for you.*\n\nUser: ${options.user}\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
+                ],
+            });
         } else if (interaction.options.getSubcommand() === "selfremove") {
             options = {
                 channel: interaction.options.getChannel("channel"),
             };
-            const channelData = await UserModel.findOne({
-                "privatechannel.id": options.channel.id,
+
+            perkchannelData = await PerkchannelModel.findOne({
+                channelId: options.channel.id,
             });
 
-            if (!channelData) {
-                error_message = `\`This channel is not registered as a private perkchannel, if you believe this is a mistake please direct message the bot developer\``;
+            if (!perkchannelData) {
+                error_message = `This channel is not registered as a perk channel, if you believe this is a mistake please direct message the bot developer.`;
                 return error_reply(interaction, error_message);
             }
 
-            if (
-                !channelData.privatechannel.users.includes(interaction.user.id)
-            ) {
-                error_message = `\`You do not have access to this channel, so you cannot remove yourslf from it\``;
+            if (perkchannelData.userId === interaction.user.id) {
+                error_message = `Thats your own perk channel so you can't remove yourself!`;
                 return error_reply(interaction, error_message);
             }
 
-            const privatechannel = interaction.guild.channels.cache.get(
-                channelData.privatechannel.id
-            );
-            const channelupdated = await privatechannel.permissionOverwrites
-                .delete(interaction.user.id)
-                .catch((error) => {
-                    error_message = `\`${error.rawError.message}\``;
-                    error_reply(interaction, error_message);
-                    return false;
-                });
+            if (!perkchannelData.users.includes(interaction.user.id)) {
+                error_message = `You do not have access to this channel, therefore you cannot remove yourself from it.`;
+                return error_reply(interaction, error_message);
+            }
 
-            if (channelupdated === false) return;
-
-            const pullIndex = channelData.privatechannel.users.indexOf(
-                interaction.user.id
-            );
-            channelData.privatechannel.users.splice(pullIndex, 1);
-            slots_used = slots_used - 1;
-
-            await UserModel.findOneAndUpdate(
-                { userid: channelData.userid },
-                channelData
+            perkchannel_discordData = interaction.guild.channels.cache.get(
+                perkchannelData.channelId
             );
 
-            channelupdated.send({
-                content: `\`A user has left this private channel\``,
+            perkchannel_discordData =
+                await perkchannel_discordData.permissionOverwrites
+                    .delete(interaction.user.id)
+                    .catch((error) => {
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return null;
+                    });
+
+            if (perkchannel_discordData === null) return;
+
+            perkchannelData.users.splice(
+                perkchannelData.users.indexOf(interaction.user.id),
+                1
+            );
+
+            await perkchannelData.findOneAndUpdate(
+                { channelId: perkchannelData.channelId },
+                perkchannelData
+            );
+
+            slots_used = perkchannelData.users.length;
+
+            perkchannel_discordData.send({
+                content: `${options.user}`,
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("#f2b079")
-                        .setDescription(
-                            `User: <@${interaction.user.id}>\nChannel: <#${
-                                channelupdated.id
-                            }>\nChannel Id: \`${
-                                channelupdated.id
-                            }\`\nOwner: <@${
-                                channelData.userid
-                            }>\nSlots Available: \`${(
-                                slots_max - slots_used
-                            ).toLocaleString()}\``
-                        ),
+                    new EmbedBuilder().setDescription(
+                        `*User has left this perk channel.*\n\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nOwner: <@${interaction.user.id}>\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
                 ],
             });
 
-            message = `<a:ravena_check:1002981211708325950> **Left channel successfully**\nChannel: <#${channelupdated.id}>\nOwner: <@${channelData.userid}>`;
-
-            const embed = new EmbedBuilder()
-                .setColor("#96ffa1")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Perk channel self remove: SUCCESSFUL**\n*I removed you from that perk channel.*\n\n\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nOwner: <@${perkchannelData.user}>`
+                    ),
+                ],
+            });
         } else if (interaction.options.getSubcommand() === "sync") {
-            const privatechannel = interaction.guild.channels.cache.get(
-                userData.privatechannel.id
-            );
+            if (!perkchannelData) {
+                error_message = `You don't own a perk channel, therefore you cannot user this command.`;
+                return error_reply(interaction, error_message);
+            }
 
-            const channelupdatedowner =
-                await privatechannel.permissionOverwrites
+            perkchannel_discordData =
+                await perkchannel_discordData.permissionOverwrites
                     .edit(interaction.user.id, {
                         ViewChannel: true,
                         ReadMessageHistory: true,
@@ -663,183 +566,34 @@ module.exports = {
                         AddReactions: true,
                     })
                     .catch((error) => {
-                        console.log(error);
-                        error_message = `\`${error.rawError.message}\``;
+                        error_message = `${error.rawError.message}`;
                         error_reply(interaction, error_message);
                         return false;
                     });
-            if (channelupdatedowner === false) return;
 
-            userData.privatechannel.users.forEach(async (user) => {
-                await privatechannel.permissionOverwrites.edit(user, {
-                    ViewChannel: true,
-                    ReadMessageHistory: true,
-                    UseApplicationCommands: true,
-                    EmbedLinks: true,
-                    AttachFiles: true,
-                    UseExternalEmojis: true,
-                    UseExternalStickers: true,
-                    AddReactions: true,
-                });
+            if (perkchannel_discordData === false) return;
+
+            perkchannelData.users.forEach(async (userId) => {
+                await perkchannel_discordData.permissionOverwrites.edit(
+                    userId,
+                    {
+                        ViewChannel: true,
+                        ReadMessageHistory: true,
+                        UseApplicationCommands: true,
+                        EmbedLinks: true,
+                        AttachFiles: true,
+                        UseExternalEmojis: true,
+                        UseExternalStickers: true,
+                        AddReactions: true,
+                    }.catch((error) => {})
+                );
             });
 
             return interaction.reply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("#42f563")
-                        .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully synced your channel's permissions**\nYour Channel: <#${privatechannel.id}>`
-                        ),
-                ],
-            });
-        } else if (interaction.options.getSubcommand() === "scan") {
-            if (
-                !interaction.member.roles.cache.has("938372143853502494") ===
-                true
-            ) {
-                error_message = `\`You don't have the required permissions to preform this action\``;
-                return error_reply(interaction, error_message);
-            }
-
-            const scan_msg = await interaction.reply({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor("Random")
-                        .setDescription(`Scanning private channels...`),
-                ],
-                fetchReply: true,
-            });
-
-            let usersArray = await UserModel.find({
-                "privatechannel.id": { $exists: true, $ne: null },
-            });
-
-            usersArray.forEach(async (user) => {
-                const channel = interaction.guild.channels.cache.get(
-                    user.privatechannel.id
-                );
-                if (!channel) {
-                    user.privatechannel.id = null;
-                    user.privatechannel.users = [];
-                    await UserModel.findOneAndUpdate(
-                        { userid: user.userid },
-                        user
-                    );
-                }
-                return;
-            });
-
-            usersArray = await UserModel.find({
-                "privatechannel.id": { $exists: true, $ne: null },
-            });
-
-            const flaggedUsersMap = Promise.all(
-                usersArray.map(async (user) => {
-                    const channel = interaction.guild.channels.cache.get(
-                        user.privatechannel.id
-                    );
-
-                    const userFetchedData = await interaction.guild.members
-                        .fetch(user.userid)
-                        .catch((error) => {
-                            return;
-                        });
-
-                    if (!userFetchedData) {
-                        return user;
-                    }
-
-                    let s_slots_max = 0;
-                    let s_slots_used = user.privatechannel.users.length;
-
-                    let hasroles = [];
-                    Object.keys(guildData.perkchannel_roles).forEach((key) => {
-                        if (
-                            userFetchedData.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            s_slots_max =
-                                s_slots_max + guildData.perkchannel_roles[key];
-                            hasroles.push(key);
-                        }
-                    });
-
-                    if (s_slots_used > s_slots_max) {
-                        const removedusers =
-                            user.privatechannel.users.slice(s_slots_max);
-                        removedusers.forEach(async (removedid) => {
-                            if (channel) {
-                                await channel.permissionOverwrites.delete(
-                                    removedid
-                                );
-                                s_slots_used = s_slots_used - 1;
-                                privatechannel.send({
-                                    content: `\`A user has been removed from this private channel\``,
-                                    embeds: [
-                                        new EmbedBuilder()
-                                            .setColor("#f2b079")
-                                            .setDescription(
-                                                `User: <@${removedid}>\nChannel: <#${
-                                                    privatechannel.id
-                                                }>\nChannel Id: \`${
-                                                    privatechannel.id
-                                                }\`\nOwner: <@${
-                                                    interaction.user.id
-                                                }>\nSlots Available: \`${(
-                                                    s_slots_max - s_slots_used
-                                                ).toLocaleString()}\``
-                                            ),
-                                    ],
-                                });
-                            }
-                        });
-                        user.privatechannel.users =
-                            user.privatechannel.users.slice(0, s_slots_max);
-                        await UserModel.findOneAndUpdate(
-                            { userid: user.userid },
-                            user
-                        );
-                        s_slots_used = user.privatechannel.users.length;
-                    }
-
-                    if (s_slots_max <= 0) {
-                        return user;
-                    }
-                })
-            );
-            let flaggedUsers = await flaggedUsersMap;
-            flaggedUsers = flaggedUsers.filter(Boolean);
-            const flaggedUsersDisplay = flaggedUsers
-                .map((user) => {
-                    return `\`-\` <@${user.userid}> \`${user.privatechannel.id}\``;
-                })
-                .join("\n");
-            flaggedUsers.forEach(async (user) => {
-                interaction.guild.channels.delete(
-                    user.privatechannel.id,
-                    "Didn't fulfill perkchannel requirements"
-                );
-                user.privatechannel.id = null;
-                user.privatechannel.users = [];
-                await UserModel.findOneAndUpdate({ userid: user.userid }, user);
-            });
-
-            return scan_msg.edit({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor("#42f563")
-                        .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully scanned private channels**\n\n__**Following Channels Deleted:**__\nActive Channels: \`${
-                                usersArray.length - flaggedUsers.length
-                            }\`\nChannels Deleted: \`${
-                                flaggedUsers.length
-                            }\`\n\n${
-                                flaggedUsers.length > 0
-                                    ? flaggedUsersDisplay
-                                    : `\`none\``
-                            }`
-                        ),
+                    new EmbedBuilder().setDescription(
+                        `**Sync perk channel permissions: SUCCESSFUL**\n*I synced your perk channel permissions according what is stored.*\n\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
                 ],
             });
         }

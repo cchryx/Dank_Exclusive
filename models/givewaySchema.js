@@ -2,30 +2,30 @@ const mongoose = require("mongoose");
 
 const giveawaySchema = new mongoose.Schema(
     {
-        guildid: {
+        guildId: {
             type: String,
             required: true,
         },
-        channelid: {
+        channelId: {
             type: String,
             required: true,
         },
-        messageid: {
+        messageId: {
             type: String,
             required: true,
         },
-        hostid: {
+        hostId: {
             type: String,
             required: true,
         },
-        sponsorid: {
+        sponsorId: {
             type: String,
             required: true,
         },
-        sponsormessage: {
+        sponsorMessage: {
             type: String,
         },
-        winnersamount: {
+        winnersAmount: {
             type: Number,
             required: true,
         },
@@ -45,15 +45,14 @@ const giveawaySchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        infodisplay: {
+        informationDisplay: {
             type: String,
-        },
-        typeurl: {
-            type: String,
-            required: true,
         },
         requirements: {
-            type: Array,
+            type: Object,
+        },
+        chatRequirements: {
+            type: Object,
         },
         blacklist: {
             type: Array,
@@ -61,20 +60,19 @@ const giveawaySchema = new mongoose.Schema(
         bypass: {
             type: Array,
         },
+        globalBypass: {
+            type: String,
+        },
         entries: {
             type: Array,
             default: [],
         },
-        winnersresults: {
+        winnersResults: {
             type: Array,
             default: [],
         },
-        rerollexpire: {
+        rerollExpire: {
             type: Number,
-        },
-        entriescount: {
-            type: Number,
-            default: 0,
         },
     },
     { minimize: false }

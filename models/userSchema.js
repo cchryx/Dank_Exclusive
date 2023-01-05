@@ -2,34 +2,29 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
     {
-        userid: {
+        userId: {
             type: String,
             required: true,
             unique: true,
         },
-        privatechannel: {
-            type: Object,
-            default: {
-                id: null,
-                users: [],
-            },
-        },
-        customrole: {
-            type: Object,
-            default: {
-                id: null,
-                users: [],
-            },
-        },
-        autoreaction: {
+        autoReaction: {
             type: Array,
             default: [],
         },
-        donations: {
+        levelInfo: {
+            type: Object,
+            default: {
+                prestige: 0,
+                level: 0,
+                exp: 0,
+                messages: 0,
+            },
+        },
+        donation: {
             type: Object,
             default: {},
         },
-        miscdata: {
+        miscData: {
             type: Object,
             default: {},
         },

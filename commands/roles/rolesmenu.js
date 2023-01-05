@@ -9,23 +9,21 @@ const {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("roles")
-        .setDescription("Quick and easy self role menu")
+        .setName("rolesmenu")
+        .setDescription("Quick and easy self role menu.")
         .addSubcommand((subcommand) =>
-            subcommand
-                .setName("main")
-                .setDescription("Main: quick and easy self role menu")
+            subcommand.setName("main").setDescription("Main ping roles.")
         ),
     cooldown: 10,
     async execute(interaction, client) {
         if (interaction.options.getSubcommand() === "main") {
             const roles_embed = new EmbedBuilder()
-                .setTitle(`Main Ping Roles`)
-                .setColor(`#e0cffa`)
                 .setFooter({
                     text: "Click buttons to get your self role",
                 })
-                .setDescription(`\`╔⏤⏤⏤⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤⏤⏤⏤╗\``);
+                .setDescription(
+                    `**Main Ping Roles**\n*Here lies a self role menu.*\n\`╔⏤⏤⏤⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤⏤⏤⏤╗\``
+                );
 
             interaction.reply({
                 content: `Successfully posted self roles`,

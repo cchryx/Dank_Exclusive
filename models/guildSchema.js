@@ -2,81 +2,58 @@ const mongoose = require("mongoose");
 
 const guildSchema = new mongoose.Schema(
     {
-        guildid: {
+        guildId: {
             type: String,
             required: true,
+            unique: true,
         },
-        giveaway_roles: {
-            type: Array,
-            default: [],
-        },
-        giveaway_userids: {
-            type: Array,
-            default: [],
-        },
-        moderation_roles: {
-            type: Array,
-            default: [],
-        },
-        moderation_userids: {
-            type: Array,
-            default: [],
-        },
-        boostroles: {
-            type: Array,
-            default: [],
-        },
-        perkar_roles: {
+        perk: {
             type: Object,
-            default: {},
-        },
-        perkchannel_roles: {
-            type: Object,
-            default: {},
-        },
-        perkrole_roles: {
-            type: Object,
-            default: {},
-        },
-        perkrole_head: {
-            type: String,
-            default: "",
-        },
-        perkrole_head: {
-            type: String,
-            default: "",
-        },
-        perkchannel_head: {
-            type: String,
-            default: "",
+            default: {
+                placement: { channelCategory: null, rolePlacer: null },
+                channel: {},
+                autoReaction: {},
+                role: {},
+            },
         },
         giveaway: {
             type: Object,
             default: {
-                mentions: {},
-                blacklist: [],
-                bypass: [],
+                globalBlacklist_roles: [],
+                globalBypass_roles: [],
             },
         },
-        roles: {
+        donation: {
             type: Object,
-            default: {},
+            default: {
+                roles: {},
+            },
+        },
+        level: {
+            type: Object,
+            default: {
+                multipliers: {
+                    channel: {},
+                    role: {},
+                },
+            },
         },
         theme: {
             type: Object,
             default: {
-                color: "#f7cb8d",
-                emoji_join: "<:smoothie:1003726574094397560>",
-                emoji_mainpoint: "<:mainpoint_summer:1004211052612944014>",
-                emoji_subpoint: "<a:subpoint_summer:1003716658277392484>",
-                dividerurl:
-                    "https://media.discordapp.net/attachments/1003715669059178626/1003729430897770506/ezgif.com-gif-maker_14.gif",
-                button_style: 4,
+                color: "#c2c6f0",
+                emoji_join: "<:xmasGift:1043675437743743016>",
+                emoji_mainpoint: "<:xmasSanta:1043675777859862589> ",
+                emoji_subpoint: "<:xmasCandy:1043675660989763674> ",
+                emoji_reroll: "<:xmasBells:1043675497365770261>",
+                divider_url:
+                    "https://media.discordapp.net/attachments/1001660282663337986/1048011566529912882/ezgif.com-gif-maker_7.gif?width=576&height=35",
+                button_style: 2,
             },
         },
-        data: {
+        miscData: {
             type: Object,
-            default: {},
+            default: { roles: {}, channels: {}, categories: {} },
         },
     },
     { minimize: false }

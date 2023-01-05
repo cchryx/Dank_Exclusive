@@ -7,7 +7,7 @@ const colors = require("colors");
 module.exports = (client) => {
     client.handleCommands = async (commandFolders, path) => {
         const clientId = "1001660550809395281";
-        const guildId = "1001660281866424423";
+        const guildId = "902334382939963402";
 
         client.commandArray = [];
         for (folder of commandFolders) {

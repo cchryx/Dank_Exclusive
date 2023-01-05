@@ -12,467 +12,272 @@ const UserModel = require("../../models/userSchema");
 const { user_fetch } = require("../../utils/user");
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
+const { perk_slots_max } = require("../../utils/perk");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("perkar")
-        .setDescription("Perk command: add/edit your autoreaction")
+        .setDescription("Perk command: show/edit your auto-reaction")
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("show")
-                .setDescription("Show your current autoreactions")
+                .setDescription("Show your current auto reactions.")
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("remove")
-                .setDescription("Choose an autoreaction to remove")
+                .setDescription("Choose an auto-reaction to remove.")
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("add")
-                .setDescription("Add an autoreaction")
+                .setDescription("Add an auto-reaction")
                 .addStringOption((oi) => {
                     return oi
                         .setName("emoji")
                         .setDescription(
-                            "A valid role that exists in this server"
+                            "A valid emoji that exists in this server (including default emojis)."
                         )
                         .setRequired(true);
                 })
         ),
     async execute(interaction, client) {
+        let error_message;
         const guildData = await guild_fetch(interaction.guildId);
-        let userData = await user_fetch(interaction.user.id);
-        if (interaction.options.getSubcommand() === "show") {
-            let slots_max = 0;
-            let slots_used = userData.autoreaction.length;
-            let hasroles_display;
-            let slots_display;
+        const userData = await user_fetch(interaction.user.id);
+        const slots_max = await perk_slots_max(
+            interaction,
+            guildData.perk.autoReaction
+        );
+        let slots_used = userData.autoReaction.length;
+        let slots_used_display;
 
-            let hasroles = [];
-            Object.keys(guildData.perkar_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    slots_max = slots_max + guildData.perkar_roles[key];
-                    hasroles.push(key);
-                }
-            });
+        if (slots_max.slots_max > 2) {
+            slots_max.slots_max = 2;
+        }
 
-            if (slots_max > 2) {
-                slots_max = 2;
-            }
-
-            if (slots_used > slots_max) {
-                userData.autoreaction = userData.autoreaction.slice(
-                    0,
-                    slots_max
-                );
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                slots_used = userData.autoreaction.length;
-            }
-
-            if (slots_used === 0) {
-                slots_display = `\`no slots\``;
-            } else {
-                slots_display = userData.autoreaction
-                    .map((emoji) => {
-                        const slot_location =
-                            userData.autoreaction.indexOf(emoji) + 1;
-                        return `Slot ${slot_location}: ${emoji}`;
-                    })
-                    .join("\n");
-            }
-
-            if (guildData.perkar_roles) {
-                hasroles_display = Object.keys(guildData.perkar_roles)
-                    .map((key) => {
-                        let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            status = "<a:ravena_check:1002981211708325950>";
-                        }
-                        return `${status}<@&${key}>\`+ ${guildData.perkar_roles[key]}\``;
-                    })
-                    .join("\n");
-            } else {
-                hasroles_display = `\`server has no perk autoreaction roles\``;
-            }
-
-            const sub_embed = new EmbedBuilder().setDescription(
-                `\`\`\`diff\nSubcommands:\n- /perkar remove\n+ /perkar add\`\`\``
+        if (slots_max.slots_max === 0) {
+            userData.autoReaction = [];
+            await UserModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                userData
             );
-            const show_embed = new EmbedBuilder()
-                .setColor("Random")
-                .setTitle("Perk Autoreactions <a:alert:945455886187503686>")
-                .setDescription(
-                    `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
-                        slots_max - slots_used
-                    }\``
-                )
-                .addFields(
-                    {
-                        name: "Your Slots ↭",
-                        value: `${slots_display}`,
-                        inline: true,
-                    },
-                    {
-                        name: "Autoreaction Roles ↭",
-                        value: `${hasroles_display}`,
-                        inline: true,
-                    }
-                );
+            slots_used = userData.autoReaction.length;
+        }
 
-            return interaction.reply({ embeds: [show_embed, sub_embed] });
+        if (slots_used > slots_max.slots_max) {
+            userData.autoReaction = userData.autoReaction.slice(
+                0,
+                slots_max.slots_max
+            );
+            await UserModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                userData
+            );
+            slots_used = userData.autoReaction.length;
+        }
+
+        if (slots_used === 0) {
+            slots_used_display = `\`No slots used\``;
+        } else {
+            slots_used_display = userData.autoReaction
+                .map((emoji) => {
+                    return `${emoji}`;
+                })
+                .join(", ");
+        }
+
+        if (interaction.options.getSubcommand() === "show") {
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle(`Perk: Auto-reactions`)
+                        .setDescription(
+                            `*Slots is the number of auto-reactions you are permitted to add in accordance to the roles you have.*\n\nSlots Used: \`${slots_used}/${slots_max.slots_max}\``
+                        )
+                        .setFields(
+                            {
+                                name: "Perk-autoreaction Roles ↭",
+                                value: slots_max.slots_hasroles_display,
+                                inline: true,
+                            },
+                            {
+                                name: "Occupied Slots ↭",
+                                value: slots_used_display,
+                                inline: true,
+                            }
+                        ),
+                ],
+            });
         } else if (interaction.options.getSubcommand() === "add") {
             const options = {
                 emoji: interaction.options.getString("emoji"),
             };
-            let slots_max = 0;
-            let slots_used = userData.autoreaction.length;
-            let slots_display;
-            let hasroles_display;
-            let message;
 
-            let hasroles = [];
-            Object.keys(guildData.perkar_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    slots_max = slots_max + guildData.perkar_roles[key];
-                    hasroles.push(key);
-                }
-            });
-
-            if (slots_max > 2) {
-                slots_max = 2;
+            if (slots_max.slots_max === 0) {
+                error_message = `You have no perk auto-reaction slots!\n\nSlots Status: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``;
+                error_reply(interaction, error_message);
             }
 
-            if (slots_used === 0) {
-                slots_display = `\`no slots\``;
-            } else {
-                slots_display = userData.autoreaction
-                    .map((emoji) => {
-                        const slot_location =
-                            userData.autoreaction.indexOf(emoji) + 1;
-                        return `Slot ${slot_location}: ${emoji}`;
-                    })
-                    .join("\n");
+            if (slots_used >= slots_max.slots_max) {
+                error_message = `All of your perk auto-reaction slots are occupied, so you can't add anymore!\n\nSlots Status: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``;
+                error_reply(interaction, error_message);
             }
 
-            if (guildData.perkar_roles) {
-                hasroles_display = Object.keys(guildData.perkar_roles)
-                    .map((key) => {
-                        let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            status = "<a:ravena_check:1002981211708325950>";
-                        }
-                        return `${status}<@&${key}>\`+ ${guildData.perkar_roles[key]}\``;
-                    })
-                    .join("\n");
-            } else {
-                hasroles_display = `\`server has no perk autoreaction roles\``;
+            if (userData.autoReaction.includes(`${options.emoji}`)) {
+                error_message = `That emoji already exits in one of your autoreaction slots.\n\nEmoji: ${options.emoji}`;
+                error_reply(interaction, error_message);
             }
 
-            if (slots_used >= slots_max) {
-                userData.autoreaction = userData.autoreaction.slice(
-                    0,
-                    slots_max
-                );
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                slots_used = userData.autoreaction.length;
-
-                const sub_embed = new EmbedBuilder().setDescription(
-                    `\`\`\`diff\nSubcommands:\n- /perkar remove\n# /perkar show\`\`\``
-                );
-                message = `**You have reached you max amount of autoreaction slots of \`${slots_max}\`, so you aren't able to add more**`;
-                const error_embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(message)
-                    .addFields(
-                        {
-                            name: "Your Slots ↭",
-                            value: `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
-                                slots_max - slots_used
-                            }\``,
-                            inline: true,
-                        },
-                        {
-                            name: "Autoreaction Roles ↭",
-                            value: `${hasroles_display}`,
-                            inline: true,
-                        }
-                    );
-                return interaction.reply({
-                    embeds: [error_embed, sub_embed],
-                    ephemeral: true,
-                });
-            }
-
-            let emoji = options.emoji;
-
-            if (userData.autoreaction.includes(`${options.emoji}`)) {
-                message = `**That emoji already exits in one of your autoreaction slots**\nEmoji: ${options.emoji}`;
-                const error_embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(message);
-                return interaction.reply({
-                    embeds: [error_embed],
-                    ephemeral: true,
-                });
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor("Random")
-                .setDescription("Checking if your emoji is valid...");
-
-            const verify_msg = await interaction.reply({
-                embeds: [embed],
+            const perkar_add_message = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Checking if the emoji is usable for an auto-reaction...**`
+                    ),
+                ],
                 fetchReply: true,
             });
 
-            const verifyemoji = await verify_msg
-                .react(`${emoji}`)
+            const verifyEmoji = await perkar_add_message
+                .react(`${options.emoji}`)
                 .catch(async (error) => {
                     if (error.code === 10014) {
-                        message =
-                            "**You emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
-                        embed.setColor("Red").setDescription(message);
-                        verify_msg.edit({ embeds: [embed] });
+                        perkar_add_message.edit({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setDescription(
+                                        `**Your emoji was not valid!**\nYou need to provide a valid emoji that is from Dank Exclusive or can be used by the bot.`
+                                    )
+                                    .setColor("Red"),
+                            ],
+                        });
                         return false;
                     }
                 });
 
-            if (verifyemoji !== false) {
-                if (verifyemoji._emoji.id) {
-                    if (verifyemoji._emoji.animated === true) {
-                        emoji = `<a:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
-                    } else {
-                        emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
-                    }
-                } else {
-                    emoji = `${verifyemoji._emoji.name}`;
-                }
-                userData.autoreaction.push(emoji);
-                slots_used = slots_used + 1;
-
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                message = `<a:ravena_check:1002981211708325950> **Autoreaction updated successfully**\nEmoji: ${emoji}\nAvailable Slots: \`${
-                    slots_max - slots_used
-                }\``;
-                embed.setColor("Green").setDescription(message);
-                return verify_msg.edit({ embeds: [embed] });
-            }
-        } else if (interaction.options.getSubcommand() === "remove") {
-            let slots_max = 0;
-            let slots_used = userData.autoreaction.length;
-            let slots_display;
-
-            let hasroles = [];
-            Object.keys(guildData.perkar_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    slots_max = slots_max + guildData.perkar_roles[key];
-                    hasroles.push(key);
-                }
-            });
-
-            if (slots_max > 2) {
-                slots_max = 2;
+            if (verifyEmoji === false) {
+                return;
             }
 
-            if (slots_used > slots_max) {
-                userData.autoreaction = userData.autoreaction.slice(
-                    0,
-                    slots_max
-                );
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                slots_used = userData.autoreaction.length;
-            }
-
-            if (slots_used === 0) {
-                slots_display = `\`no slots\``;
+            if (verifyEmoji._emoji.id) {
+                options.emoji =
+                    verifyEmoji._emoji.animated === true
+                        ? `<a:${verifyEmoji._emoji.name}:${verifyEmoji._emoji.id}>`
+                        : `<:${verifyEmoji._emoji.name}:${verifyEmoji._emoji.id}>`;
             } else {
-                slots_display = userData.autoreaction
-                    .map((emoji) => {
-                        const slot_location =
-                            userData.autoreaction.indexOf(emoji) + 1;
-                        return `Slot ${slot_location}: ${emoji}`;
-                    })
-                    .join("\n");
+                options.emoji = `${verifyEmoji._emoji.name}`;
             }
+            userData.autoReaction.push(options.emoji);
 
-            if (guildData.perkar_roles) {
-                hasroles_display = Object.keys(guildData.perkar_roles)
-                    .map((key) => {
-                        let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            status = "<a:ravena_check:1002981211708325950>";
-                        }
-                        return `${status}<@&${key}>\`+ ${guildData.perkar_roles[key]}\``;
-                    })
-                    .join("\n");
-            } else {
-                hasroles_display = `\`server has no perk autoreaction roles\``;
-            }
-
-            const sub_embed = new EmbedBuilder().setDescription(
-                `\`\`\`fix\nClick and choose which slots you want to remove\`\`\``
+            await UserModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                userData
             );
-            let show_embed = new EmbedBuilder()
-                .setColor("Random")
-                .setTitle("Perk Autoreactions")
-                .setDescription(
-                    `${
-                        slots_used > 0
-                            ? `\`You have 15 seconds of idle time before timeout\`\n`
-                            : ``
-                    }\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
-                        slots_max - slots_used
-                    }\``
-                )
-                .addFields({
-                    name: "Your Slots ↭",
-                    value: `${slots_display}`,
-                    inline: true,
-                });
 
-            let emojislots = [];
-
-            if (userData.autoreaction.length <= 0) {
-                sub_embed.setDescription(
-                    `\`\`\`diff\n- You have no autoreactions\n+ /boosterar add\n# /perkar show\`\`\``
-                );
+            return perkar_add_message.edit({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Successfully added auto-reaction!**\n\nEmoji: ${options.emoji}`
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "remove") {
+            if (slots_used <= 0) {
+                error_message = `None of your slots are occupied.`;
+                error_reply(interaction, error_message);
             }
-
-            const slots_buttons = [];
             const row = new ActionRowBuilder();
+            const slots_buttons = [];
 
-            for (let i = 0; i < userData.autoreaction.length; i++) {
+            for (const autoreaction in userData.autoReaction) {
                 slots_buttons.push(
                     new ButtonBuilder()
-                        .setCustomId(`${i}`)
-                        .setLabel(`Slot ${i + 1}`)
-                        .setEmoji(`${userData.autoreaction[i]}`)
+                        .setCustomId(autoreaction)
+                        .setEmoji(`${userData.autoReaction[autoreaction]}`)
                         .setStyle(ButtonStyle.Primary)
                 );
             }
+
             row.setComponents(slots_buttons);
-
-            emojislots = emojislots
-                .map((slot) => {
-                    return slot;
-                })
-                .join("\n");
-
-            if (slots_buttons.length <= 0) {
-                return interaction.reply({
-                    embeds: [show_embed, sub_embed],
-                });
-            }
-
-            interaction.reply({
-                embeds: [show_embed, sub_embed],
+            const perkar_remove_message = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Remove auto-reaction:**\n*Choose an auto-reaction using the buttons below to remove.*\n\nAction Timeout: <t:${Math.floor(
+                            (Date.now() + 15 * 1000) / 1000
+                        )}:R>`
+                    ),
+                ],
                 components: [row],
+                fetchReply: true,
             });
 
-            const remove_msg = await interaction.fetchReply();
-            const collector = remove_msg.createMessageComponentCollector({
-                idle: 15 * 1000,
-            });
+            const perkar_remove_collector =
+                perkar_remove_message.createMessageComponentCollector({
+                    time: 15 * 1000,
+                });
 
-            let clicked_embed = new EmbedBuilder();
-            collector.on("collect", async (button) => {
+            let interaction_ended = false;
+            perkar_remove_collector.on("collect", async (button) => {
                 if (button.user.id !== interaction.user.id) {
-                    return button.reply({
-                        content: `Not for you to touch`,
-                        ephemeral: true,
-                    });
+                    error_message = `This is not for you leave it alone.`;
+                    error_reply(button, error_message);
                 }
+
                 button.deferUpdate();
-                if (button) {
-                    const slotloaction = parseInt(button.customId);
-                    const row = ActionRowBuilder.from(remove_msg.components[0]);
-                    row.components.forEach((c) => {
-                        c.setDisabled().setStyle(ButtonStyle.Secondary);
-                    });
-                    userData.autoreaction.pull(
-                        userData.autoreaction[slotloaction]
-                    );
-                    await UserModel.findOneAndUpdate(
-                        { userid: interaction.user.id },
-                        userData
-                    );
 
-                    userData = await user_fetch(interaction.user.id);
-                    slots_used = userData.autoreaction.length;
-                    slots_display = null;
+                const slot_location = parseInt(button.customId);
+                const slots_removed_emoji =
+                    userData.autoReaction[slot_location];
+                const row = ActionRowBuilder.from(
+                    perkar_remove_message.components[0]
+                );
 
-                    if (slots_used === 0) {
-                        slots_display = `\`no slots\``;
-                    } else {
-                        slots_display = userData.autoreaction
-                            .map((emoji) => {
-                                const slot_location =
-                                    userData.autoreaction.indexOf(emoji) + 1;
-                                return `Slot ${slot_location}: ${emoji}`;
-                            })
-                            .join("\n");
-                    }
-
-                    sub_embed.setDescription(
-                        `\`\`\`fix\nAutoreaction removed successfully\`\`\``
-                    );
-                    show_embed = new EmbedBuilder()
-                        .setColor("Random")
-                        .setTitle("Perk Autoreactions")
-                        .setDescription(
-                            `\`Slots is the number of autoreactions you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${
-                                slots_max - slots_used
-                            }\``
-                        )
-                        .addFields({
-                            name: "Your Slots ↭",
-                            value: `${slots_display}`,
-                            inline: true,
-                        });
-
-                    remove_msg.edit({
-                        embeds: [show_embed, sub_embed],
-                        components: [row],
-                    });
-                }
-            });
-
-            collector.on("end", async (collected) => {
-                const row = ActionRowBuilder.from(remove_msg.components[0]);
                 row.components.forEach((c) => {
                     c.setDisabled().setStyle(ButtonStyle.Secondary);
                 });
 
-                return remove_msg.edit({
-                    embeds: [show_embed, sub_embed],
+                userData.autoReaction.pull(
+                    userData.autoReaction[slot_location]
+                );
+                await UserModel.findOneAndUpdate(
+                    { userId: interaction.user.id },
+                    userData
+                );
+
+                perkar_remove_message.edit({
+                    embeds: [
+                        new EmbedBuilder().setDescription(
+                            `**Remove auto-reaction: SUCCESSFUL**\n*Run this command again to remove auto-reactions.*\n\nAction Expired: <t:${Math.floor(
+                                (Date.now() + 15 * 1000) / 1000
+                            )}:R>\nRmoved Auto-reaction: ${slots_removed_emoji}`
+                        ),
+                    ],
+                    components: [row],
+                });
+
+                interaction_ended = true;
+            });
+
+            perkar_remove_collector.on("end", async (collected) => {
+                if (interaction_ended === true) {
+                    return;
+                }
+
+                const row = ActionRowBuilder.from(
+                    perkar_remove_message.components[0]
+                );
+                row.components.forEach((c) => {
+                    c.setDisabled().setStyle(ButtonStyle.Secondary);
+                });
+
+                return perkar_remove_message.edit({
+                    embeds: [
+                        new EmbedBuilder().setDescription(
+                            `**Remove auto-reaction: ACTION TIMED OUT**\n*Run this command again to remove auto-reactions.*\n\nAction Expired: <t:${Math.floor(
+                                (Date.now() + 15 * 1000) / 1000
+                            )}:R>`
+                        ),
+                    ],
                     components: [row],
                 });
             });

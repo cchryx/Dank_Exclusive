@@ -7,785 +7,524 @@ const {
     ComponentType,
 } = require("discord.js");
 
-const UserModel = require("../../models/userSchema");
+const PerkroleModel = require("../../models/perkroleSchema");
 
-const { user_fetch } = require("../../utils/user");
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
+const {
+    perk_role_fetch,
+    perk_slots_max,
+    perk_role_create,
+} = require("../../utils/perk");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("perkrole")
-        .setDescription(
-            "Perk command: create/remove/edit your customrole.users"
-        )
+        .setDescription("Perk command: create/remove/edit your perk role.")
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("create")
-                .setDescription("Create your role")
+                .setDescription("Create your perk role.")
                 .addStringOption((oi) => {
                     return oi
                         .setName("name")
                         .setDescription(
-                            "Valid role name with at least 1 character but the max is 100"
+                            "Valid role name with at least 1 character and a maximum of 100 characters."
                         )
                         .setRequired(true);
                 })
                 .addAttachmentOption((oi) => {
                     return oi
-                        .setName("uploadicon")
-                        .setDescription("Valid non-animated image under 256KB");
+                        .setName("icon_upload")
+                        .setDescription(
+                            "Valid non-animated image under 256KB."
+                        );
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("emojiicon")
-                        .setDescription("Valid non-animated emoji under 256KB");
+                        .setName("icon_emoji")
+                        .setDescription(
+                            "Valid non-animated emoji under 256KB."
+                        );
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("color")
-                        .setDescription("Valid hex color");
+                        .setDescription("Valid hex color.");
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("delete")
-                .setDescription("Delete your current role")
+                .setDescription("Delete your current role.")
         )
         .addSubcommand((subcommand) =>
-            subcommand.setName("show").setDescription("Show your current role")
+            subcommand
+                .setName("show")
+                .setDescription("Show your perk role information.")
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("useradd")
-                .setDescription("Choose a user to add your role to")
+                .setDescription("Add your perk role to a user.")
                 .addUserOption((oi) => {
                     return oi
                         .setName("user")
-                        .setDescription("A valid user that is in this server")
+                        .setDescription("A valid user that is in this server.")
                         .setRequired(true);
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("userremove")
-                .setDescription("Choose a user to remove your role from")
+                .setDescription("Remove your perk role from a user.")
                 .addUserOption((oi) => {
                     return oi
                         .setName("user")
-                        .setDescription("A valid user that is in this server")
+                        .setDescription("A valid user.")
                         .setRequired(true);
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("edit")
-                .setDescription("Edit your role: color, icon, name")
+                .setDescription("Edit your perk roles's color, icon, name.")
                 .addAttachmentOption((oi) => {
                     return oi
-                        .setName("uploadicon")
-                        .setDescription("Valid non-animated image under 256KB");
+                        .setName("icon_upload")
+                        .setDescription(
+                            "Valid non-animated image under 256KB."
+                        );
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("emojiicon")
-                        .setDescription("Valid non-animated emoji under 256KB");
+                        .setName("icon_emoji")
+                        .setDescription(
+                            "Valid non-animated emoji under 256KB."
+                        );
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("name")
                         .setDescription(
-                            "Valid role name with at least 1 character but the max is 100"
+                            "Valid role name with at least 1 character and a maximum of 100 characters."
                         );
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("color")
-                        .setDescription("Valid hex color");
+                        .setDescription("Valid hex color.");
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("selfremove")
-                .setDescription("Remove a perkrole from yourself")
+                .setDescription("Remove a perk role from yourself.")
                 .addRoleOption((oi) => {
                     return oi
                         .setName("role")
-                        .setDescription("Valid role name within the server")
+                        .setDescription("Valid perk role within the server.")
                         .setRequired(true);
                 })
         )
         .addSubcommand((subcommand) =>
             subcommand
-                .setName("scan")
-                .setDescription(
-                    "Scan perkroles to see which ones aren't valid anymore"
-                )
+                .setName("sync")
+                .setDescription("Sync your users to your perk role.")
         ),
     async execute(interaction, client) {
-        const guildData = await guild_fetch(interaction.guildId);
-        let userData = await user_fetch(interaction.user.id);
         let error_message;
+        const guildData = await guild_fetch(interaction.guildId);
+        let perkroleData = await perk_role_fetch(interaction.user.id);
+        const slots_max = await perk_slots_max(
+            interaction,
+            guildData.perk.role
+        );
+        let perkrole_discordData;
+        let slots_used = 0;
+        let slots_used_display;
 
-        if (interaction.options.getSubcommand() !== "create") {
-            if (!userData.customrole.id) {
-                error_message = `\`You do not have your own role\`\n\`\`\`fix\n/perkrole create\`\`\``;
-                return error_reply(interaction, error_message);
+        if (perkroleData) {
+            perkrole_discordData = await interaction.guild.roles.fetch(
+                perkroleData.roleId
+            );
+
+            if (slots_max.slots_max === 0) {
+                await PerkroleModel.findOneAndDelete({
+                    userId: perkroleData.userId,
+                });
+
+                interaction.guild.roles.delete(perkroleData.roleId);
+            }
+
+            slots_used = perkroleData.users.length;
+
+            if (slots_max.slots_max > 80) {
+                slots_max.slots_max = 80;
+            }
+
+            if (slots_used > slots_max.slots_max) {
+                const perkrole_users_flagged = perkroleData.users.slice(
+                    slots_max.slots_max
+                );
+                perkroleData.users = perkroleData.users.slice(
+                    0,
+                    slots_max.slots_max
+                );
+                slots_used = perkroleData.users.length;
+
+                for (const userId of perkrole_users_flagged) {
+                    const flaggeduser_fetch =
+                        await interaction.guild.members.fetch(userId);
+                    flaggeduser_fetch.roles
+                        .remove(perkroleData.roleId)
+                        .catch((error) => {});
+
+                    interaction.user.send({
+                        embeds: [
+                            new EmbedBuilder().setDescription(
+                                `**Remove user from perkrole: COMPLETED**\n*User was over the limit of users having this perk role.*\n\nRole: <@&${
+                                    perkroleData.roleId
+                                }>\nRole Id: \`${
+                                    perkroleData.roleId
+                                }\`\nUser: <@${userId}>\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
+                            ),
+                        ],
+                    });
+                }
+
+                await PerkroleModel.findOneAndUpdate(
+                    { userId: interaction.user.id },
+                    perkroleData
+                );
+                slots_used = perkroleData.users.length;
+            }
+
+            if (slots_used === 0) {
+                slots_used_display = `\`No slots used\``;
+            } else {
+                slots_used_display = perkroleData.users
+                    .map((userId) => {
+                        return `<@${userId}>`;
+                    })
+                    .join(", ");
             }
         }
 
         if (interaction.options.getSubcommand() === "create") {
-            if (!guildData.perkrole_head) {
-                error_message = `\`This server doesn't have a head role where the perkroles can be put under\``;
+            if (perkroleData) {
+                error_message = `You already own a perk role, you can't create another one!\n\nRole: <@&${perkroleData.roleId}>`;
                 return error_reply(interaction, error_message);
             }
-            let allowtocreate = false;
-            const allowedroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    return (allowtocreate = true);
-                }
-                allowedroles.push(key);
-            });
-            const allowedroles_mapped = allowedroles
-                .map((element) => {
-                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
-                })
-                .join("\n");
 
-            if (allowtocreate === false) {
-                if (userData.customrole.id) {
-                    interaction.guild.roles.delete(
-                        userData.customrole.id,
-                        "Didn't fulfill perkrole requirements"
-                    );
-                }
-                userData.customrole.id = null;
-                userData.customrole.users = [];
-                await UserModel.findOneAndUpdate(
-                    { userid: userData.userid },
-                    userData
-                );
-
-                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
+            if (slots_max.slots_max === 0) {
+                error_message = `You don't have any perk role slots to create a perk role.`;
                 return error_reply(interaction, error_message);
             }
-            if (userData.customrole.id) {
-                error_message = `\`You already have your own role\`\n\`\`\`fix\n/perkrole edit\`\`\``;
+
+            if (!guildData.perk.placement.rolePlacer) {
+                error_message = `Server has not set a role placer to place perk roles on top.`;
                 return error_reply(interaction, error_message);
             }
 
             const options = {
                 name: interaction.options.getString("name"),
                 color: interaction.options.getString("color"),
-                uploadicon: interaction.options.getAttachment("uploadicon"),
-                emojiicon: interaction.options.getString("emojiicon"),
+                icon_upload: interaction.options.getAttachment("icon_upload"),
+                icon_emoji: interaction.options.getString("icon_emoji"),
             };
+            const perkrole_information = {};
+            let perkrole_create_message;
 
-            let verify_msg;
-            let emoji;
-            if (options.emojiicon) {
-                emoji = options.emojiicon;
-                const embed = new EmbedBuilder()
-                    .setColor("Random")
-                    .setDescription("Checking if your emoji is valid...");
+            const perkrole_roleplacer = await interaction.guild.roles.fetch(
+                guildData.perk.placement.rolePlacer
+            );
 
-                verify_msg = await interaction.reply({
-                    embeds: [embed],
+            var validHex_reg = /^#([0-9a-f]{3}){1,2}$/i;
+            if (validHex_reg.test(options.color) === false) {
+                options.color = null;
+            }
+
+            if (options.icon_emoji) {
+                perkrole_create_message = await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder().setDescription(
+                            `**Checking if the emoji is usable for an auto-reaction...**`
+                        ),
+                    ],
                     fetchReply: true,
                 });
 
-                const verifyemoji = await verify_msg
-                    .react(`${emoji}`)
+                const verifyEmoji = await perkrole_create_message
+                    .react(`${options.icon_emoji}`)
                     .catch(async (error) => {
                         if (error.code === 10014) {
-                            message =
-                                "**You emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
-                            embed.setColor("Red").setDescription(message);
-                            verify_msg.edit({ embeds: [embed] });
-                            options.emojiicon = null;
+                            perkrole_create_message.edit({
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setDescription(
+                                            `**Your emoji was not valid!**\nYou need to provide a valid emoji that is from Dank Exclusive or can be used by the bot.`
+                                        )
+                                        .setColor("Red"),
+                                ],
+                            });
                             return false;
                         }
                     });
 
-                if (verifyemoji !== false) {
-                    let passedemoji = false;
-                    if (verifyemoji._emoji.id) {
-                        if (verifyemoji._emoji.animated === true) {
-                            message =
-                                "**You emoji was not valid**\n`Role icon doesn't accept animated emojis`";
-                            embed.setColor("Red").setDescription(message);
-                            return verify_msg.edit({ embeds: [embed] });
-                        } else {
-                            options.emojiicon = `https://cdn.discordapp.com/emojis/${verifyemoji._emoji.id}.webp`;
-                            passedemoji = true;
-                            emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
-                        }
-                    } else {
-                        message =
-                            "**You emoji was not valid**\n`Couldn't find emoji id`";
-                        embed.setColor("Red").setDescription(message);
-                        return verify_msg.edit({ embeds: [embed] });
-                    }
+                if (verifyEmoji === false) {
+                    return;
+                }
 
-                    if (passedemoji === true) {
-                        message = `<a:ravena_check:1002981211708325950> **Emoji accepted**\nEmoji: ${emoji}`;
-                        embed.setColor("Green").setDescription(message);
-                        verify_msg.edit({ embeds: [embed] });
+                if (verifyEmoji._emoji.id) {
+                    if (verifyEmoji._emoji.animated === true) {
+                        return perkrole_create_message.edit({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setDescription(
+                                        `**Your emoji was not valid!**\nAnimated emojis don't work for role icons.`
+                                    )
+                                    .setColor("Red"),
+                            ],
+                        });
+                    } else {
+                        options.icon_emoji = `https://cdn.discordapp.com/emojis/${verifyEmoji._emoji.id}.webp`;
                     }
                 } else {
-                    message =
-                        "**You emoji was not valid**\n`That emoji wasn't able to used as a role icon`";
-                    embed.setColor("Red").setDescription(message);
-                    verify_msg.edit({ embeds: [embed] });
+                    return perkrole_create_message.edit({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `**Your emoji was not valid!**\nCouldn't find emoji id.`
+                                )
+                                .setColor("Red"),
+                        ],
+                    });
                 }
             }
 
-            const roleinfo = {};
-            const headrole = await interaction.guild.roles.fetch(
-                guildData.perkrole_head
-            );
-
-            var validhex_reg = /^#([0-9a-f]{3}){1,2}$/i;
-            if (validhex_reg.test(options.color) === false) {
-                options.color = null;
+            perkrole_information.name = options.name;
+            perkrole_information.color = options.color || null;
+            if (options.icon_upload) {
+                perkrole_information.icon = options.icon_upload.attachment;
+            }
+            if (options.icon_emoji) {
+                perkrole_information.icon = options.icon_emoji;
             }
 
-            roleinfo.name = options.name;
-            roleinfo.color = options.color || null;
-            if (options.uploadicon) {
-                roleinfo.icon = options.uploadicon.attachment;
-            }
+            perkrole_information.position =
+                perkrole_roleplacer.rawPosition + 1 || null;
 
-            if (options.emojiicon) {
-                roleinfo.icon = options.emojiicon;
-            }
-            roleinfo.reason = "creating perk role";
-            roleinfo.position = headrole.rawPosition + 1;
-
-            const rolecreated = await interaction.guild.roles
-                .create(roleinfo)
+            perkrole_discordData = await interaction.guild.roles
+                .create(perkrole_information)
                 .catch((error) => {
-                    error_message = `\`${error.rawError.message}\``;
+                    error_message = `${error.rawError.message}`;
                     error_reply(interaction, error_message);
-                    return false;
+                    return null;
                 });
 
-            if (rolecreated === false) return;
-            userData.customrole.id = rolecreated.id;
+            if (perkrole_discordData === null) return;
+
             interaction.guild.members.cache
                 .get(interaction.user.id)
-                .roles.add(rolecreated);
-            await UserModel.findOneAndUpdate(
-                { userid: userData.userid },
-                userData
+                .roles.add(perkrole_discordData);
+
+            await perk_role_create(
+                interaction.user.id,
+                perkrole_discordData.id
             );
 
-            let newmessage = `<a:ravena_check:1002981211708325950> **Role created successfully**\n\nRole: <@&${rolecreated.id}>\nRole Id: \`${rolecreated.id}\`\nColor: \`${options.color}\`\nPosition: \`${rolecreated.rawPosition}\``;
+            const perkrole_create_embed = new EmbedBuilder().setDescription(
+                `**Create perk role: SUCCESSFUL**\n*I have made a perk role for you! Enjoy it!*\n\nRole: <@&${
+                    perkrole_discordData.id
+                }>\nRole Id: \`${
+                    perkrole_discordData.id
+                }\`\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\`\n\n**Properties**\nColor: \`${
+                    perkrole_discordData.color
+                }\`\nPosition: \`${perkrole_discordData.rawPosition}\`${
+                    options.icon_emoji
+                        ? `Icon Emoji: ${options.icon_emoji}`
+                        : ""
+                }`
+            );
 
-            if (verify_msg) {
-                newmessage = newmessage + `\nEmoji Icon: ${emoji}`;
+            if (options.icon_upload) {
+                perkrole_create_embed.setThumbnail(
+                    options.icon_upload.attachment
+                );
             }
-            const embed = new EmbedBuilder()
-                .setColor(rolecreated.color)
-                .setDescription(newmessage);
 
-            if (options.uploadicon) {
-                embed.setThumbnail(options.uploadicon.attachment);
-            }
-
-            if (verify_msg) {
-                return verify_msg.edit({ embeds: [embed] });
+            if (perkrole_create_message) {
+                return perkrole_create_message.edit({
+                    embeds: [perkrole_create_embed],
+                });
             } else {
-                return interaction.reply({ embeds: [embed] });
+                return interaction.reply({ embeds: [perkrole_create_embed] });
             }
         } else if (interaction.options.getSubcommand() === "show") {
-            if (!userData.customrole.id) {
-                error_message = `\`You do not have your own role\`\n\`\`\`fix\n/perkrole create\`\`\``;
-                return error_reply(interaction, error_message);
-            }
-
-            let allowtocreate = false;
-            const allowedroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    return (allowtocreate = true);
-                }
-                allowedroles.push(key);
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle(`Perk: Role`)
+                        .setDescription(
+                            `*Slots is the number of users you are permitted to add your perk role to in accordance to the roles you have.*\n\nPerk Role: ${
+                                perkroleData
+                                    ? `<@&${perkroleData.roleId}>`
+                                    : "`null`"
+                            }\nSlots Occupied: \`${slots_used}/${
+                                slots_max.slots_max
+                            }\``
+                        )
+                        .setFields(
+                            {
+                                name: "Perk-role Roles ↭",
+                                value: slots_max.slots_hasroles_display,
+                                inline: true,
+                            },
+                            {
+                                name: "Occupied Slots ↭",
+                                value: `${
+                                    slots_used_display
+                                        ? slots_used_display
+                                        : `\`You don't own a perk role\``
+                                }`,
+                                inline: true,
+                            }
+                        ),
+                ],
             });
-            const allowedroles_mapped = allowedroles
-                .map((element) => {
-                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
-                })
-                .join("\n");
-
-            if (allowtocreate === false) {
-                if (userData.customrole.id) {
-                    interaction.guild.roles.delete(
-                        userData.customrole.id,
-                        "Didn't fulfill perkrole requirements"
-                    );
-                }
-                userData.customrole.id = null;
-                userData.customrole.users = [];
-                await UserModel.findOneAndUpdate(
-                    { userid: userData.userid },
-                    userData
-                );
-
-                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
-                return error_reply(interaction, error_message);
-            }
-
-            let slots_max = 0;
-            let slots_used = userData.customrole.users.length;
-            let hasroles_display;
-            let slots_display;
-
-            let hasroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    slots_max = slots_max + guildData.perkrole_roles[key];
-                    hasroles.push(key);
-                }
-            });
-
-            if (slots_used > slots_max) {
-                const removedusers = userData.customrole.users.slice(slots_max);
-                removedusers.forEach(async (removedid) => {
-                    const user = await interaction.guild.members.fetch(
-                        removedid
-                    );
-                    user.roles.remove(userData.customrole.id);
-                });
-                userData.customrole.users = userData.customrole.users.slice(
-                    0,
-                    slots_max
-                );
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                slots_used = userData.customrole.users.length;
-            }
-
-            let slots_display_i;
-            if (slots_used === 0) {
-                slots_display = `\`no slots\``;
-            } else {
-                if (userData.customrole.users.length > 10) {
-                    slots_display_i = userData.customrole.users
-                        .map((user) => {
-                            const slot_location =
-                                userData.customrole.users.indexOf(user) + 1;
-                            return `<@${user}>`;
-                        })
-                        .join(" ");
-
-                    slots_display = `\`You have more than 10 slots, therefore they have been compressed in the embed bellow\``;
-                } else {
-                    slots_display = userData.customrole.users
-                        .map((user) => {
-                            const slot_location =
-                                userData.customrole.users.indexOf(user) + 1;
-                            return `Slot ${slot_location}: <@${user}>`;
-                        })
-                        .join("\n");
-                }
-            }
-
-            if (guildData.perkrole_roles) {
-                hasroles_display = Object.keys(guildData.perkrole_roles)
-                    .map((key) => {
-                        let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            status = "<a:ravena_check:1002981211708325950>";
-                        }
-                        return `${status}<@&${key}>\`+ ${guildData.perkrole_roles[key]}\``;
-                    })
-                    .join("\n");
-            } else {
-                hasroles_display = `\`server has no perkrole roles\``;
-            }
-
-            const sub_embed = new EmbedBuilder().setDescription(
-                `\`\`\`diff\nSubcommands:\n- /perkrole userremove\n+ /perkrole useradd\`\`\``
-            );
-            const show_embed = new EmbedBuilder()
-                .setColor("Random")
-                .setTitle("Perk Roles <a:crown:924052254074474567>")
-                .setDescription(
-                    `\`Slots is the number of users you are permitted to add\`\nRole: <@&${
-                        userData.customrole.id
-                    }>\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
-                        slots_max - slots_used
-                    ).toLocaleString()}\``
-                )
-                .addFields(
-                    {
-                        name: "Your Slots ↭",
-                        value: `${slots_display}`,
-                        inline: true,
-                    },
-                    {
-                        name: "Perkrole Roles ↭",
-                        value: `${hasroles_display}`,
-                        inline: true,
-                    }
-                );
-
-            const embeds = [show_embed];
-
-            if (slots_display_i) {
-                embeds.push(new EmbedBuilder().setDescription(slots_display_i));
-            } else {
-                embeds.push(sub_embed);
-            }
-            return interaction.reply({ embeds: embeds });
         } else if (interaction.options.getSubcommand() === "edit") {
-            if (!guildData.perkrole_head) {
-                error_message = `\`This server doesn't have a head role where the perkroles can be put under\``;
-                return error_reply(interaction, error_message);
-            }
-            let allowtocreate = false;
-            const allowedroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    return (allowtocreate = true);
-                }
-                allowedroles.push(key);
-            });
-            const allowedroles_mapped = allowedroles
-                .map((element) => {
-                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
-                })
-                .join("\n");
-
-            if (allowtocreate === false) {
-                if (userData.customrole.id) {
-                    interaction.guild.roles.delete(
-                        userData.customrole.id,
-                        "Didn't fulfill perkrole requirements"
-                    );
-                }
-                userData.customrole.id = null;
-                userData.customrole.users = [];
-                await UserModel.findOneAndUpdate(
-                    { userid: userData.userid },
-                    userData
-                );
-
-                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
+            if (!perkroleData) {
+                error_message = `You don't own a perk role, therefore you cannot edit it.`;
                 return error_reply(interaction, error_message);
             }
 
             const options = {
                 name: interaction.options.getString("name"),
                 color: interaction.options.getString("color"),
-                uploadicon: interaction.options.getAttachment("uploadicon"),
-                emojiicon: interaction.options.getString("emojiicon"),
+                icon_upload: interaction.options.getAttachment("icon_upload"),
+                icon_emoji: interaction.options.getString("icon_emoji"),
             };
+            const perkrole_information = {};
+            let perkrole_edit_message;
 
-            let verify_msg;
-            let emoji;
-            if (options.emojiicon) {
-                emoji = options.emojiicon;
-                const embed = new EmbedBuilder()
-                    .setColor("Random")
-                    .setDescription("Checking if your emoji is valid...");
+            var validHex_reg = /^#([0-9a-f]{3}){1,2}$/i;
+            if (validHex_reg.test(options.color) === false) {
+                options.color = null;
+            }
 
-                verify_msg = await interaction.reply({
-                    embeds: [embed],
+            if (options.icon_emoji) {
+                perkrole_edit_message = await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder().setDescription(
+                            `**Checking if the emoji is usable for an auto-reaction...**`
+                        ),
+                    ],
                     fetchReply: true,
                 });
 
-                const verifyemoji = await verify_msg
-                    .react(`${emoji}`)
+                const verifyEmoji = await perkrole_edit_message
+                    .react(`${options.icon_emoji}`)
                     .catch(async (error) => {
                         if (error.code === 10014) {
-                            message =
-                                "**Your emoji was not valid**\n`You need to provide a valid emoji that is from Dank Exclusive or can be used by the bot`";
-                            embed.setColor("Red").setDescription(message);
-                            verify_msg.edit({ embeds: [embed] });
-                            options.emojiicon = null;
+                            perkrole_edit_message.edit({
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setDescription(
+                                            `**Your emoji was not valid!**\nYou need to provide a valid emoji that is from Dank Exclusive or can be used by the bot.`
+                                        )
+                                        .setColor("Red"),
+                                ],
+                            });
                             return false;
                         }
                     });
 
-                if (verifyemoji !== false) {
-                    let passedemoji = false;
-                    if (verifyemoji._emoji.id) {
-                        if (verifyemoji._emoji.animated === true) {
-                            message =
-                                "**Your emoji was not valid**\n`Role icon doesn't accept animated emojis`";
-                            embed.setColor("Red").setDescription(message);
-                            return verify_msg.edit({ embeds: [embed] });
-                        } else {
-                            options.emojiicon = `https://cdn.discordapp.com/emojis/${verifyemoji._emoji.id}.webp`;
-                            passedemoji = true;
-                            emoji = `<:${verifyemoji._emoji.name}:${verifyemoji._emoji.id}>`;
-                        }
-                    } else {
-                        message =
-                            "**Your emoji was not valid**\n`Couldn't find emoji id`";
-                        embed.setColor("Red").setDescription(message);
-                        return verify_msg.edit({ embeds: [embed] });
-                    }
+                if (verifyEmoji === false) {
+                    return;
+                }
 
-                    if (passedemoji === true) {
-                        message = `<a:ravena_check:1002981211708325950> **Emoji accepted**\nEmoji: ${emoji}`;
-                        embed.setColor("Green").setDescription(message);
-                        verify_msg.edit({ embeds: [embed] });
+                if (verifyEmoji._emoji.id) {
+                    if (verifyEmoji._emoji.animated === true) {
+                        return perkrole_edit_message.edit({
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setDescription(
+                                        `**Your emoji was not valid!**\nAnimated emojis don't work for role icons.`
+                                    )
+                                    .setColor("Red"),
+                            ],
+                        });
+                    } else {
+                        options.icon_emoji = `https://cdn.discordapp.com/emojis/${verifyEmoji._emoji.id}.webp`;
                     }
                 } else {
-                    message =
-                        "**Your emoji was not valid**\n`That emoji wasn't able to used as a role icon`";
-                    embed.setColor("Red").setDescription(message);
-                    verify_msg.edit({ embeds: [embed] });
+                    return perkrole_edit_message.edit({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `**Your emoji was not valid!**\nCouldn't find emoji id.`
+                                )
+                                .setColor("Red"),
+                        ],
+                    });
                 }
             }
 
-            var validhex_reg = /^#([0-9a-f]{3}){1,2}$/i;
-            if (validhex_reg.test(options.color) === false) {
-                options.color = null;
+            perkrole_information.name =
+                options.name || perkrole_discordData.name;
+            perkrole_information.color =
+                options.color || perkrole_discordData.color;
+            if (options.icon_upload) {
+                perkrole_information.icon = options.icon_upload.attachment;
+            }
+            if (options.icon_emoji) {
+                perkrole_information.icon = options.icon_emoji;
             }
 
-            const roleinfo = {};
-            const role = await interaction.guild.roles.fetch(
-                userData.customrole.id
-            );
-
-            roleinfo.name = options.name || role.name;
-            roleinfo.color = options.color || role.color;
-
-            if (options.uploadicon) {
-                roleinfo.icon = options.uploadicon.attachment;
-            }
-
-            if (options.emojiicon) {
-                roleinfo.icon = options.emojiicon;
-            }
-
-            const updaterole = await interaction.guild.roles
-                .edit(role.id, roleinfo)
+            perkrole_discordData = await interaction.guild.roles
+                .edit(perkroleData.roleId, perkrole_information)
                 .catch((error) => {
-                    console.log(error);
-                    error_message = `\`${
-                        error.rawError
-                            ? error.rawError.message
-                            : "There was an error"
-                    }\``;
+                    error_message = `${error.rawError.message}`;
                     error_reply(interaction, error_message);
-                    return false;
+                    return null;
                 });
 
-            if (updaterole === false) return;
+            if (perkrole_discordData === null) return;
 
-            let embedcolor;
-            if (options.color) {
-                embedcolor = options.color;
-            } else {
-                embedcolor = role.color;
-            }
+            const perkrole_edit_embed = new EmbedBuilder().setDescription(
+                `**Update perk role: SUCCESSFUL**\n*I made changes to the properties of your perk role.*\n\nRole: <@&${
+                    perkrole_discordData.id
+                }>\n\n**Properties**\nColor: \`${
+                    perkrole_discordData.color
+                }\`\nPosition: \`${perkrole_discordData.rawPosition}\`${
+                    options.icon_emoji
+                        ? `Icon Emoji: ${options.icon_emoji}`
+                        : ""
+                }`
+            );
 
-            const roleupdated = interaction.guild.roles.cache.get(role.id);
-
-            let newmessage = `<a:ravena_check:1002981211708325950> **Role updated successfully**\n\nRole: <@&${
-                roleupdated.id
-            }>\nRole Id: \`${roleupdated.id}\`\nColor: \`${
-                options.color || role.color
-            }\``;
-
-            if (verify_msg) {
-                newmessage = newmessage + `\nEmoji Icon: ${emoji}`;
-            }
-            const embed = new EmbedBuilder()
-                .setColor(embedcolor)
-                .setDescription(newmessage);
-
-            if (options.uploadicon) {
-                embed.setThumbnail(options.uploadicon.attachment);
-            }
-
-            if (verify_msg) {
-                return verify_msg.edit({ embeds: [embed] });
-            } else {
-                return interaction.reply({ embeds: [embed] });
-            }
-        } else if (interaction.options.getSubcommand() === "userremove") {
-            let allowtocreate = false;
-            const allowedroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    return (allowtocreate = true);
-                }
-                allowedroles.push(key);
-            });
-            const allowedroles_mapped = allowedroles
-                .map((element) => {
-                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
-                })
-                .join("\n");
-
-            if (allowtocreate === false) {
-                if (userData.customrole.id) {
-                    interaction.guild.roles.delete(
-                        userData.customrole.id,
-                        "Didn't fulfill perkrole requirements"
-                    );
-                }
-                userData.customrole.id = null;
-                userData.customrole.users = [];
-                await UserModel.findOneAndUpdate(
-                    { userid: userData.userid },
-                    userData
+            if (options.icon_upload) {
+                perkrole_edit_embed.setThumbnail(
+                    options.icon_upload.attachment
                 );
+            }
 
-                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
+            if (perkrole_edit_message) {
+                return perkrole_edit_message.edit({
+                    embeds: [perkrole_edit_embed],
+                });
+            } else {
+                return interaction.reply({ embeds: [perkrole_edit_embed] });
+            }
+        } else if (interaction.options.getSubcommand() === "useradd") {
+            if (!perkroleData) {
+                error_message = `You don't own a perk role, therefore you cannot edit its name.`;
                 return error_reply(interaction, error_message);
             }
 
-            const options = {
-                user: interaction.options.getUser("user"),
-            };
-
-            let slots_max = 0;
-            let slots_used = userData.customrole.users.length;
-            let slots_display;
-            let hasroles_display;
-            let message;
-
-            let hasroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    slots_max = slots_max + guildData.perkrole_roles[key];
-                    hasroles.push(key);
-                }
-            });
-
-            if (slots_used === 0) {
-                slots_display = `\`no slots\``;
-            } else {
-                slots_display = userData.customrole.users
-                    .map((user) => {
-                        const slot_location =
-                            userData.customrole.users.indexOf(user) + 1;
-                        return `Slot ${slot_location}: ${user}`;
-                    })
-                    .join("\n");
-            }
-
-            if (guildData.perkrole_roles) {
-                hasroles_display = Object.keys(guildData.perkrole_roles)
-                    .map((key) => {
-                        let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            status = "<a:ravena_check:1002981211708325950>";
-                        }
-                        return `${status}<@&${key}>\`+ ${guildData.perkrole_roles[key]}\``;
-                    })
-                    .join("\n");
-            } else {
-                hasroles_display = `\`server has no perk perkrole roles\``;
-            }
-
-            if (slots_used >= slots_max) {
-                const removedusers = userData.customrole.users.slice(slots_max);
-                removedusers.forEach(async (removedid) => {
-                    const user = await interaction.guild.members.fetch(
-                        removedid
-                    );
-                    user.roles.remove(userData.customrole.id);
-                });
-                userData.customrole.users = userData.customrole.users.slice(
-                    0,
-                    slots_max
-                );
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                slots_used = userData.customrole.users.length;
-            }
-
-            let user = options.user;
-
-            if (!userData.customrole.users.includes(`${options.user.id}`)) {
-                message = `**That user doesn't exist in one of your user slots**\nUser: ${user}`;
-                const error_embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(message);
-                return interaction.reply({
-                    embeds: [error_embed],
-                    ephemeral: true,
-                });
-            }
-
-            const pullIndex = userData.customrole.users.indexOf(user.id);
-            userData.customrole.users.splice(pullIndex, 1);
-            slots_used = slots_used - 1;
-
-            await UserModel.findOneAndUpdate(
-                { userid: interaction.user.id },
-                userData
-            );
-
-            if (interaction.guild.members.cache.get(options.user.id)) {
-                interaction.guild.members.cache
-                    .get(options.user.id)
-                    .roles.remove(userData.customrole.id);
-            }
-
-            message = `<a:ravena_check:1002981211708325950> **User removed successfully**\nYour Role: <@&${
-                userData.customrole.id
-            }>\nUser: ${user}\nAvailable Slots: \`${(
-                slots_max - slots_used
-            ).toLocaleString()}\``;
-
-            const embed = new EmbedBuilder()
-                .setColor("Green")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
-        } else if (interaction.options.getSubcommand() === "useradd") {
-            let allowtocreate = false;
-            const allowedroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    return (allowtocreate = true);
-                }
-                allowedroles.push(key);
-            });
-            const allowedroles_mapped = allowedroles
-                .map((element) => {
-                    return `<@&${element}>\`+ ${guildData.perkrole_roles[element]}\``;
-                })
-                .join("\n");
-
-            if (allowtocreate === false) {
-                if (userData.customrole.id) {
-                    interaction.guild.roles.delete(
-                        userData.customrole.id,
-                        "Didn't fulfill perkrole requirements"
-                    );
-                }
-                userData.customrole.id = null;
-                userData.customrole.users = [];
-                await UserModel.findOneAndUpdate(
-                    { userid: userData.userid },
-                    userData
-                );
-
-                error_message = `\`You don't fulfill the requirements to have your own role\`\n\n**Perkrole roles:**\n${allowedroles_mapped}`;
+            if (slots_used >= slots_max.slots_max) {
+                error_message = `You have reached the maximum slots for your perk role, therefore you cannot add it to anymore users.\n\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``;
                 return error_reply(interaction, error_message);
             }
 
@@ -793,340 +532,157 @@ module.exports = {
                 user: interaction.options.getMember("user"),
             };
 
-            if (options.user.user.bot == true) {
-                error_message = `You can't give perkroles to bots`;
+            if (!options.user) {
+                error_message = `That user doesn't exist in the server.`;
                 return error_reply(interaction, error_message);
             }
 
-            if (!options.user) {
-                error_message = `\`That user doesn't exist in the server\``;
+            if (options.user.user.bot === true) {
+                error_message = `You cannot add your perk role to a bot.`;
                 return error_reply(interaction, error_message);
             }
 
             if (options.user.id === interaction.user.id) {
-                error_message = `\`You own the role so why give to yourself?\``;
+                error_message = `You own the role so why give to yourself?`;
                 return error_reply(interaction, error_message);
             }
 
-            let slots_max = 0;
-            let slots_used = userData.customrole.users.length;
-            let slots_display;
-            let hasroles_display;
-            let message;
+            if (perkroleData.users.includes(options.user.id)) {
+                error_message = `That user already exist in one of your perk role user slosts!\n\nUser: ${options.user}`;
+                return error_reply(interaction, error_message);
+            }
 
-            let hasroles = [];
-            Object.keys(guildData.perkrole_roles).forEach((key) => {
-                if (interaction.member.roles.cache.find((r) => r.id === key)) {
-                    slots_max = slots_max + guildData.perkrole_roles[key];
-                    hasroles.push(key);
-                }
+            perkroleData.users.push(options.user.id);
+            options.user.roles.add(perkroleData.roleId);
+
+            await PerkroleModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                perkroleData
+            );
+
+            slots_used = perkroleData.users.length;
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Perk role add user: SUCCESSFUL**\n*I added your perk role to that user.*\n\nUser: ${options.user}\nRole: <@&${perkrole_discordData.id}>\nRole Id: \`${perkrole_discordData.id}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
+                ],
             });
-
-            if (slots_used === 0) {
-                slots_display = `\`no slots\``;
-            } else {
-                slots_display = userData.customrole.users
-                    .map((user) => {
-                        const slot_location =
-                            userData.customrole.users.indexOf(user) + 1;
-                        return `Slot ${slot_location}: ${user}`;
-                    })
-                    .join("\n");
+        } else if (interaction.options.getSubcommand() === "userremove") {
+            if (!perkroleData) {
+                error_message = `You don't own a perk role, therefore you cannot remove it from users.`;
+                return error_reply(interaction, error_message);
             }
 
-            if (guildData.perkrole_roles) {
-                hasroles_display = Object.keys(guildData.perkrole_roles)
-                    .map((key) => {
-                        let status = "<a:ravena_uncheck:1002983318565965885>";
-
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            status = "<a:ravena_check:1002981211708325950>";
-                        }
-                        return `${status}<@&${key}>\`+ ${guildData.perkrole_roles[key]}\``;
-                    })
-                    .join("\n");
-            } else {
-                hasroles_display = `\`server has no perk perkrole roles\``;
+            if (perkroleData.users.length <= 0) {
+                error_message = `You have no users occupying your perk role slots, therefore you can't remove your perk role from users.`;
+                return error_reply(interaction, error_message);
             }
 
-            if (slots_used >= slots_max) {
-                const removedusers = userData.customrole.users.slice(slots_max);
-                removedusers.forEach(async (removedid) => {
-                    const user = await interaction.guild.members.fetch(
-                        removedid
-                    );
-                    user.roles.remove(userData.customrole.id);
-                });
-                userData.customrole.users = userData.customrole.users.slice(
-                    0,
-                    slots_max
-                );
-                await UserModel.findOneAndUpdate(
-                    { userid: interaction.user.id },
-                    userData
-                );
-                slots_used = userData.customrole.users.length;
-
-                const sub_embed = new EmbedBuilder().setDescription(
-                    `\`\`\`diff\nSubcommands:\n- /perkrole userremove\n# /perkrole show\`\`\``
-                );
-                message = `**You have reached you max amount of user slots of \`${slots_max.toLocaleString()}\`, so you aren't able to add more**`;
-                const error_embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(message)
-                    .addFields(
-                        {
-                            name: "Your Slots ↭",
-                            value: `\`Slots is the number of users you are permitted to add\`\n**Max Slots:** \`${slots_max.toLocaleString()}\`\n**Available Slots:** \`${(
-                                slots_max - slots_used
-                            ).toLocaleString()}\``,
-                            inline: true,
-                        },
-                        {
-                            name: "Perkrole Roles ↭",
-                            value: `${hasroles_display}`,
-                            inline: true,
-                        }
-                    );
-                return interaction.reply({
-                    embeds: [error_embed, sub_embed],
-                    ephemeral: true,
-                });
-            }
-
-            let user = options.user;
-
-            if (userData.customrole.users.includes(`${options.user.id}`)) {
-                message = `**That user already exist in one of your user slots**\nUser: ${user}`;
-                const error_embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(message);
-                return interaction.reply({
-                    embeds: [error_embed],
-                    ephemeral: true,
-                });
-            }
-
-            userData.customrole.users.push(user.id);
-            slots_used = slots_used + 1;
-
-            await UserModel.findOneAndUpdate(
-                { userid: interaction.user.id },
-                userData
-            );
-            interaction.guild.members.cache
-                .get(options.user.id)
-                .roles.add(userData.customrole.id);
-            message = `<a:ravena_check:1002981211708325950> **User added successfully**\nYour Role: <@&${
-                userData.customrole.id
-            }>\nUser: ${user}\nAvailable Slots: \`${(
-                slots_max - slots_used
-            ).toLocaleString()}\``;
-
-            const embed = new EmbedBuilder()
-                .setColor("Green")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
-        } else if (interaction.options.getSubcommand() === "delete") {
-            const roledeleted = interaction.guild.roles.cache.find(
-                (r) => r.id === userData.customrole.id
-            );
-
-            interaction.guild.roles.delete(
-                userData.customrole.id,
-                "Delete perkrole"
-            );
-            userData.customrole.id = null;
-            userData.customrole.users = [];
-            await UserModel.findOneAndUpdate(
-                { userid: userData.userid },
-                userData
-            );
-
-            const embed = new EmbedBuilder()
-                .setColor(roledeleted.color)
-                .setDescription(
-                    `<a:ravena_check:1002981211708325950> **Role removed successfully**\n\nRole: <@&${roledeleted.id}>\nRole Id: \`${roledeleted.id}\`\nPosition: \`${roledeleted.rawPosition}\``
-                );
-
-            return interaction.reply({ embeds: [embed] });
-        } else if (interaction.options.getSubcommand() === "selfremove") {
             const options = {
+                user: interaction.options.getUser("user"),
+            };
+
+            if (!perkroleData.users.includes(options.user.id)) {
+                error_message = `That user doesn't exist in one of your perk role user slots!\n\nUser: ${options.user}`;
+                return error_reply(interaction, error_message);
+            }
+
+            if (options.user.id === interaction.user.id) {
+                error_message = `Thats your own perk role so you can't remove yourself!`;
+                return error_reply(interaction, error_message);
+            }
+
+            const user_fetch = await interaction.guild.members.fetch(
+                options.user.id
+            );
+            user_fetch.roles.remove(perkroleData.roleId);
+            perkroleData.users.splice(
+                perkroleData.users.indexOf(options.user.id),
+                1
+            );
+            await PerkroleModel.findOneAndUpdate(
+                { userId: interaction.user.id },
+                perkroleData
+            );
+
+            slots_used = perkroleData.users.length;
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Perk role remove user: SUCCESSFUL**\n*I removed your perk role from that user.*\n\nUser: ${options.user}\nRole: <@&${perkrole_discordData.id}>\nRole Id: \`${perkrole_discordData.id}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "selfremove") {
+            options = {
                 role: interaction.options.getRole("role"),
             };
-            if (
-                !interaction.member.roles.cache.find(
-                    (r) => r.id === options.role.id
-                )
-            ) {
-                error_message = `\`You don't currently have that role\``;
-                return error_reply(interaction, error_message);
-            }
-            if (options.role.id === userData.customrole.id) {
-                error_message = `\`You are the owner of this role so you have to do the following\`\`\`fix\n/perkrole delete\`\`\``;
-                return error_reply(interaction, error_message);
-            }
-            const ownerofrole = await UserModel.findOne({
-                "customrole.id": options.role.id,
+
+            perkroleData = await PerkroleModel.findOne({
+                roleId: options.role.id,
             });
 
-            if (!ownerofrole) {
-                error_message = `\`That role specified isn't a perkrole\``;
+            if (!perkroleData) {
+                error_message = `This role is not registered as a perk role, if you believe this is a mistake please direct message the bot developer.`;
                 return error_reply(interaction, error_message);
             }
 
-            const user = await interaction.guild.members.fetch(
-                interaction.user.id
-            );
-
-            const pullIndex = ownerofrole.customrole.users.indexOf(
-                interaction.user.id
-            );
-            ownerofrole.customrole.users.splice(pullIndex, 1);
-
-            await UserModel.findOneAndUpdate(
-                { userid: ownerofrole.userid },
-                ownerofrole
-            );
-            user.roles.remove(options.role.id);
-            message = `<a:ravena_check:1002981211708325950> **Role removed successfully**\nRole: <@&${options.role.id}>\nOwner: <@${ownerofrole.userid}>`;
-            const embed = new EmbedBuilder()
-                .setColor("Green")
-                .setDescription(message);
-            return interaction.reply({ embeds: [embed] });
-        } else if (interaction.options.getSubcommand() === "scan") {
-            if (
-                !interaction.member.roles.cache.has("938372143853502494") ===
-                true
-            ) {
-                error_message = `\`You don't have the required permissions to preform this action\``;
+            if (perkroleData.userId === interaction.user.id) {
+                error_message = `Thats your own perk role so you can't remove it from yourself!`;
                 return error_reply(interaction, error_message);
             }
 
-            const scan_msg = await interaction.reply({
+            if (!perkroleData.users.includes(interaction.user.id)) {
+                error_message = `You do not have this perk role assigned to you currently, therefore you cannot remove it from yourself.`;
+                return error_reply(interaction, error_message);
+            }
+
+            interaction.user.remove(perkroleData.roleId);
+
+            perkroleData.users.splice(
+                perkroleData.users.indexOf(interaction.user.id),
+                1
+            );
+            await perkroleData.findOneAndUpdate(
+                { channelId: perkroleData.channelId },
+                perkroleData
+            );
+
+            slots_used = perkroleData.users.length;
+
+            return interaction.reply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("Random")
-                        .setDescription(`Scanning perkroles...`),
+                    new EmbedBuilder().setDescription(
+                        `**Perk channel self remove: SUCCESSFUL**\n*I removed that perk role from you.*\n\n\nRole: <@&${perkroleData.roleId}>\nRole Id: \`${perkroleData.roleId}\`\nOwner: <@${perkroleData.userId}}>`
+                    ),
                 ],
-                fetchReply: true,
             });
+        } else if (interaction.options.getSubcommand() === "sync") {
+            if (!perkroleData) {
+                error_message = `You don't own a perk role, therefore you cannot use this command.`;
+                return error_reply(interaction, error_message);
+            }
 
-            let usersArray = await UserModel.find({
-                "customrole.id": { $exists: true, $ne: null },
-            });
-
-            usersArray.forEach(async (user) => {
-                const channel = interaction.guild.roles.cache.get(
-                    user.customrole.id
-                );
-                if (!channel) {
-                    user.customrole.id = null;
-                    user.customrole.users = [];
-                    await UserModel.findOneAndUpdate(
-                        { userid: user.userid },
-                        user
-                    );
-                }
-                return;
-            });
-
-            usersArray = await UserModel.find({
-                "customrole.id": { $exists: true, $ne: null },
-            });
-
-            const flaggedUsersMap = Promise.all(
-                usersArray.map(async (user) => {
-                    const channel = interaction.guild.roles.cache.get(
-                        user.customrole.id
-                    );
-
-                    const userFetchedData = await interaction.guild.members
-                        .fetch(user.userid)
-                        .catch((error) => {
-                            return;
-                        });
-
-                    if (!userFetchedData) {
-                        return user;
-                    }
-
-                    let s_slots_max = 0;
-                    let s_slots_used = user.customrole.users.length;
-
-                    let hasroles = [];
-                    Object.keys(guildData.perkrole_roles).forEach((key) => {
-                        if (
-                            interaction.member.roles.cache.find(
-                                (r) => r.id === key
-                            )
-                        ) {
-                            s_slots_max =
-                                s_slots_max + guildData.perkrole_roles[key];
-                            hasroles.push(key);
-                        }
-                    });
-
-                    if (s_slots_used > s_slots_max) {
-                        const removedusers =
-                            user.customrole.users.slice(s_slots_max);
-                        removedusers.forEach(async (removedid) => {
-                            const userfetch =
-                                await interaction.guild.members.fetch(
-                                    removedid
-                                );
-                            userfetch.roles.remove(user.customrole.id);
-                        });
-                        user.customrole.users = user.customrole.users.slice(
-                            0,
-                            s_slots_max
-                        );
-                        await UserModel.findOneAndUpdate(
-                            { userid: interaction.user.id },
-                            user
-                        );
-                        s_slots_used = user.customrole.users.length;
-                    }
-
-                    if (s_slots_max <= 0) {
-                        return user;
-                    }
-                })
+            const user_fetch = await interaction.guild.members.fetch(
+                interaction.user.id
             );
-            let flaggedUsers = await flaggedUsersMap;
-            flaggedUsers = flaggedUsers.filter(Boolean);
-            const flaggedUsersDisplay = flaggedUsers
-                .map((user) => {
-                    return `\`-\` <@${user.userid}> \`${user.customrole.id}\``;
-                })
-                .join("\n");
-            flaggedUsers.forEach(async (user) => {
-                interaction.guild.roles.delete(
-                    user.customrole.id,
-                    "Didn't fulfill perkrole requirements"
+            user_fetch.roles.add(perkroleData.roleId);
+
+            perkroleData.users.forEach(async (userId) => {
+                const flaggeduser_fetch = await interaction.guild.members.fetch(
+                    userId
                 );
-                user.customrole.id = null;
-                user.customrole.users = [];
-                await UserModel.findOneAndUpdate({ userid: user.userid }, user);
+                flaggeduser_fetch.roles.add(perkroleData.roleId);
             });
 
-            return scan_msg.edit({
+            return interaction.reply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor("#42f563")
-                        .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully scanned private roles**\n\n__**Following Roles Deleted:**__\nActive Channels: \`${
-                                usersArray.length - flaggedUsers.length
-                            }\`\nRoles Deleted: \`${flaggedUsers.length}\`\n\n${
-                                flaggedUsers.length > 0
-                                    ? flaggedUsersDisplay
-                                    : `\`none\``
-                            }`
-                        ),
+                    new EmbedBuilder().setDescription(
+                        `**Sync perk role users: SUCCESSFUL**\n*I synced your perk channel users according what is stored.*\n\nRole: <@&${perkroleData.roleId}>\nRole Id: \`${perkroleData.roleId}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
                 ],
             });
         }

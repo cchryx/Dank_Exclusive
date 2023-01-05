@@ -1,5 +1,3 @@
-const ms = require("better-ms");
-const humanizeDuration = require("humanize-duration");
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const {
     EmbedBuilder,
@@ -12,80 +10,44 @@ const {
 
 const UserModel = require("../../models/userSchema");
 const GuildModel = require("../../models/guildSchema");
-const GiveawayModel = require("../../models/giveawaySchema");
+const GiveawayModel = require("../../models/givewaySchema");
 
 const { user_fetch } = require("../../utils/user");
-const { guild_fetch, guild_checkperm_giveaway } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
-const { roles_dissect } = require("../../utils/utils");
-
-const jsoncooldowns = require("../../giveaway-cooldowns.json");
-const fs = require("fs");
-
-const humantime = humanizeDuration.humanizer({
-    language: "shortEn",
-    delimiter: " ",
-    spacer: "",
-    languages: {
-        shortEn: {
-            y: () => "y",
-            mo: () => "mo",
-            w: () => "w",
-            d: () => "d",
-            h: () => "h",
-            m: () => "m",
-            s: () => "s",
-            ms: () => "ms",
-        },
-    },
-});
+const { giveaway_check_mentioncd } = require("../../utils/giveaway");
+const {
+    discord_check_role,
+    discord_dissect_roles,
+} = require("../../utils/discord");
+const { guild_fetch } = require("../../utils/guild");
+const { time_format } = require("../../utils/time");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("giveaway")
-        .setDescription("Giveaway stuff")
+        .setDescription("Giveaway actions.")
         .addSubcommand((subcommand) =>
             subcommand
-                .setName("show")
-                .setDescription("Show your current active giveaways")
-        )
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName("deleteall")
+                .setName("cleanup")
                 .setDescription(
-                    "Delete all giveawys that have ended from databse"
+                    "Delete all giveawys that have ended from databse."
                 )
         )
         .addSubcommand((subcommand) =>
             subcommand
-                .setName("start")
-                .setDescription("Start a new giveaway")
-                .addStringOption((oi) => {
-                    return oi
-                        .setName("type")
-                        .setDescription(
-                            "Nitro, Dank Memer, Bro Bot, Xenon, or other"
-                        )
-                        .setRequired(true)
-                        .addChoices(
-                            { name: "Dank Memer", value: "dankmemer" },
-                            { name: "Nitro", value: "nitro" },
-                            { name: "Bro Bot", value: "brobot" },
-                            { name: "Xenon", value: "xenon" },
-                            { name: "Other", value: "other" }
-                        );
-                })
+                .setName("create")
+                .setDescription("Create a new giveaway.")
                 .addStringOption((oi) => {
                     return oi
                         .setName("prize")
-                        .setDescription("Giveaway prize")
+                        .setDescription("Giveaway prize.")
                         .setRequired(true);
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("time")
+                        .setName("duration")
                         .setDescription(
-                            "How long will the giveaway last, how much time do users get to enter (example: 1h2m9s)"
+                            "How long will the giveaway last, how much time do users get to enter (example: 1h2m9s)."
                         )
                         .setRequired(true);
                 })
@@ -93,58 +55,88 @@ module.exports = {
                     return oi
                         .setName("winners")
                         .setDescription(
-                            "How many winners can the giveaway have"
+                            "How many winners can the giveaway have."
                         )
                         .setRequired(true);
                 })
                 .addUserOption((oi) => {
                     return oi
-                        .setName("donator")
-                        .setDescription("Who donated to this giveaway")
+                        .setName("sponsor")
+                        .setDescription("Who donated to this giveaway.")
                         .setRequired(true);
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("mentions")
+                        .setName("globalbypass")
                         .setDescription(
-                            "Id: Roles will get pinged for this giveaway"
+                            "Include global bypass in this giveaway?"
+                        )
+                        .addChoices(
+                            {
+                                name: "True",
+                                value: "true",
+                            },
+                            { name: "False", value: "false" }
+                        )
+                        .setRequired(true);
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("mention")
+                        .setDescription(
+                            "Which role will be mentioned for this giveaway."
                         )
                         .addChoices(
                             {
                                 name: "Massive Giveaway",
-                                value: "giveaway_massive",
+                                value: "902635820014505987",
                             },
-                            { name: "Giveaway", value: "giveaway" },
-                            { name: "Nitro Giveaway", value: "giveaway_nitro" },
-                            { name: "Bro Bot", value: "bro_bot" }
+                            { name: "Giveaway", value: "902412470365347870" },
+                            {
+                                name: "Nitro Giveaway",
+                                value: "932718201723306084",
+                            },
+                            { name: "Bro Bot", value: "928366279109279806" }
                         );
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("reqroles")
+                        .setName("requiredroles")
                         .setDescription(
-                            "Id: Which roles do you need in order to join the giveaway, sparate by spaces"
+                            "Id or mention roles separated by space."
                         );
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("requiredchat")
+                        .setDescription(
+                            "Amount of messages needed to be sent in a certain channel separated by space. [channel] [messages]"
+                        );
+                })
+                .addNumberOption((oi) => {
+                    return oi
+                        .setName("requiredlevel")
+                        .setDescription("Number value.");
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("bypassroles")
                         .setDescription(
-                            "Id: What roles can bypass this giveaway, sparate by spaces"
+                            "Id or mention roles separated by space."
                         );
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("blacklistroles")
                         .setDescription(
-                            "Id: What user role is blacklisted to join this giveaway, sparate by spaces"
+                            "Id or mention roles separated by space."
                         );
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("message")
                         .setDescription(
-                            "Message that will be attached to the giveaway"
+                            "Message that will be attached to the giveaway."
                         );
                 })
         )
@@ -155,23 +147,26 @@ module.exports = {
                 .addUserOption((oi) => {
                     return oi
                         .setName("sponsor")
-                        .setDescription("Who sponsored to this giveaway")
+                        .setDescription("Who sponsored to this giveaway.")
                         .setRequired(true);
                 })
                 .addStringOption((oi) => {
                     return oi
-                        .setName("mentions")
+                        .setName("mention")
                         .setDescription(
-                            "Roles will get pinged for this giveaway"
+                            "Which role will be mentioned for this giveaway."
                         )
                         .addChoices(
                             {
                                 name: "Massive Giveaway",
-                                value: "giveaway_massive",
+                                value: "902635820014505987",
                             },
-                            { name: "Giveaway", value: "giveaway" },
-                            { name: "Nitro Giveaway", value: "giveaway_nitro" },
-                            { name: "Bro Bot", value: "bro_bot" }
+                            { name: "Giveaway", value: "902412470365347870" },
+                            {
+                                name: "Nitro Giveaway",
+                                value: "932718201723306084",
+                            },
+                            { name: "Bro Bot", value: "928366279109279806" }
                         )
                         .setRequired(true);
                 })
@@ -179,354 +174,137 @@ module.exports = {
                     return oi
                         .setName("message")
                         .setDescription(
-                            "Message that will be attached to the giveaway"
+                            "Message that will be attached to the giveaway."
                         );
                 })
         ),
     async execute(interaction, client) {
         const guildData = await guild_fetch(interaction.guildId);
-        requiredperms = ["ManageChannels", "ManageGuild", "Administrator"];
-        let message;
-        let pass = await guild_checkperm_giveaway(interaction, requiredperms);
+        const embed_theme = guildData.theme;
+        let error_message;
 
-        if (!pass === true) {
-            message = `\`You don't have the required permissions to preform this action\``;
-            return error_reply(interaction, message);
+        const checkAccess = await discord_check_role(interaction, [
+            "902372521213587456",
+        ]);
+        if (checkAccess === false) {
+            error_message = "You don't have the roles to use this command.";
+            error_reply(interaction, error_message);
         }
-        const embedTheme = guildData.theme;
-        if (interaction.options.getSubcommand() === "start") {
+
+        if (interaction.options.getSubcommand() === "create") {
             const options = {
                 type: interaction.options.getString("type"),
                 prize: interaction.options.getString("prize"),
-                time: interaction.options.getString("time"),
+                duration: interaction.options.getString("duration"),
                 winners: interaction.options.getNumber("winners"),
-                donator: interaction.options.getMember("donator"),
-                reqrole: interaction.options.getString("reqroles"),
+                sponsor: interaction.options.getMember("sponsor"),
+                requiredroles: interaction.options.getString("requiredroles"),
                 bypassroles: interaction.options.getString("bypassroles"),
                 blacklistroles: interaction.options.getString("blacklistroles"),
                 message: interaction.options.getString("message"),
-                mentions: interaction.options.getString("mentions"),
+                requiredlevel: interaction.options.getNumber("requiredlevel"),
+                mention: interaction.options.getString("mention"),
+                globalbypass: interaction.options.getString("globalbypass"),
+                requiredchat: interaction.options.getString("requiredchat"),
             };
 
-            let cooldown;
-            if (options.mentions) {
-                const userID = interaction.user.id;
-                if (!jsoncooldowns.hasOwnProperty(userID)) {
-                    jsoncooldowns[userID] = {};
-                }
-
-                if (options.mentions === "giveaway") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 180;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].giveaway = timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                } else if (options.mentions === "giveaway_massive") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 300;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].giveaway_massive =
-                            timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                } else if (options.mentions === "giveaway_nitro") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 300;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].giveaway_nitro =
-                            timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                } else if (options.mentions === "bro_bot") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 300;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].bro_bot = timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                }
-
-                options.mentions =
-                    guildData.giveaway.mentions[options.mentions];
-            }
-
-            let typeurl;
-            if (options.type === "dankmemer") {
-                typeurl =
-                    "https://cdn.discordapp.com/attachments/1003715669059178626/1003729888785739907/memer.webp";
-            } else if (options.type === "nitro") {
-                typeurl =
-                    "https://cdn.discordapp.com/attachments/1003715669059178626/1003729889150632027/EmSIbDzXYAAb4R7.png";
-            } else if (options.type === "brobot") {
-                typeurl =
-                    "https://cdn.discordapp.com/attachments/1003715669059178626/1003729887531651193/e4ac5faef283425eb128dac16bbeb2c2.png?width=390&height=390";
-            } else if (options.type === "xenon") {
-                typeurl =
-                    "https://cdn.discordapp.com/attachments/1003715669059178626/1003729888416632902/988082656505909268.gif";
-            } else if (options.type === "other") {
-                typeurl =
-                    "https://cdn.discordapp.com/attachments/1003715669059178626/1003729887988809770/824918033889361941.gif";
-            }
-            options.winners = parseInt(options.winners);
+            // handle winners
+            options.winners = Math.floor(options.winners);
             if (options.winners < 1) {
-                message = `\`The amount of winners should be greater than 0\``;
-                return error_reply(interaction, message);
+                options.winners *= -1;
             }
-            let mentions;
-            if (options.mentions) {
-                const mention_args = options.mentions.split(" ");
-                mentionedrole = [];
-                mention_args.forEach((element) => {
-                    if (
-                        interaction.guild.roles.cache.find(
-                            (role) => role.id === element
-                        )
-                    ) {
-                        const fetchedrole = interaction.guild.roles.cache.find(
-                            (role) => role.id === element
-                        );
-                        mentionedrole.push(fetchedrole);
-                    }
-                });
-                const mentionedrole_map = mentionedrole
-                    .map((element) => {
-                        return element;
-                    })
-                    .join(" ");
 
-                if (mentionedrole.length <= 0) {
-                    mentions = `\`No mentions for this giveaway\``;
-                } else {
-                    mentions = mentionedrole_map;
+            // handle duration
+            const timeData = await time_format(interaction, options.duration);
+            if (timeData.status === false) {
+                return;
+            }
+
+            const requiredChat_string = options.requiredchat;
+            let requiredChat;
+            let requiredChat_raw;
+            let requiredChat_arguments;
+            let requiredChat_channel;
+            let requiredChat_messages;
+            if (options.requiredchat) {
+                requiredChat_arguments = requiredChat_string.split(" ");
+                requiredChat_arguments = requiredChat_arguments.filter(Boolean);
+                requiredChat_channel = requiredChat_arguments[0];
+                requiredChat_messages = parseInt(requiredChat_arguments[1]);
+
+                if (!requiredChat_messages) {
+                    error_message = `Couldn't convert amount of messages to an interger.\nAurgument Syntax: \`[channel] [messages]\``;
+                    return error_reply(interaction, error_message);
                 }
-            } else {
-                mentions = `\`No mentions for this giveaway\``;
-            }
-            const etime = `time: ` + options.time;
-            const timeargs = etime.split(" ");
-            timeargs.shift();
-            const time = ms.getMilliseconds(timeargs[0]);
-            if (!time) {
-                message = `\`Couldn't parse ${timeargs[0]}\nExample: 1d1h12m\``;
-                return error_reply(interaction, message);
-            }
-            if (time < 1000) {
-                message = `\`Minimum timer is 1s\``;
-                return error_reply(interaction, message);
-            }
-            const endtime = Date.now() + time;
-            const giveaway_embed = new EmbedBuilder()
-                .setTitle(`${options.prize}`)
-                .setThumbnail(typeurl)
-                .setColor(embedTheme.color)
-                .setDescription(
-                    `Click ${embedTheme.emoji_join} to enter\n\n${
-                        embedTheme.emoji_mainpoint
-                    }**Ending:** <t:${Math.floor(
-                        endtime / 1000
-                    )}:R> (\`duration: ${humantime(time)}\`)\n${
-                        embedTheme.emoji_mainpoint
-                    }**Host:** ${interaction.user}\n${
-                        embedTheme.emoji_mainpoint
-                    }**Donator:** ${options.donator}`
-                )
-                .setImage(embedTheme.dividerurl)
-                .setFooter({
-                    text: `Winners: ${options.winners.toLocaleString()}`,
-                });
 
-            const info_object = {};
-            const info_arry_raw = {};
+                if (requiredChat_messages < 1) {
+                    options.winners *= -1;
+                }
 
-            let required_roles;
-            if (options.reqrole) {
-                required_roles = await roles_dissect(
+                requiredChat_channel = requiredChat_channel.replace(/\D/g, "");
+                const requiredChat_channel_validation =
+                    client.channels.cache.get(requiredChat_channel);
+
+                if (!requiredChat_channel_validation) {
+                    error_message = `Couldn't find that channel in this server.\nAurgument Syntax: \`[channel] [messages]\``;
+                    return error_reply(interaction, error_message);
+                }
+
+                requiredChat_raw = {
+                    channel: requiredChat_channel,
+                    messages: requiredChat_messages,
+                };
+
+                requiredChat = {
+                    channel: requiredChat_channel,
+                    messages: requiredChat_messages,
+                    users_progress: {},
+                };
+            }
+
+            const rolesData = {};
+            const rolesData_raw = {};
+
+            if (options.requiredroles) {
+                rolesData.required = await discord_dissect_roles(
                     interaction,
-                    options.reqrole
+                    options.requiredroles
                 );
             }
-            if (required_roles) {
-                info_object.required = `${embedTheme.emoji_subpoint}Required: ${required_roles.mapstring}`;
-                info_arry_raw.required = required_roles.roles;
+
+            if (rolesData.required) {
+                rolesData.required.display = `${embed_theme.emoji_subpoint}**Required Roles:** ${rolesData.required.mapString}`;
+                rolesData_raw.required = rolesData["required"].roles;
             }
 
-            let bypass_roles;
             if (options.bypassroles) {
-                bypass_roles = await roles_dissect(
+                rolesData.bypass = await discord_dissect_roles(
                     interaction,
                     options.bypassroles
                 );
             }
-            if (bypass_roles) {
-                info_object.bypass = `${embedTheme.emoji_subpoint}Bypass: ${bypass_roles.mapstring}`;
-                info_arry_raw.bypass = bypass_roles.roles;
+
+            if (rolesData.bypass) {
+                rolesData.bypass.display = `${embed_theme.emoji_subpoint}**Bypass Roles:** ${rolesData.bypass.mapString}`;
+                rolesData_raw.bypass = rolesData["bypass"].roles;
             }
 
-            let blacklist_roles;
             if (options.blacklistroles) {
-                blacklist_roles = await roles_dissect(
+                rolesData.blacklist = await discord_dissect_roles(
                     interaction,
                     options.blacklistroles
                 );
             }
-            if (blacklist_roles) {
-                info_object.blacklist = `${embedTheme.emoji_subpoint}Blacklisted: ${blacklist_roles.mapstring}`;
-                info_arry_raw.blacklist = blacklist_roles.roles;
+
+            if (rolesData.blacklist) {
+                rolesData.blacklist.display = `${embed_theme.emoji_subpoint}**Blacklisted Roles:** ${rolesData.blacklist.mapString}`;
+                rolesData_raw.blacklist = rolesData["blacklist"].roles;
             }
 
-            if (info_arry_raw.required && info_arry_raw.bypass) {
+            if (rolesData_raw.required && rolesData_raw.bypass) {
                 let repeat = false;
-                info_arry_raw.required.forEach((role) => {
-                    if (info_arry_raw.bypass.includes(role)) {
+                rolesData_raw.required.forEach((role) => {
+                    if (rolesData_raw.bypass.includes(role)) {
                         repeat = true;
                     }
                 });
@@ -537,10 +315,10 @@ module.exports = {
                 }
             }
 
-            if (info_arry_raw.required && info_arry_raw.blacklist) {
+            if (rolesData_raw.required && rolesData_raw.blacklist) {
                 let repeat = false;
-                info_arry_raw.required.forEach((role) => {
-                    if (info_arry_raw.blacklist.includes(role)) {
+                rolesData_raw.required.forEach((role) => {
+                    if (rolesData_raw.blacklist.includes(role)) {
                         repeat = true;
                     }
                 });
@@ -551,10 +329,10 @@ module.exports = {
                 }
             }
 
-            if (info_arry_raw.blacklist && info_arry_raw.bypass) {
+            if (rolesData_raw.blacklist && rolesData_raw.bypass) {
                 let repeat = false;
-                info_arry_raw.blacklist.forEach((role) => {
-                    if (info_arry_raw.bypass.includes(role)) {
+                rolesData_raw.blacklist.forEach((role) => {
+                    if (rolesData_raw.bypass.includes(role)) {
                         repeat = true;
                     }
                 });
@@ -565,28 +343,102 @@ module.exports = {
                 }
             }
 
-            let info_map;
-            if (Object.keys(info_object).length > 0) {
-                info_map = Object.keys(info_object)
-                    .map((key) => {
-                        return info_object[key];
+            const embeds = [];
+
+            const giveaway_embed = new EmbedBuilder()
+                .setTitle(`${options.prize}`)
+                .setColor(embed_theme.color)
+                .setDescription(
+                    `Click ${embed_theme.emoji_join} to enter\n\n${
+                        embed_theme.emoji_mainpoint
+                    }**Ending:** <t:${Math.floor(
+                        timeData.endTime / 1000
+                    )}:R> (\`duration: ${timeData.humanTime}\`)\n${
+                        embed_theme.emoji_mainpoint
+                    }**Host:** ${interaction.user}\n${
+                        embed_theme.emoji_mainpoint
+                    }**Donator:** ${options.sponsor}`
+                )
+                .setImage(embed_theme.dividerurl)
+                .setFooter({
+                    text: `Winners: ${options.winners.toLocaleString()}`,
+                });
+
+            let info_map = [];
+
+            if (options.requiredlevel) {
+                info_map.push(
+                    `${
+                        embed_theme.emoji_subpoint
+                    }**Required Level:** \`${options.requiredlevel.toLocaleString()}\``
+                );
+            }
+
+            if (requiredChat_raw) {
+                info_map.push(
+                    `${
+                        embed_theme.emoji_subpoint
+                    }**Required Chat:** \`${requiredChat_messages.toLocaleString()} messages\` in <#${requiredChat_channel}>`
+                );
+            }
+
+            let hasRoleInformation;
+            Object.keys(rolesData_raw).forEach((element) => {
+                if (Array.isArray(rolesData_raw[element])) {
+                    hasRoleInformation = true;
+                }
+            });
+
+            if (hasRoleInformation == true || options.requiredlevel) {
+                if (Object.keys(rolesData_raw).length > 0) {
+                    Object.keys(rolesData_raw).forEach((key) => {
+                        if (!rolesData_raw[key]) {
+                            return;
+                        }
+                        return info_map.push(rolesData[key].display);
+                    });
+                }
+            }
+
+            if (info_map.length > 0) {
+                info_map = info_map
+                    .map((element) => {
+                        return element;
                     })
+                    .filter(Boolean)
                     .join("\n");
 
                 giveaway_embed.setFields({
                     name: "Information:",
                     value: info_map,
                 });
+            } else {
+                info_map = null;
             }
 
-            const embeds = [giveaway_embed];
+            const requirements = {
+                requiredlevel: null,
+                requiredRoles: [],
+            };
+            if (options.requiredlevel) {
+                requirements.requiredlevel = options.requiredlevel;
+            }
+
+            if (rolesData_raw.required) {
+                requirements.requiredRoles = rolesData_raw.required;
+            }
+
+            embeds.push(giveaway_embed);
+
             if (options.message) {
                 const message_embed = new EmbedBuilder()
-                    .setColor(embedTheme.color)
-                    .setDescription(`**Message:** ${options.message}`)
+                    .setColor(embed_theme.color)
+                    .setDescription(
+                        `**Message:** ${options.message}\n\nBe sure to thank the sponsor in <#908201143660859433>!`
+                    )
                     .setFooter({
-                        url: options.donator.user.displayAvatarURL(),
-                        text: `-${options.donator.user.tag}`,
+                        url: options.sponsor.user.displayAvatarURL(),
+                        text: `-${options.sponsor.user.tag}`,
                     });
                 embeds.push(message_embed);
             }
@@ -596,8 +448,8 @@ module.exports = {
             const button_join = new ButtonBuilder()
                 .setCustomId(`giveaway_join`)
                 .setLabel(`0`)
-                .setEmoji(`${embedTheme.emoji_join}`)
-                .setStyle(embedTheme.button_style);
+                .setEmoji(`${embed_theme.emoji_join}`)
+                .setStyle(embed_theme.button_style);
             const button_end = new ButtonBuilder()
                 .setCustomId(`giveaway_end`)
                 .setLabel(`End`)
@@ -612,30 +464,45 @@ module.exports = {
 
             rows.push(row);
 
-            const send_msg = await interaction.channel.send({
-                content: mentions,
+            const mention = `${
+                options.mention ? `<@&${options.mention}>` : `\`No mentions\``
+            }`;
+            const giveaway_message = await interaction.channel.send({
+                content: mention,
                 embeds: embeds,
                 components: rows,
                 allowedMentions: { parse: ["users", "roles"] },
             });
 
-            if (required_roles) {
-                if (required_roles.roles.includes("922663821208879125")) {
+            // handle mention
+            if (options.mention) {
+                const checkMentioncd = await giveaway_check_mentioncd(
+                    interaction,
+                    options.mention
+                );
+
+                if (checkMentioncd === false) {
+                    return;
+                }
+            }
+
+            if (rolesData_raw.required) {
+                if (rolesData_raw.required.includes("922663821208879125")) {
                     const vote_row = new ActionRowBuilder();
                     const vote_embed = new EmbedBuilder()
-                        .setColor(embedTheme.color)
+                        .setColor(embed_theme.color)
                         .setDescription(
-                            `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.voter\` <:panda_yay:909668976009805824>`
+                            `**How to become a voter?**\n<a:bluearrow:1005191872647536660> Vote Link: [\`https://top.gg/servers/902334382939963402/vote\`](https://top.gg/servers/902334382939963402/vote)\n<a:bluearrow:1005191872647536660> Check out our voter perks by using \`.perks voter\` <:panda_yay:909668976009805824>`
                         );
                     vote_row.addComponents([
                         new ButtonBuilder()
                             .setCustomId(`vote_perks`)
                             .setLabel(`Voting Perks`)
-                            .setEmoji(`<a:dankex:992270290027556885>`)
-                            .setStyle(embedTheme.button_style),
+                            .setEmoji(`<a:dankex:1054942804637388900>`)
+                            .setStyle(embed_theme.button_style),
                         new ButtonBuilder()
                             .setLabel(`Vote here`)
-                            .setEmoji(`<a:dankex:992270290027556885>`)
+                            .setEmoji(`<a:dankex:1054942804637388900>`)
                             .setStyle(5)
                             .setURL(
                                 "https://top.gg/servers/902334382939963402/vote"
@@ -650,289 +517,49 @@ module.exports = {
             }
 
             return GiveawayModel.create({
-                guildid: interaction.guildId,
-                channelid: interaction.channelId,
-                messageid: send_msg.id,
-                hostid: interaction.user.id,
-                sponsorid: options.donator.id,
-                sponsormessage: options.message,
-                winnersamount: options.winners,
+                guildId: interaction.guildId,
+                channelId: interaction.channelId,
+                messageId: giveaway_message.id,
+                hostId: interaction.user.id,
+                sponsorId: options.sponsor.id,
+                sponsorMessage: options.message,
+                winnersAmount: options.winners,
                 prize: options.prize,
-                duration: time,
-                endsAt: endtime,
-                infodisplay: info_map,
-                typeurl: typeurl,
-                requirements: info_arry_raw.required,
-                blacklist: info_arry_raw.blacklist,
-                bypass: info_arry_raw.bypass,
+                duration: timeData.timeMilliseconds,
+                endsAt: timeData.endTime,
+                informationDisplay: info_map,
+                requirements: requirements,
+                blacklist: rolesData_raw.blacklist,
+                bypass: rolesData_raw.bypass,
+                globalBypass: options.globalbypass,
+                chatRequirements: requiredChat,
             });
-        } else if (interaction.options.getSubcommand() === "show") {
         } else if (interaction.options.getSubcommand() === "mention") {
-            if (
-                !interaction.member.roles.cache.has("902372521213587456") ===
-                true
-            ) {
-                error_message = `\`You don't have the required permissions to preform this action\``;
-                return error_reply(interaction, error_message);
-            }
-
-            const allowedchannels = [
-                "902344036659118130",
-                "902344122650734622",
-                "902344060281430016",
-                "960370004384165908",
-            ];
-            let allowedchannels_pass = false;
-
-            allowedchannels.forEach((channel) => {
-                if (interaction.channelId === channel) {
-                    allowedchannels_pass = true;
-                }
-            });
-
-            if (allowedchannels_pass === false) {
-                error_message = `You are only allowed to use this command in <#902344036659118130>, <#902344122650734622>, <#902344060281430016>, and <#960370004384165908>`;
-                return error_reply(interaction, error_message);
-            }
-
             const options = {
                 message: interaction.options.getString("message"),
                 sponsor: interaction.options.getMember("sponsor"),
-                mentions: interaction.options.getString("mentions"),
+                mention: interaction.options.getString("mention"),
             };
 
-            let cooldown;
-            if (options.mentions) {
-                const userID = interaction.user.id;
-                if (!jsoncooldowns.hasOwnProperty(userID)) {
-                    jsoncooldowns[userID] = {};
-                }
+            const checkMentioncd = await giveaway_check_mentioncd(
+                interaction,
+                options.mention
+            );
 
-                if (options.mentions === "giveaway") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 180;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].giveaway = timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                } else if (options.mentions === "giveaway_massive") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 300;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].giveaway_massive =
-                            timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                } else if (options.mentions === "giveaway_nitro") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 300;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].giveaway_nitro =
-                            timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                } else if (options.mentions === "bro_bot") {
-                    let readytimestamp =
-                        jsoncooldowns[userID][options.mentions];
-
-                    if (!readytimestamp) {
-                        readytimestamp = 0;
-                    }
-
-                    const timeleft = new Date(readytimestamp);
-                    let check =
-                        timeleft - Date.now() >= timeleft ||
-                        timeleft - Date.now() <= 0;
-
-                    if (!check) {
-                        const cooldown_embed =
-                            new EmbedBuilder().setDescription(
-                                `\`You are on cooldown for mentioning giveaways, please wait for cooldown to end or don't add mentions when using this command\`\n\`Other mentions may work if they are not on cooldown\`\nReady: <t:${Math.floor(
-                                    readytimestamp / 1000
-                                )}:R>\nMention: <@&${
-                                    guildData.giveaway.mentions[
-                                        options.mentions
-                                    ]
-                                }>`
-                            );
-
-                        return interaction.reply({
-                            embeds: [cooldown_embed],
-                            ephemeral: true,
-                        });
-                    } else {
-                        cooldown = 300;
-                        const cooldown_amount = cooldown * 1000;
-                        const timpstamp = Date.now() + cooldown_amount;
-                        jsoncooldowns[interaction.user.id].bro_bot = timpstamp;
-                        fs.writeFile(
-                            "./giveaway-cooldowns.json",
-                            JSON.stringify(jsoncooldowns),
-                            (err) => {
-                                if (err) {
-                                    console.log(err);
-                                }
-                            }
-                        );
-                    }
-                }
-
-                options.mentions =
-                    guildData.giveaway.mentions[options.mentions];
-            }
-
-            let mentions;
-            if (options.mentions) {
-                const mention_args = options.mentions.split(" ");
-                mentionedrole = [];
-                mention_args.forEach((element) => {
-                    if (
-                        interaction.guild.roles.cache.find(
-                            (role) => role.id === element
-                        )
-                    ) {
-                        const fetchedrole = interaction.guild.roles.cache.find(
-                            (role) => role.id === element
-                        );
-                        mentionedrole.push(fetchedrole);
-                    }
-                });
-                const mentionedrole_map = mentionedrole
-                    .map((element) => {
-                        return element;
-                    })
-                    .join(" ");
-
-                if (mentionedrole.length <= 0) {
-                    mentions = `\`No mentions for this giveaway\``;
-                } else {
-                    mentions = mentionedrole_map;
-                }
-            } else {
-                mentions = `\`No mentions for this giveaway\``;
+            if (checkMentioncd === false) {
+                return;
             }
 
             const mention_embed = new EmbedBuilder()
-                .setColor(embedTheme.color)
+                .setColor(embed_theme.color)
                 .setDescription(
-                    `${embedTheme.emoji_mainpoint}**Sponsor:** ${
+                    `${embed_theme.emoji_mainpoint}**Sponsor:** ${
                         options.sponsor.user
-                    }\n${embedTheme.emoji_mainpoint}**Message:** ${
+                    }\n${embed_theme.emoji_mainpoint}**Message:** ${
                         options.message ? options.message : `\`none\``
                     }\n${
-                        embedTheme.emoji_subpoint
-                    }**Thank the sponsor in <#908201143660859433>**`
+                        embed_theme.emoji_subpoint
+                    }**Thank the sponsor in <#908201143660859433>!**`
                 )
                 .setThumbnail(
                     "https://images-ext-1.discordapp.net/external/2y7jsoXk5r9GJEvoiA0tHNpYhzD9s7S6zeHEFnaelKQ/%3Fsize%3D1024/https/cdn.discordapp.com/icons/902334382939963402/a_a0b58c0fa37eab6c37f4b6310e300a99.gif?width=299&height=299"
@@ -944,10 +571,10 @@ module.exports = {
             });
 
             await interaction.channel.send({
-                content: mentions,
+                content: `<@&${options.mention}>`,
                 embeds: [mention_embed],
             });
-        } else if (interaction.options.getSubcommand() === "deleteall") {
+        } else if (interaction.options.getSubcommand() === "cleanup") {
             if (
                 !interaction.member.roles.cache.has("938372143853502494") ===
                 true
@@ -978,6 +605,7 @@ module.exports = {
                         ),
                 ],
             });
+        } else if (interaction.options.getSubcommand() === "show") {
         }
     },
 };
