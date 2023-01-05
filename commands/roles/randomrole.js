@@ -1,48 +1,50 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 
-const { discord_check_role } = require("../../utils/discord");
+const { guild_checkperm_mod } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
+const { reference_letternumber } = require("../../utils/reference");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("randomrole")
-        .setDescription("Gives a role to random about of people")
+        .setDescription("gives a number of random people a role")
         .addStringOption((oi) => {
             return oi
                 .setName("quantity")
-                .setDescription("How many users will this role be added to.")
+                .setDescription(
+                    "A constant number: `123`, a short form: `2k`, a keyword: `max or half`"
+                )
                 .setRequired(true);
         })
         .addRoleOption((oi) => {
             return oi
                 .setName("role")
-                .setDescription("A role in the server.")
+                .setDescription("A valid role that exists in this server")
                 .setRequired(true);
         })
         .addRoleOption((oi) => {
             return oi
                 .setName("blacklist")
                 .setDescription(
-                    "A role in the server in which if a user has this role, they will not be reciveing the role."
+                    "A valid role that exists in this server that you want to blacklist"
                 );
         }),
 
     async execute(interaction, client) {
-        let error_message;
-        const checkAccess = await discord_check_role(interaction, [
-            "904456239415697441",
-        ]);
-        if (checkAccess === false) {
-            error_message = "You don't have the roles to use this command.";
-            return error_reply(interaction, error_message);
-        }
-
         const options = {
             quantity: interaction.options.getString("quantity"),
             role: interaction.options.getRole("role"),
             blacklist: interaction.options.getRole("blacklist"),
         };
+        requiredperms = [
+            "ManageChannels",
+            "ManageGuild",
+            "Administrator",
+            "ManageRoles",
+        ];
+        let message;
+        let pass = await guild_checkperm_mod(interaction, requiredperms);
 
         // const member_fetch = await interaction.guild.members.fetch();
         // const member_fetch_filterhumans = member_fetch.filter(
