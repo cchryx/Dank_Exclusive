@@ -75,7 +75,7 @@ module.exports = {
                         .addChoices(
                             { name: "set", value: "set" },
                             { name: "add", value: "add" },
-                            { name: "remove", value: "remove" }
+                            { name: "minus", value: "minus" }
                         );
                 })
                 .addNumberOption((oi) => {
