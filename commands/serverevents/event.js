@@ -152,7 +152,7 @@ module.exports = {
                 embeds: [event_embed],
             });
 
-            dankexData.data.event.ongoing = true;
+            dankexData.miscData.event.ongoing = true;
             return GuildModel.findOneAndUpdate(
                 {
                     guildid: "902334382939963402",
@@ -160,7 +160,7 @@ module.exports = {
                 dankexData
             );
         } else if (interaction.options.getSubcommand() === "end") {
-            if (dankexData.data.event.ongoing === false) {
+            if (dankexData.miscData.event.ongoing === false) {
                 error_message = `There is no ongoing event. You can start a new event by running \`/event start\` in <#902733103380975616>.`;
                 return error_reply(interaction, error_message);
             }
