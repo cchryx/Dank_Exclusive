@@ -79,9 +79,11 @@ module.exports = {
 
             return interaction.reply({
                 embeds: [
-                    new EmbedBuilder().setDescription(
-                        `**Level leaderboard: DISPLAY**\n*Showing level leaderboard of the top 15 in ${interaction.guild.name}*\n\n${donation_leaderboard_display}`
-                    ),
+                    new EmbedBuilder()
+                        .setDescription(
+                            `**Level leaderboard: DISPLAY**\n*Showing level leaderboard of the top 15 in ${interaction.guild.name}*\n\n${donation_leaderboard_display}`
+                        )
+                        .setThumbnail(interaction.guild.iconURL()),
                 ],
             });
         }

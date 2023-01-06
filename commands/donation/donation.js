@@ -226,11 +226,13 @@ module.exports = {
 
             return interaction.reply({
                 embeds: [
-                    new EmbedBuilder().setDescription(
-                        `**Donation leaderboard: ${options.category.toUpperCase()}**\n*Showing donation leaderboard of the top 15 in ${
-                            interaction.guild.name
-                        }*\n\n${donation_leaderboard_display}`
-                    ),
+                    new EmbedBuilder()
+                        .setDescription(
+                            `**Donation leaderboard: ${options.category.toUpperCase()}**\n*Showing donation leaderboard of the top 15 in ${
+                                interaction.guild.name
+                            }*\n\n${donation_leaderboard_display}`
+                        )
+                        .setThumbnail(interaction.guild.iconURL()),
                 ],
             });
         }
