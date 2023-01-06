@@ -10,7 +10,7 @@ const {
 
 const UserModel = require("../../models/userSchema");
 const GuildModel = require("../../models/guildSchema");
-const GiveawayModel = require("../../models/givewaySchema");
+const GiveawayModel = require("../../models/giveawaySchema");
 
 const { user_fetch } = require("../../utils/user");
 const { error_reply } = require("../../utils/error");

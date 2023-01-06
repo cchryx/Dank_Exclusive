@@ -7,7 +7,7 @@ const {
     ComponentType,
 } = require("discord.js");
 
-const PerkroleModel = require("../../models/perkroleSchema");
+const PerkroleModel = require("../../models/perk/perkroleSchema");
 
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");

@@ -10,8 +10,8 @@ const {
 } = require("discord.js");
 
 const UserModel = require("../../models/userSchema");
-const PerkchannelModel = require("../../models/perkchannelSchema");
-const PerkroleModel = require("../../models/perkroleSchema");
+const PerkchannelModel = require("../../models/perk/perkchannelSchema");
+const PerkroleModel = require("../../models/perk/perkroleSchema");
 
 const { user_fetch } = require("../../utils/user");
 const { guild_fetch } = require("../../utils/guild");

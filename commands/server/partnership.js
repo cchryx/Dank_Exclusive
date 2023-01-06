@@ -10,6 +10,16 @@ const {
     Message,
 } = require("discord.js");
 
+const PchannelModel = require("../../models/pchannelSchema");
+
+const {
+    discord_dissect_roles,
+    discord_check_role,
+} = require("../../utils/discord");
+const { error_reply } = require("../../utils/error");
+const { guild_fetch } = require("../../utils/guild");
+const { time_format } = require("../../utils/time");
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("partnership")
@@ -58,10 +68,10 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("createchannel")
-                .setDescription("Create a channel for channel partners")
+                .setDescription("Create a channel for channel partnerships.")
                 .addUserOption((oi) => {
                     return oi
-                        .setName("partnermanager")
+                        .setName("user")
                         .setDescription("Other server partnership manager.")
                         .setRequired(true);
                 })
@@ -82,14 +92,16 @@ module.exports = {
                 .addStringOption((oi) => {
                     return oi
                         .setName("mentions")
-                        .setDescription("Mentions for posting ad.")
+                        .setDescription(
+                            "Mentions that go along with the advertisement."
+                        )
                         .setRequired(true);
                 })
                 .addStringOption((oi) => {
                     return oi
                         .setName("unhidden")
                         .setDescription(
-                            "Will is be visible to everyone in the server."
+                            "Will this channel be visible to everyone in the server."
                         )
                         .setRequired(true)
                         .addChoices(
@@ -102,30 +114,23 @@ module.exports = {
             subcommand
                 .setName("claimmention")
                 .setDescription(
-                    "Claim the mention for this partnership channel"
+                    "Claim the mention for this partnership channel."
                 )
         ),
     cooldown: 10,
     async execute(interaction, client) {
         let error_message;
+        const guildData = await guild_fetch(interaction.guildId);
 
         const checkAccess = await discord_check_role(interaction, [
             "920839776322609183",
         ]);
         if (checkAccess === false) {
             error_message = "You don't have the roles to use this command.";
-            error_reply(interaction, error_message);
+            return error_reply(interaction, error_message);
         }
 
         if (interaction.options.getSubcommand() === "log") {
-            if (
-                !interaction.member.roles.cache.has("920839776322609183") ===
-                true
-            ) {
-                error_message = `\`You don't have the required permissions to preform this action\``;
-                return error_reply(interaction, error_message);
-            }
-
             const options = {
                 serverinvite: interaction.options.getString("serverinvite"),
                 serverid: interaction.options.getString("serverid"),
@@ -134,82 +139,71 @@ module.exports = {
                 partneroffer: interaction.options.getString("partneroffer"),
             };
 
-            const partnershiplog_msg = await client.channels.cache
+            const partnership_log_msg = await client.channels.cache
                 .get("961728822208778260")
                 .send({
                     content: `**Server Invite:** ${options.serverinvite}`,
                     embeds: [
-                        new EmbedBuilder()
-                            .setColor("#FAFFFC")
-                            .setDescription(
-                                `**Server Id:** \`${options.serverid}\`\n**Their Partnership Manager:** ${options.user}\n**Log Issued By:** ${interaction.user}\n\n__**Offers:**__\nOur Offer: \`${options.ouroffer}\`\nTheir Offer: \`${options.partneroffer}\`\n\nRemove respective reaction if offer is used up:\n<:mainpoint_fallblossom:1016418438194933870> - US\n<:mainpoint_summer:1004211052612944014> - THEM`
-                            ),
+                        new EmbedBuilder().setDescription(
+                            `**Server Id:** \`${options.serverid}\`\n**Their Partnership Manager:** ${options.user}\n**Log Issued By:** ${interaction.user}\n\n__**Offers:**__\nOur Offer: \`${options.ouroffer}\`\nTheir Offer: \`${options.partneroffer}\`\n\nRemove respective reaction if offer is used up:\n<:mainpoint_fallblossom:1016418438194933870> - US\n<:mainpoint_summer:1004211052612944014> - THEM`
+                        ),
                     ],
                 });
 
-            partnershiplog_msg.react(
+            partnership_log_msg.react(
                 "<:mainpoint_fallblossom:1016418438194933870>"
             );
-            partnershiplog_msg.react("<:mainpoint_summer:1004211052612944014>");
+            partnership_log_msg.react(
+                "<:mainpoint_summer:1004211052612944014>"
+            );
 
-            interaction.reply({
+            return interaction.reply({
                 content:
-                    "<a:ravena_check:1002981211708325950> Successfully logged to <#961728822208778260>",
+                    "<a:ravena_check:1002981211708325950> Successfully logged to <#961728822208778260>.",
                 ephemeral: true,
             });
         } else if (interaction.options.getSubcommand() === "createchannel") {
-            if (
-                !interaction.member.roles.cache.has("920839776322609183") ===
-                true
-            ) {
-                error_message = `\`You don't have the required permissions to preform this action\``;
-                return error_reply(interaction, error_message);
-            }
-
             const options = {
-                partnermanager: interaction.options.getMember("partnermanager"),
+                user: interaction.options.getMember("user"),
                 time: interaction.options.getString("time"),
                 mentions: interaction.options.getString("mentions"),
                 channelname: interaction.options.getString("channelname"),
                 unhidden: interaction.options.getString("unhidden"),
             };
 
-            if (!options.partnermanager) {
-                error_message = `\`That use is not in this server\``;
+            if (!options.user) {
+                error_message = `That user is not in this server.`;
                 return error_reply(interaction, error_message);
             }
 
-            const etime = `time: ` + options.time;
-            const timeargs = etime.split(" ");
-            timeargs.shift();
-            const time = ms.getMilliseconds(timeargs[0]);
-            if (!time) {
-                message = `\`Couldn't parse ${timeargs[0]}\nExample: 1d1h12m\``;
-                return error_reply(interaction, message);
+            // handle duration
+            const timeData = await time_format(interaction, options.time);
+            if (timeData.status === false) {
+                return;
             }
-            if (time < 1000) {
-                message = `\`Minimum timer is 1s\``;
-                return error_reply(interaction, message);
-            }
-            const expiretime = Date.now() + time;
-            const mentions = await roles_dissect(interaction, options.mentions);
 
-            if (!mentions) {
-                error_message = `\`Couldn't find any mentioning of roles\``;
+            // handle mentions
+            const mentionsData = await discord_dissect_roles(
+                interaction,
+                options.mentions
+            );
+            if (mentionsData.length <= 0) {
+                error_message = `Couldn't find any mentioning of roles.`;
                 return error_reply(interaction, error_message);
             }
 
-            const channelinfo = {};
-            channelinfo.name = options.channelname;
-            channelinfo.parent = "920519695487090759";
-            channelinfo.type = ChannelType.GuildText;
-            const permissionoverwrites = [
+            const partnership_channel_information = {};
+            partnership_channel_information.name = options.channelname;
+            partnership_channel_information.parent =
+                guildData.miscData.categories.partnershipChannel || null;
+            partnership_channel_information.type = ChannelType.GuildText;
+            partnership_channel_information.permissionOverwrites = [
                 {
                     id: interaction.guild.id,
                     deny: [PermissionsBitField.Flags.SendMessages],
                 },
                 {
-                    id: options.partnermanager,
+                    id: options.user.id,
                     allow: [
                         PermissionsBitField.Flags.SendMessages,
                         PermissionsBitField.Flags.ReadMessageHistory,
@@ -223,38 +217,43 @@ module.exports = {
                 },
             ];
 
-            if (options.unhidden === "false") {
-                permissionoverwrites.push({
-                    id: "920490576904851457",
+            if (
+                options.unhidden === "false" &&
+                guildData.miscData.roles.noPartnership
+            ) {
+                console.log(true);
+                partnership_channel_information.permissionOverwrites.push({
+                    id: guildData.miscData.roles.noPartnership,
                     deny: [PermissionsBitField.Flags.ViewChannel],
                 });
             }
 
-            channelinfo.permissionOverwrites = permissionoverwrites;
+            const partnership_channel_discordData =
+                await interaction.guild.channels
+                    .create(partnership_channel_information)
+                    .catch((error) => {
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return false;
+                    });
 
-            const channelcreated = await interaction.guild.channels
-                .create(channelinfo)
-                .catch((error) => {
-                    error_message = `\`${error.rawError.message}\``;
-                    error_reply(interaction, error_message);
-                    return false;
-                });
+            if (partnership_channel_discordData === false) return;
 
-            if (channelcreated === false) return;
-
-            channelcreated.send({
-                content: `${options.partnermanager}`,
+            partnership_channel_discordData.send({
+                content: `${options.user}`,
                 embeds: [
                     new EmbedBuilder()
                         .setTitle(`${options.channelname}`)
                         .setDescription(
-                            `**Partnership channel has been created!**\n\n**Claim Mentions:** </partnership claimmention:1023475945056772152>\n**Channel Expires:** <t:${Math.floor(
-                                expiretime / 1000
+                            `**Create partnership channel: SUCCESSFUL**\n\nClaim Mentions: </partnership claimmention:1060990423541235823>\nChannel Issued By: ${
+                                interaction.user
+                            }\nChannel Expires: <t:${Math.floor(
+                                timeData.endTime / 1000
                             )}:R> <t:${Math.floor(
-                                expiretime / 1000
-                            )}:D>\n**Mentions:** ${
-                                mentions.mapstring
-                            }\n\n*You can only mention once, so use it when you are mentioning.*\n*Channel will auto delete after timer ends.*\n*Feel free to post your ad.*`
+                                timeData.endTime / 1000
+                            )}:D>\nMentions: ${
+                                mentionsData.mapString
+                            }\n\n*You can only use the mention command once, so use it when you are mentioning.*\n*Channel will auto delete after timer ends.*\n*Feel free to post your ad.*`
                         ),
                 ],
             });
@@ -264,42 +263,45 @@ module.exports = {
                     new EmbedBuilder()
                         .setTitle(`${options.channelname}`)
                         .setDescription(
-                            `**Partnership channel has been created!**\n\n**Channel Expires:** <t:${Math.floor(
-                                expiretime / 1000
+                            `**Create partnership channel: SUCCESSFUL**\n\nChannel Expires: <t:${Math.floor(
+                                timeData.endTime / 1000
                             )}:R> <t:${Math.floor(
-                                expiretime / 1000
-                            )}:D>\n**Partnership Manager:** ${
-                                options.channelname
-                            }\n**Mentions:** ${
-                                mentions.mapstring
-                            }\n**Channel:** <#${channelcreated.id}>`
+                                timeData.endTime / 1000
+                            )}:D>\nPartnership Manager: ${
+                                options.user
+                            }\nMentions: ${
+                                mentionsData.mapString
+                            }\nUnhidden: \`${options.unhidden}\`\nChannel: <#${
+                                partnership_channel_discordData.id
+                            }>`
                         ),
                 ],
             });
 
-            interaction.guild.members.cache
-                .get(options.partnermanager.id)
-                .roles.add("920192428915441724");
+            if (guildData.miscData.roles.heistPartner) {
+                interaction.guild.members.cache
+                    .get(options.user.id)
+                    .roles.add(guildData.miscData.roles.heistPartner);
+            }
 
-            return PartnershipChannelModel.create({
-                channelid: channelcreated.id,
-                pmanid: options.partnermanager.id,
-                expire: expiretime,
-                mentions: mentions.mapstring,
-                mentionused: false,
+            return PchannelModel.create({
+                channelId: partnership_channel_discordData.id,
+                ownerId: options.user.id,
+                expiresAt: timeData.endTime,
+                mentions: mentionsData.mapString,
             });
         } else if (interaction.options.getSubcommand() === "claimmention") {
-            const pchannelData = await PartnershipChannelModel.findOne({
-                channelid: interaction.channelId,
+            const pchannelData = await PchannelModel.findOne({
+                channelId: interaction.channelId,
             });
 
             if (!pchannelData) {
-                error_message = `\`This channel isn't registered as a partnership channel\``;
+                error_message = `This channel isn't registered as a partnership channel.`;
                 return error_reply(interaction, error_message);
             }
 
-            if (pchannelData.mentionused === true) {
-                error_message = `\`This channel already used their mention.\nIf this is an error contact bot developer or an admin.\``;
+            if (pchannelData.mentionUsed === true) {
+                error_message = `This channel already used their mention.\nIf this is an error contact bot developer or an admin.`;
                 return error_reply(interaction, error_message);
             }
 
@@ -311,11 +313,12 @@ module.exports = {
                 content: `${pchannelData.mentions}\nCheck out this server we've just partnered with!\n*This is an event partnership, __we are not otherwise affiliated with this server__*`,
             });
 
-            await PartnershipChannelModel.findOneAndUpdate(
+            pchannelData.mentionUsed = true;
+            return await PchannelModel.findOneAndUpdate(
                 {
-                    channelid: interaction.channelId,
+                    channelId: pchannelData.channelId,
                 },
-                { mentionused: true }
+                pchannelData
             );
         }
     },

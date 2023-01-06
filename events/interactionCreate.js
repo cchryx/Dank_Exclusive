@@ -8,7 +8,7 @@ const {
 } = require("discord.js");
 const humanizeDuration = require("humanize-duration");
 
-const GiveawayModel = require("../models/givewaySchema");
+const GiveawayModel = require("../models/giveawaySchema");
 
 const { discord_self_role } = require("../utils/discord");
 const { error_reply } = require("../utils/error");
@@ -22,6 +22,12 @@ const {
 } = require("../utils/giveaway");
 const { guild_fetch } = require("../utils/guild");
 const { vote_perks } = require("../utils/information");
+const {
+    timer_join,
+    timer_fetch,
+    timer_check_fulfill,
+    timer_leave,
+} = require("../utils/timer");
 const { user_fetch } = require("../utils/user");
 
 const humantime = humanizeDuration.humanizer({
@@ -162,6 +168,38 @@ module.exports = {
                 );
             } else if (interaction.customId === "vote_perks") {
                 return await vote_perks(interaction);
+            } else if (interaction.customId === "timer_join") {
+                const timerData = await timer_fetch(
+                    interaction,
+                    interaction.message.id
+                );
+                if (timerData.status === false) {
+                    return;
+                }
+
+                const checkFufill = await timer_check_fulfill(
+                    interaction,
+                    timerData.data
+                );
+                if (checkFufill === false) {
+                    return;
+                }
+
+                await timer_join(interaction, timerData.data, guildData);
+            } else if (interaction.customId === "timer_leave") {
+                const timerData = await timer_fetch(
+                    interaction,
+                    interaction.message.reference.messageId
+                );
+                if (timerData.status === false) {
+                    return;
+                }
+
+                return await timer_leave(
+                    interaction,
+                    timerData.data,
+                    guildData
+                );
             }
 
             if (

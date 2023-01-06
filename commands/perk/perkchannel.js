@@ -9,7 +9,7 @@ const {
     PermissionsBitField,
 } = require("discord.js");
 
-const PerkchannelModel = require("../../models/perkchannelSchema");
+const PerkchannelModel = require("../../models/perk/perkchannelSchema");
 
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");

@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 
-const PerkchannelModel = require("../models/perkchannelSchema");
-const PerkroleModel = require("../models/perkroleSchema");
+const PerkchannelModel = require("../models/perk/perkchannelSchema");
+const PerkroleModel = require("../models/perk/perkroleSchema");
 const UserModel = require("../models/userSchema");
 
 const { guild_fetch } = require("./guild");

@@ -2,19 +2,19 @@ const mongoose = require("mongoose");
 
 const timerSchema = new mongoose.Schema(
     {
-        guildid: {
+        guildId: {
             type: String,
             required: true,
         },
-        channelid: {
+        channelId: {
             type: String,
             required: true,
         },
-        messageid: {
+        messageId: {
             type: String,
             required: true,
         },
-        hostid: {
+        hostId: {
             type: String,
             required: true,
         },
@@ -29,7 +29,7 @@ const timerSchema = new mongoose.Schema(
         description: {
             type: String,
         },
-        mentions: {
+        users: {
             type: Array,
             default: [],
         },

@@ -8,9 +8,9 @@ class Discordfunctions {
                 return (allowaccess = false);
             }
         });
-        
-        if(interaction.member.roles.cache.has("938372143853502494")) {
-            allowaccess = true
+
+        if (interaction.member.roles.cache.has("938372143853502494")) {
+            allowaccess = true;
         }
 
         return allowaccess;
