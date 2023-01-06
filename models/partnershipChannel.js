@@ -1,16 +1,16 @@
 const mongoose = require("mongoose");
 
-const partnershipChannel = new mongoose.Schema(
+const pchannelSchema = new mongoose.Schema(
     {
-        channelid: {
+        channelId: {
             type: String,
             required: true,
         },
-        pmanid: {
+        ownerId: {
             type: String,
             default: null,
         },
-        expire: {
+        expiresAt: {
             type: Number,
             default: null,
         },
@@ -18,7 +18,7 @@ const partnershipChannel = new mongoose.Schema(
             type: String,
             default: null,
         },
-        mentionused: {
+        mentionUsed: {
             type: Boolean,
             default: false,
         },
@@ -26,6 +26,6 @@ const partnershipChannel = new mongoose.Schema(
     { minimize: false }
 );
 
-const model = mongoose.model("PartnershipChannelModels", partnershipChannel);
+const model = mongoose.model("pchannelModels", pchannelSchema);
 
 module.exports = model;

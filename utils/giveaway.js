@@ -6,7 +6,7 @@ const {
 } = require("discord.js");
 const fs = require("fs");
 
-const GiveawayModel = require("../models/givewaySchema");
+const GiveawayModel = require("../models/giveawaySchema");
 const GWCOOLDOWN = require("../cooldowns/gwmention.json");
 const { error_reply } = require("./error");
 const { time_humantime } = require("./time");
