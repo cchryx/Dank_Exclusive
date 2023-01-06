@@ -231,9 +231,7 @@ class Giveawayfunctions {
                                     giveawayData.chatRequirements
                                         .users_progress[interaction.user.id]
                                         .messages
-                                }/${
-                                    giveawayData.chatRequirements.messages
-                                } messages\` in <#${
+                                }/${giveawayData.chatRequirements.messages.toLocaleString()} messages\` in <#${
                                     giveawayData.chatRequirements.channel
                                 }>`
                             )
