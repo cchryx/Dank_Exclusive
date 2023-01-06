@@ -1,9 +1,9 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 
-const { guild_checkperm_mod } = require("../../utils/guild");
-const { error_reply } = require("../../utils/error");
-const { reference_letternumber } = require("../../utils/reference");
+// const { guild_checkperm_mod } = require("../../utils/guild");
+// const { error_reply } = require("../../utils/error");
+// const { reference_letternumber } = require("../../utils/reference");
 
 module.exports = {
     data: new SlashCommandBuilder()

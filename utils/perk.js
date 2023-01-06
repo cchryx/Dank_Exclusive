@@ -54,31 +54,33 @@ class Perkfunctions {
 
         const user_discordData = await interaction.guild.members.fetch(userId);
 
-        if (Object.keys(perkData).length > 0) {
-            Object.keys(perkData).forEach((roleId) => {
-                if (
-                    user_discordData.roles.cache.find(
-                        (role) => role.id === roleId
-                    )
-                ) {
-                    slots_max += perkData[roleId];
-                    slots_hasroles.push(roleId);
-                }
-            });
-
-            slots_hasroles_display = Object.keys(perkData)
-                .map((roleId) => {
-                    return `${
+        if (user_discordData) {
+            if (Object.keys(perkData).length > 0) {
+                Object.keys(perkData).forEach((roleId) => {
+                    if (
                         user_discordData.roles.cache.find(
-                            (r) => r.id === roleId
+                            (role) => role.id === roleId
                         )
-                            ? "<a:ravena_check:1002981211708325950>"
-                            : "<a:ravena_uncheck:1002983318565965885>"
-                    }\`+ ${perkData[roleId]}\`<@&${roleId}>`;
-                })
-                .join("\n");
-        } else {
-            slots_hasroles_display = `\`This server has no perk auto-reaction roles\``;
+                    ) {
+                        slots_max += perkData[roleId];
+                        slots_hasroles.push(roleId);
+                    }
+                });
+
+                slots_hasroles_display = Object.keys(perkData)
+                    .map((roleId) => {
+                        return `${
+                            user_discordData.roles.cache.find(
+                                (r) => r.id === roleId
+                            )
+                                ? "<a:ravena_check:1002981211708325950>"
+                                : "<a:ravena_uncheck:1002983318565965885>"
+                        }\`+ ${perkData[roleId]}\`<@&${roleId}>`;
+                    })
+                    .join("\n");
+            } else {
+                slots_hasroles_display = `\`This server has no perk auto-reaction roles\``;
+            }
         }
 
         return {

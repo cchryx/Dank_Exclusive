@@ -208,7 +208,7 @@ module.exports = {
             perkchannel_information.parent =
                 guildData.perk.placement.channelCategory;
             perkchannel_information.type = ChannelType.GuildText;
-            perkchannel_information.permissionoverwrites = [
+            perkchannel_information.permissionOverwrites = [
                 {
                     id: interaction.guild.id,
                     deny: [PermissionsBitField.Flags.ViewChannel],
@@ -229,7 +229,7 @@ module.exports = {
             ];
 
             if (guildData.miscData.roles.bots) {
-                perkchannel_information.permissionoverwrites.push({
+                perkchannel_information.permissionOverwrites.push({
                     id: guildData.miscData.roles.bots,
                     allow: [
                         PermissionsBitField.Flags.ViewChannel,
@@ -574,9 +574,8 @@ module.exports = {
             if (perkchannel_discordData === false) return;
 
             perkchannelData.users.forEach(async (userId) => {
-                await perkchannel_discordData.permissionOverwrites.edit(
-                    userId,
-                    {
+                await perkchannel_discordData.permissionOverwrites
+                    .edit(userId, {
                         ViewChannel: true,
                         ReadMessageHistory: true,
                         UseApplicationCommands: true,
@@ -585,8 +584,8 @@ module.exports = {
                         UseExternalEmojis: true,
                         UseExternalStickers: true,
                         AddReactions: true,
-                    }.catch((error) => {})
-                );
+                    })
+                    .catch((error) => {});
             });
 
             return interaction.reply({

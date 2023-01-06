@@ -150,6 +150,7 @@ module.exports = {
             const perkchannelsDeleted = [];
             const perkchannelsUpdated = [];
             let perkchannelsDeleted_display;
+
             if (perkchannelsData.length > 0) {
                 for (const perkchannelData of perkchannelsData) {
                     const perkchannel_discordData =
@@ -159,12 +160,14 @@ module.exports = {
 
                     if (!perkchannel_discordData) {
                         perkchannelsDeleted.push({
-                            channelName: perkchannel_discordData.name,
+                            channelName: perkchannel_discordData
+                                ? perkchannel_discordData.name
+                                : "deleted-channel",
                             userId: perkchannelData.userId,
                         });
 
-                        await PerkchannelModel.deleteOne({
-                            channelId: perkchannelData.channelId,
+                        await PerkchannelModel.findOneAndDelete({
+                            userId: perkchannelData.userId,
                         });
 
                         continue;
@@ -213,14 +216,16 @@ module.exports = {
                         }
 
                         await PerkchannelModel.findOneAndUpdate(
-                            { userId: interaction.user.id },
+                            { userId: perkchannelData.userId },
                             perkchannelData
                         );
                     }
 
                     if (slots_max.slots_max === 0) {
                         perkchannelsDeleted.push({
-                            channelName: perkchannel_discordData.name,
+                            channelName: perkchannel_discordData
+                                ? perkchannel_discordData.name
+                                : "deleted-channel",
                             userId: perkchannelData.userId,
                         });
 
@@ -228,7 +233,7 @@ module.exports = {
                             userId: perkchannelData.userId,
                         });
 
-                        interaction.guild.channels.delete(
+                        await interaction.guild.channels.delete(
                             perkchannelData.channelId
                         );
                     }
@@ -255,13 +260,15 @@ module.exports = {
                         );
 
                     if (!perkrole_discordData) {
-                        perkchannelsDeleted.push({
-                            roleName: perkrole_discordData.name,
+                        perkrolesDeleted.push({
+                            roleName: perkrole_discordData
+                                ? perkrole_discordData.name
+                                : "deleted-role",
                             userId: perkroleData.userId,
                         });
 
-                        await PerkchannelModel.deleteOne({
-                            roleId: perkroleData.roleId,
+                        await PerkroleModel.findOneAndDelete({
+                            userId: perkroleData.userId,
                         });
 
                         continue;
@@ -291,35 +298,43 @@ module.exports = {
 
                         for (const userId of perkrole_users_flagged) {
                             const flaggeduser_fetch =
-                                await interaction.guild.members.fetch(userId);
+                                interaction.guild.members.cache.get(userId);
+
+                            if (!flaggeduser_fetch) {
+                                continue;
+                            }
 
                             flaggeduser_fetch.roles
                                 .remove(perkroleData.roleId)
                                 .catch((error) => {});
 
-                            interaction.user.send({
-                                content: `<@${userId}>`,
-                                embeds: [
-                                    new EmbedBuilder().setDescription(
-                                        `**Remove user from perkrole: COMPLETED**\n*User was over the limit of users having this perk role.*\n\nRole: <@&${
-                                            perkroleData.roleId
-                                        }>\nRole Id: \`${
-                                            perkroleData.roleId
-                                        }\`\nUser: <@${userId}>\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
-                                    ),
-                                ],
-                            });
+                            interaction.guild.members.cache
+                                .get(perkroleData.userId)
+                                .send({
+                                    content: `<@${userId}>`,
+                                    embeds: [
+                                        new EmbedBuilder().setDescription(
+                                            `**Remove user from perkrole: COMPLETED**\n*User was over the limit of users having this perk role.*\n\nRole: <@&${
+                                                perkroleData.roleId
+                                            }>\nRole Id: \`${
+                                                perkroleData.roleId
+                                            }\`\nUser: <@${userId}>\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
+                                        ),
+                                    ],
+                                });
                         }
 
                         await PerkroleModel.findOneAndUpdate(
-                            { userId: interaction.user.id },
+                            { userId: perkroleData.userId },
                             perkroleData
                         );
                     }
 
                     if (slots_max.slots_max === 0) {
                         perkrolesDeleted.push({
-                            roleName: perkrole_discordData.name,
+                            roleName: perkrole_discordData
+                                ? perkrole_discordData.name
+                                : "deleted-role",
                             userId: perkroleData.userId,
                         });
 
