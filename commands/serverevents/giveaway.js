@@ -188,7 +188,7 @@ module.exports = {
         ]);
         if (checkAccess === false) {
             error_message = "You don't have the roles to use this command.";
-            error_reply(interaction, error_message);
+            return error_reply(interaction, error_message);
         }
 
         if (interaction.options.getSubcommand() === "create") {
