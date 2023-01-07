@@ -182,8 +182,8 @@ class Giveawayfunctions {
                 }
             });
 
-            if (giveawayData.globalBypass_roles === "true") {
-                guildData.giveaway.bypass.forEach((id) => {
+            if (giveawayData.globalBypass === "true") {
+                guildData.giveaway.globalBypass_roles.forEach((id) => {
                     if (
                         interaction.member.roles.cache.find((r) => r.id === id)
                     ) {
