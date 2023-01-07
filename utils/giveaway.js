@@ -462,7 +462,7 @@ class Giveawayfunctions {
         // handle giveaway winners
         let giveaway_winners = [];
         if (giveawayData.winnersAmount > 1) {
-            for (let i = 0; i < giveaway.winnersAmount; i++) {
+            for (let i = 0; i < giveawayData.winnersAmount; i++) {
                 giveaway_winners.push(
                     giveawayData.entries.filter(
                         (val) => !giveaway_winners.includes(val)
