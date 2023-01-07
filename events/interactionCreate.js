@@ -126,7 +126,7 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(
-                                    `\`You are not the host of this giveaway, therefore you cannot end it manually.\``
+                                    `\`You are not the host of this giveaway, therefore you cannot end it manually\``
                                 )
                                 .setColor("#ffc182"),
                         ],
@@ -151,7 +151,7 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(
-                                    `\`You are not the host of this giveaway, therefore you cannot reroll winners.\``
+                                    `\`You are not the host of this giveaway, therefore you cannot reroll winners\``
                                 )
                                 .setColor("#ffc182"),
                         ],
