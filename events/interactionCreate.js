@@ -142,9 +142,13 @@ module.exports = {
                     ephemeral: true,
                 });
             } else if (interaction.customId === "giveaway_reroll") {
-                const giveawayData = await GiveawayModel.findOne({
-                    messageid: interaction.message.id,
-                });
+                const giveawayData = await giveaway_fetch(
+                    interaction,
+                    interaction.message.id
+                );
+                if (giveawayData.status === false) {
+                    return;
+                }
 
                 if (giveawayData.hostId !== interaction.user.id) {
                     return interaction.reply({
