@@ -245,7 +245,7 @@ module.exports = {
                     new EmbedBuilder()
                         .setTitle(`${options.channelname}`)
                         .setDescription(
-                            `**Create partnership channel: SUCCESSFUL**\n\nClaim Mentions: </partnership claimmention:1060990423541235823>\nChannel Issued By: ${
+                            `**Create partnership channel: SUCCESSFUL**\n\nClaim Mentions: </partnership claimmention:1061029106516512829>\nChannel Issued By: ${
                                 interaction.user
                             }\nChannel Expires: <t:${Math.floor(
                                 timeData.endTime / 1000
