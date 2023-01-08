@@ -12,9 +12,8 @@ module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         if (message.author.bot) {
-            if (!message.interaction) {
-                return;
-            }
+            if (!message.interaction) return;
+            if (message.author.id === client.user.id) return;
 
             await user_exp_add_interaction(client, message);
         }
