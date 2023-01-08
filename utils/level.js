@@ -116,6 +116,7 @@ class Levelfunctions {
     static async user_level_modify(interaction, userId, action, value) {
         const userData = await user_fetch(userId);
         const guildData = await guild_fetch(interaction.guildId);
+        const user_discordData = await interaction.guild.members.fetch(userId);
 
         if (action === "add") {
             userData.levelInfo.level += value;
@@ -129,14 +130,14 @@ class Levelfunctions {
 
         if (guildData.level.channel) {
             interaction.guild.channels.cache.get(guildData.level.channel).send({
-                content: `${interaction.user}`,
+                content: `${user_discordData.user}`,
                 embeds: [
                     new EmbedBuilder()
-                        .setTitle(`${interaction.user.tag}`)
+                        .setTitle(`${user_discordData.user.tag}`)
                         .setDescription(
                             `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level}\`*`
                         )
-                        .setThumbnail(interaction.user.displayAvatarURL()),
+                        .setThumbnail(user_discordData.user.displayAvatarURL()),
                 ],
             });
         }

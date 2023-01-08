@@ -75,19 +75,25 @@ module.exports = {
         }
 
         const options = {
-            user: interaction.options.getUser("user"),
+            user: interaction.options.getMember("user"),
             value: interaction.options.getNumber("value"),
         };
+
+        if (!options.user) {
+            error_message = "That user isn't in this server.";
+            return error_reply(interaction, error_message);
+        }
+
         const modifiedLevelData = await user_level_modify(
             interaction,
-            options.user.id,
+            options.user.user.id,
             interaction.options.getSubcommand(),
             Math.floor(options.value)
         );
 
         if (Object.keys(guildData.level.roles).length > 0) {
             await level_autoroles(
-                interaction.member,
+                options.user,
                 guildData.level.roles,
                 modifiedLevelData.newLevel
             );
@@ -96,7 +102,7 @@ module.exports = {
         return interaction.reply({
             embeds: [
                 new EmbedBuilder()
-                    .setThumbnail(options.user.displayAvatarURL())
+                    .setThumbnail(options.user.user.displayAvatarURL())
                     .setDescription(
                         `**New Level:** \`${modifiedLevelData.newLevel.toLocaleString()}\`\n**Action:** \`${
                             modifiedLevelData.action
