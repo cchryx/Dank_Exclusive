@@ -90,7 +90,7 @@ class Levelfunctions {
                         new EmbedBuilder()
                             .setTitle(`${message.author.tag}`)
                             .setDescription(
-                                `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level}\`*`
+                                `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level.toLocaleString()}\`*`
                             )
                             .setThumbnail(message.author.displayAvatarURL()),
                     ],
@@ -135,7 +135,7 @@ class Levelfunctions {
                     new EmbedBuilder()
                         .setTitle(`${user_discordData.user.tag}`)
                         .setDescription(
-                            `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level}\`*`
+                            `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level.toLocaleString()}\`*`
                         )
                         .setThumbnail(user_discordData.user.displayAvatarURL()),
                 ],

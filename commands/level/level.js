@@ -27,14 +27,14 @@ module.exports = {
     cooldown: 10,
     async execute(interaction, client) {
         let error_message;
+        const INCREMENT = 35;
+        let exp_cap;
 
         if (interaction.options.getSubcommand() === "show") {
-            const INCREMENT = 35;
             const level_embed = new EmbedBuilder();
             const options = {
                 user: interaction.options.getUser("user"),
             };
-            let exp_cap;
             let userDiscord;
             let userData;
 
@@ -66,14 +66,29 @@ module.exports = {
         } else if (interaction.options.getSubcommand() === "leaderboard") {
             const usersData = await UserModel.find();
             let level_sort = usersData.sort((a, b) => {
-                return b.levelInfo.level - a.levelInfo.level;
+                if (a.levelInfo.level === b.levelInfo.level) {
+                    return b.levelInfo.exp - a.levelInfo.exp;
+                } else {
+                    return b.levelInfo.level - a.levelInfo.level;
+                }
             });
+
             level_sort = level_sort.slice(0, 15);
             const donation_leaderboard_display = level_sort
                 .map((userData, index) => {
-                    return `**\`${index + 1}.\`** <@${userData.userId}> - \`${
-                        userData.levelInfo.level ? userData.levelInfo.level : 0
-                    }\``;
+                    exp_cap = INCREMENT + userData.levelInfo.level * INCREMENT;
+
+                    return `**\`${index + 1}.\`** <@${
+                        userData.userId
+                    }> - **level ${
+                        userData.levelInfo.level
+                            ? userData.levelInfo.level.toLocaleString()
+                            : 0
+                    }** \`${
+                        userData.levelInfo.exp
+                            ? userData.levelInfo.exp.toLocaleString()
+                            : 0
+                    }/${exp_cap.toLocaleString()}\``;
                 })
                 .join("\n");
 
