@@ -100,9 +100,14 @@ module.exports = {
         }
 
         return interaction.reply({
+            content: `${options.user}`,
             embeds: [
                 new EmbedBuilder()
                     .setThumbnail(options.user.user.displayAvatarURL())
+                    .setAuthor({
+                        name: `${userDiscord.tag}`,
+                        iconURL: userDiscord.displayAvatarURL(),
+                    })
                     .setDescription(
                         `**New Level:** \`${modifiedLevelData.newLevel.toLocaleString()}\`\n**Action:** \`${
                             modifiedLevelData.action
