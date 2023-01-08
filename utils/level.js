@@ -8,7 +8,7 @@ const { guild_fetch } = require("./guild");
 const { EmbedBuilder } = require("discord.js");
 
 class Levelfunctions {
-    static async user_exp_add(client, message) {
+    static async user_exp_add_message(client, message) {
         const userData = await user_fetch(message.author.id);
         const guildData = await guild_fetch(message.guild.id);
         const level_initial = userData.levelInfo.level;
@@ -93,6 +93,116 @@ class Levelfunctions {
                                 `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level.toLocaleString()}\`*`
                             )
                             .setThumbnail(message.author.displayAvatarURL()),
+                    ],
+                });
+            }
+        }
+
+        for (const role of Object.keys(guildData.level.roles)) {
+            if (
+                userData.levelInfo.level >= guildData.level.roles[role] &&
+                message.member.roles.cache.has(role) === false
+            ) {
+                message.member.roles.add(role);
+            } else if (
+                userData.levelInfo.level < guildData.level.roles[role] &&
+                message.member.roles.cache.has(role) === true
+            ) {
+                message.member.roles.remove(role);
+            }
+        }
+    }
+
+    static async user_exp_add_interaction(client, message) {
+        const user_discordData = await message.guild.members.fetch(
+            message.interaction.user.id
+        );
+        const userData = await user_fetch(user_discordData.user.id);
+        const guildData = await guild_fetch(user_discordData.guild.id);
+        const level_initial = userData.levelInfo.level;
+        const cooldown = 5 * 1000;
+        const INCREMENT = 35;
+        const exp_cap = INCREMENT + userData.levelInfo.level * INCREMENT;
+        let exp_increase = 1;
+        let exp_multiplier = 1;
+        let timeLeft;
+        let readyTimestamp;
+        let check;
+
+        if (
+            guildData.level.multipliers.channel.hasOwnProperty(
+                message.channel.id
+            )
+        ) {
+            exp_multiplier +=
+                guildData.level.multipliers.channel[message.channel.id];
+        }
+
+        Object.keys(guildData.level.multipliers.role).forEach((role) => {
+            try {
+                if (user_discordData.roles.cache.has(role)) {
+                    exp_multiplier += guildData.level.multipliers.role[role];
+                }
+                return;
+            } catch (error) {
+                return;
+            }
+        });
+
+        userData.levelInfo.messages += 1;
+        exp_increase *= exp_multiplier;
+
+        if (!LVLCOOLDOWN.hasOwnProperty(user_discordData.user.id)) {
+            LVLCOOLDOWN[user_discordData.user.id] = null;
+        }
+
+        readyTimestamp = LVLCOOLDOWN[user_discordData.user.id];
+        if (!readyTimestamp) {
+            readyTimestamp = 0;
+        }
+
+        timeLeft = new Date(readyTimestamp);
+        check = timeLeft - Date.now() >= timeLeft || timeLeft - Date.now() <= 0;
+
+        if (check) {
+            userData.levelInfo.exp += exp_increase;
+
+            if (userData.levelInfo.exp >= exp_cap) {
+                userData.levelInfo.level += 1;
+                userData.levelInfo.exp -= exp_cap;
+            }
+
+            readyTimestamp = Date.now() + cooldown;
+            LVLCOOLDOWN[user_discordData.user.id] = readyTimestamp;
+            fs.writeFile(
+                "./cooldowns/exp.json",
+                JSON.stringify(LVLCOOLDOWN),
+                (error) => {
+                    if (error) {
+                        console.log(error);
+                    }
+                }
+            );
+        }
+
+        await USERMODEL.findOneAndUpdate(
+            { userId: user_discordData.user.id },
+            userData
+        );
+
+        if (userData.levelInfo.level > level_initial) {
+            if (guildData.level.channel) {
+                client.channels.cache.get(guildData.level.channel).send({
+                    content: `${user_discordData.user}`,
+                    embeds: [
+                        new EmbedBuilder()
+                            .setTitle(`${user_discordData.user.tag}`)
+                            .setDescription(
+                                `**Level message: CONGRATULATIONS**\n*You are now \`level ${userData.levelInfo.level.toLocaleString()}\`*`
+                            )
+                            .setThumbnail(
+                                user_discordData.user.displayAvatarURL()
+                            ),
                     ],
                 });
             }
