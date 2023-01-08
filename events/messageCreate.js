@@ -12,7 +12,6 @@ module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         if (message.author.bot) {
-            console.log(message);
             if (!message.interaction) {
                 return;
             }

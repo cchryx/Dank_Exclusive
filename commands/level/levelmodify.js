@@ -104,10 +104,7 @@ module.exports = {
             embeds: [
                 new EmbedBuilder()
                     .setThumbnail(options.user.user.displayAvatarURL())
-                    .setAuthor({
-                        name: `${userDiscord.tag}`,
-                        iconURL: userDiscord.displayAvatarURL(),
-                    })
+                    .setTitle(`${options.user.user.tag}`)
                     .setDescription(
                         `**New Level:** \`${modifiedLevelData.newLevel.toLocaleString()}\`\n**Action:** \`${
                             modifiedLevelData.action
