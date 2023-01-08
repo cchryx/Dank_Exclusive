@@ -8,7 +8,11 @@ const { perk_autoreaction } = require("../utils/perk");
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
-        await user_exp_add(message);
+        if (message.author.bot) {
+            return;
+        }
+
+        await user_exp_add(client, message);
         await giveaway_requiredchat(message.author.id, message.channel.id);
 
         if (message.mentions.members.size > 0) {

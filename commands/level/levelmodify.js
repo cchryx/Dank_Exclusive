@@ -2,8 +2,9 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder, Embed } = require("discord.js");
 const { discord_check_role } = require("../../utils/discord");
 const { error_reply } = require("../../utils/error");
+const { guild_fetch } = require("../../utils/guild");
 
-const { user_level_modify } = require("../../utils/level");
+const { user_level_modify, level_autoroles } = require("../../utils/level");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -63,6 +64,8 @@ module.exports = {
     cooldown: 10,
     async execute(interaction, client) {
         let error_message;
+        const guildData = await guild_fetch(interaction.guildId);
+
         const checkAccess = await discord_check_role(interaction, [
             "904456239415697441",
         ]);
@@ -76,10 +79,19 @@ module.exports = {
             value: interaction.options.getNumber("value"),
         };
         const modifiedLevelData = await user_level_modify(
+            interaction,
             options.user.id,
             interaction.options.getSubcommand(),
             Math.floor(options.value)
         );
+
+        if (Object.keys(guildData.level.roles).length > 0) {
+            await level_autoroles(
+                interaction.member,
+                guildData.level.roles,
+                modifiedLevelData.newLevel
+            );
+        }
 
         return interaction.reply({
             embeds: [

@@ -51,6 +51,39 @@ module.exports = {
             return subcommand
                 .setName("multipliershow")
                 .setDescription("Show experience multipliers.");
+        })
+        .addSubcommand((subcommand) => {
+            return subcommand
+                .setName("roleset")
+                .setDescription("Set a level auto-role to a level.")
+                .addNumberOption((oi) => {
+                    return oi
+                        .setName("level")
+                        .setDescription("Specify an positive interger.")
+                        .setRequired(true);
+                })
+                .addRoleOption((oi) => {
+                    return oi
+                        .setName("role")
+                        .setDescription("Specify a role.")
+                        .setRequired(true);
+                });
+        })
+        .addSubcommand((subcommand) => {
+            return subcommand
+                .setName("roleremove")
+                .setDescription("Remove a level auto-role.")
+                .addRoleOption((oi) => {
+                    return oi
+                        .setName("role")
+                        .setDescription("Specify a role.")
+                        .setRequired(true);
+                });
+        })
+        .addSubcommand((subcommand) => {
+            return subcommand
+                .setName("roleshow")
+                .setDescription("Show all level auto-roles.");
         }),
     cooldown: 10,
     async execute(interaction, client) {
@@ -119,7 +152,7 @@ module.exports = {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder().setDescription(
-                        `**Successfully set new experience multipliers!**\n\nMultiplier: \`x ${options.value.toLocaleString()}\`\n${multiplierset_changes_map}`
+                        `**Set experience multipliers: SUCCESSFUL**\n*I finished setting new experience multipliers.*\n\nMultiplier: \`x ${options.value.toLocaleString()}\`\n${multiplierset_changes_map}`
                     ),
                 ],
             });
@@ -224,7 +257,78 @@ module.exports = {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder().setDescription(
-                        `**Successfully removed experience multipliers!**\n\n${multiplierremove_changes_map}`
+                        `**Remove experience multipliers: SUCCESSFUL**\n*I finished removing these experience multipliers.*\n\n${multiplierremove_changes_map}`
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "roleset") {
+            const options = {
+                level: interaction.options.getNumber("level"),
+                role: interaction.options.getRole("role"),
+            };
+
+            options.level = Math.floor(options.level);
+            if (options.level < 1) {
+                options.level *= -1;
+            }
+
+            guildData.level.roles[options.role.id] = options.level;
+
+            await GuildModel.findOneAndUpdate(
+                { guildId: guildData.guildId },
+                guildData
+            );
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Set level auto-role: SUCCESSFUL**\n*I set an auto-role to that level.*\n\nAuto-role: \`level ${options.level.toLocaleString()}\` ${
+                            options.role
+                        }`
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "roleremove") {
+            const options = {
+                role: interaction.options.getRole("role"),
+            };
+
+            if (!guildData.level.roles.hasOwnProperty(options.role.id)) {
+                error_message = `The role specified isn't an already existing level auto-role.\n\nRole: ${options.role}`;
+                return error_reply(interaction, error_message);
+            }
+
+            delete guildData.level.roles[options.role.id];
+
+            await GuildModel.findOneAndUpdate(
+                { guildId: guildData.guildId },
+                guildData
+            );
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Remove level auto-role: SUCCESSFUL**\n*I removed a level auto-role.*\n\nAuto-role: ${options.role}`
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "roleshow") {
+            roleshow_map = Object.keys(guildData.level.roles)
+                .map((roleId) => {
+                    return `\`${guildData.level.roles[roleId]}\` <@&${roleId}>`;
+                })
+                .join("\n");
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Level Auto-roles**\n*Here lies all of the set level auto-role for ${
+                            interaction.guild.name
+                        }.*\n\n${
+                            roleshow_map
+                                ? roleshow_map
+                                : "`no level auto-roles`"
+                        }`
                     ),
                 ],
             });

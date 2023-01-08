@@ -32,6 +32,8 @@ const guildSchema = new mongoose.Schema(
         level: {
             type: Object,
             default: {
+                channel: null,
+                roles: {},
                 multipliers: {
                     channel: {},
                     role: {},
