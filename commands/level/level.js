@@ -27,7 +27,7 @@ module.exports = {
     cooldown: 10,
     async execute(interaction, client) {
         let error_message;
-        const INCREMENT = 35;
+        const INCREMENT = 40;
         let exp_cap;
 
         if (interaction.options.getSubcommand() === "show") {
