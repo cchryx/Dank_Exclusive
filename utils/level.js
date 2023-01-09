@@ -121,7 +121,7 @@ class Levelfunctions {
         const guildData = await guild_fetch(user_discordData.guild.id);
         const level_initial = userData.levelInfo.level;
         const cooldown = 5 * 1000;
-        const INCREMENT = 35;
+        const INCREMENT = 40;
         const exp_cap = INCREMENT + userData.levelInfo.level * INCREMENT;
         let exp_increase = 1;
         let exp_multiplier = 1;
