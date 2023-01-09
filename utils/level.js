@@ -211,14 +211,14 @@ class Levelfunctions {
         for (const role of Object.keys(guildData.level.roles)) {
             if (
                 userData.levelInfo.level >= guildData.level.roles[role] &&
-                message.member.roles.cache.has(role) === false
+                user_discordData.roles.cache.has(role) === false
             ) {
-                message.member.roles.add(role);
+                user_discordData.roles.add(role);
             } else if (
                 userData.levelInfo.level < guildData.level.roles[role] &&
-                message.member.roles.cache.has(role) === true
+                user_discordData.roles.cache.has(role) === true
             ) {
-                message.member.roles.remove(role);
+                user_discordData.roles.remove(role);
             }
         }
     }
