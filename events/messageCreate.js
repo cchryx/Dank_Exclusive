@@ -16,10 +16,10 @@ module.exports = {
             if (message.author.id === client.user.id) return;
 
             await user_exp_add_interaction(client, message);
+        } else {
+            await user_exp_add_message(client, message);
+            await giveaway_requiredchat(message.author.id, message.channel.id);
         }
-
-        await user_exp_add_message(client, message);
-        await giveaway_requiredchat(message.author.id, message.channel.id);
 
         if (message.mentions.members.size > 0) {
             if (message.mentions.repliedUser) return;
