@@ -53,11 +53,11 @@ module.exports = {
                         .setDescription("Valid hex color.");
                 })
         )
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName("delete")
-                .setDescription("Delete your current role.")
-        )
+        // .addSubcommand((subcommand) =>
+        //     subcommand
+        //         .setName("delete")
+        //         .setDescription("Delete your current role.")
+        // )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("show")
@@ -343,7 +343,7 @@ module.exports = {
                     perkrole_discordData.color
                 }\`\nPosition: \`${perkrole_discordData.rawPosition}\`${
                     options.icon_emoji
-                        ? `\nIcon Emoji: ${options.icon_emoji}`
+                        ? `\nIcon Emoji: [\`click here\`](${options.icon_emoji})`
                         : ""
                 }`
             );
