@@ -125,12 +125,13 @@ module.exports = {
         const checkAccess = await discord_check_role(interaction, [
             "920839776322609183",
         ]);
-        if (checkAccess === false) {
-            error_message = "You don't have the roles to use this command.";
-            return error_reply(interaction, error_message);
-        }
 
         if (interaction.options.getSubcommand() === "log") {
+            if (checkAccess === false) {
+                error_message = "You don't have the roles to use this command.";
+                return error_reply(interaction, error_message);
+            }
+
             const options = {
                 serverinvite: interaction.options.getString("serverinvite"),
                 serverid: interaction.options.getString("serverid"),
@@ -163,6 +164,11 @@ module.exports = {
                 ephemeral: true,
             });
         } else if (interaction.options.getSubcommand() === "createchannel") {
+            if (checkAccess === false) {
+                error_message = "You don't have the roles to use this command.";
+                return error_reply(interaction, error_message);
+            }
+
             const options = {
                 user: interaction.options.getMember("user"),
                 time: interaction.options.getString("time"),
