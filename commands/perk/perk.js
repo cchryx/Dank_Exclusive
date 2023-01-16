@@ -308,9 +308,12 @@ module.exports = {
                                 .remove(perkroleData.roleId)
                                 .catch((error) => {});
 
-                            interaction.guild.members.cache
+                            const roleOwner_discordData = interaction.guild.members.cache
                                 .get(perkroleData.userId)
-                                .send({
+                                .catch((error) => { return false });
+                            
+                            if (roleOwner_discordData !== false) {
+                                roleOwner_discordData.send({
                                     content: `<@${userId}>`,
                                     embeds: [
                                         new EmbedBuilder().setDescription(
@@ -322,7 +325,8 @@ module.exports = {
                                         ),
                                     ],
                                 })
-                                .catch((error) => {});
+                            }
+                               
                         }
 
                         await PerkroleModel.findOneAndUpdate(
