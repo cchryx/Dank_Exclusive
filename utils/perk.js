@@ -52,9 +52,9 @@ class Perkfunctions {
         let slots_max = 0;
         let slots_hasroles_display;
 
-        const user_discordData = await interaction.guild.members.fetch(userId);
+        const user_discordData = await interaction.guild.members.fetch(userId).catch(error => {return false});
 
-        if (user_discordData) {
+        if (user_discordData !== false) {
             if (Object.keys(perkData).length > 0) {
                 Object.keys(perkData).forEach((roleId) => {
                     if (
