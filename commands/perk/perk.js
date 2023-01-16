@@ -310,9 +310,8 @@ module.exports = {
 
                             const roleOwner_discordData = interaction.guild.members.cache
                                 .get(perkroleData.userId)
-                                .catch((error) => { return false });
                             
-                            if (roleOwner_discordData !== false) {
+                            if (roleOwner_discordData) {
                                 roleOwner_discordData.send({
                                     content: `<@${userId}>`,
                                     embeds: [
