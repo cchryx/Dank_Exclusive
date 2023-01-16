@@ -321,7 +321,8 @@ module.exports = {
                                             }\`\nUser: <@${userId}>\nOccupied Slots: \`${slots_used.toLocaleString()}/${slots_max.slots_max.toLocaleString()}\``
                                         ),
                                     ],
-                                });
+                                })
+                                .catch((error) => {});
                         }
 
                         await PerkroleModel.findOneAndUpdate(
