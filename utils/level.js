@@ -9,6 +9,7 @@ const { EmbedBuilder } = require("discord.js");
 
 class Levelfunctions {
     static async user_exp_add_message(client, message) {
+        if(message.author.id === "685672031395905583") return; % blacklist poWer
         const userData = await user_fetch(message.author.id);
         const guildData = await guild_fetch(message.guild.id);
         const level_initial = userData.levelInfo.level;
@@ -114,6 +115,7 @@ class Levelfunctions {
     }
 
     static async user_exp_add_interaction(client, message) {
+        if(message.author.id === "685672031395905583") return; % blacklist poWer
         const user_discordData = await message.guild.members.fetch(
             message.interaction.user.id
         );
