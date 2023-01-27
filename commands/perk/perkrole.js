@@ -660,7 +660,7 @@ module.exports = {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder().setDescription(
-                        `**Perk channel self remove: SUCCESSFUL**\n*I removed that perk role from you.*\n\n\nRole: <@&${perkroleData.roleId}>\nRole Id: \`${perkroleData.roleId}\`\nOwner: <@${perkroleData.userId}}>`
+                        `**Perk channel self remove: SUCCESSFUL**\n*I removed that perk role from you.*\n\nRole: <@&${perkroleData.roleId}>\nRole Id: \`${perkroleData.roleId}\`\nOwner: <@${perkroleData.userId}>`
                     ),
                 ],
             });
