@@ -620,7 +620,7 @@ module.exports = {
             options = {
                 role: interaction.options.getRole("role"),
             };
-            
+
             const user_fetch = await interaction.guild.members.fetch(
                 interaction.user.id
             );
@@ -644,8 +644,8 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            user_fetch.roles.add(perkroleData.roleId);
-            
+            user_fetch.roles.remove(perkroleData.roleId);
+
             perkroleData.users.splice(
                 perkroleData.users.indexOf(interaction.user.id),
                 1
