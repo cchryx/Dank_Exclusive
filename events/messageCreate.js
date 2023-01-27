@@ -22,6 +22,8 @@ module.exports = {
             await giveaway_requiredchat(message.author.id, message.channel.id);
         }
 
+        await discord_sticky_message(message);
+
         if (message.mentions.members.size > 0) {
             if (message.mentions.repliedUser) return;
             return perk_autoreaction(
@@ -30,7 +32,5 @@ module.exports = {
                 await guild_fetch(message.guildId)
             );
         }
-
-        await discord_sticky_message(message);
     },
 };
