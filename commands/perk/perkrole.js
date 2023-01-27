@@ -640,7 +640,7 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            interaction.user.remove(perkroleData.roleId);
+            interaction.user.roles.remove(perkroleData.roleId);
 
             perkroleData.users.splice(
                 perkroleData.users.indexOf(interaction.user.id),
