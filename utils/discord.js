@@ -1,5 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require("discord.js");
 
+const StickyModel = require("../models/stickySchema");
+
 class Discordfunctions {
     static async discord_check_role(interaction, roles) {
         let allowaccess = true;
@@ -193,6 +195,43 @@ class Discordfunctions {
                 ephemeral: true,
             });
         }
+    }
+    static async discord_sticky_message(message) {
+        const stickyData = await StickyModel.findOne({
+            channelId: message.channel.id,
+        });
+
+        if (!stickyData) return;
+
+        const sticky_message = {};
+        const sticky_discordData = await message.channel.messages.fetch(
+            stickyData.messageId
+        );
+
+        if (sticky_discordData.content) {
+            sticky_message.content = sticky_discordData.content;
+        }
+
+        if (sticky_discordData.embeds) {
+            sticky_message.embeds = sticky_discordData.embeds;
+        }
+
+        if (sticky_discordData.components) {
+            sticky_message.components = sticky_discordData.components;
+        }
+
+        const sticky_discordData_new = await message.channel.send(
+            sticky_message
+        );
+
+        stickyData.messageId = sticky_discordData_new.id;
+        await StickyModel.findOneAndUpdate(
+            {
+                channelId: stickyData.channelId,
+            },
+            stickyData
+        );
+        await sticky_discordData.delete();
     }
 }
 
