@@ -650,8 +650,8 @@ module.exports = {
                 perkroleData.users.indexOf(interaction.user.id),
                 1
             );
-            await perkroleData.findOneAndUpdate(
-                { channelId: perkroleData.channelId },
+            await PerkroleModel.findOneAndUpdate(
+                { roleId: perkroleData.roleId },
                 perkroleData
             );
 
