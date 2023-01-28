@@ -205,7 +205,7 @@ class Discordfunctions {
         if (stickyData.active === false) return;
 
         const sticky_message = {};
-        const sticky_discordData = await message.channel.messages.fetch(
+        const sticky_discordData = await message.channel.messages.cache.get(
             stickyData.messageId
         );
 
@@ -218,12 +218,16 @@ class Discordfunctions {
         }
 
         if (stickyData.components) {
-            sticky_message.components = stickyData.components;
+            sticky_message.components = [
+                new ActionRowBuilder().setComponents(
+                    new ButtonBuilder(stickyData.components[0])
+                ),
+            ];
         }
 
-        const sticky_discordData_new = await message.channel
-            .send(sticky_message)
-            .catch((error) => {});
+        const sticky_discordData_new = await message.channel.send(
+            sticky_message
+        );
 
         stickyData.messageId = sticky_discordData_new.id;
         await StickyModel.findOneAndUpdate(
@@ -232,7 +236,8 @@ class Discordfunctions {
             },
             stickyData
         );
-        await sticky_discordData.delete();
+
+        if (sticky_discordData) await sticky_discordData.delete();
     }
 }
 

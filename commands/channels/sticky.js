@@ -151,7 +151,7 @@ module.exports = {
                     sticky_message.components.push(sticky_row);
 
                     stickyData_create.components =
-                        sticky_message.components[0].data;
+                        sticky_message.components[0].components[0].data;
                 } catch (error) {
                     delete sticky_message.components;
                 }
@@ -243,7 +243,11 @@ module.exports = {
                 }
 
                 if (stickyData.components) {
-                    sticky_message.components = stickyData.components;
+                    sticky_message.components = [
+                        new ActionRowBuilder().setComponents(
+                            new ButtonBuilder(stickyData.components[0])
+                        ),
+                    ];
                 }
 
                 interaction.reply({
@@ -251,7 +255,7 @@ module.exports = {
                         new EmbedBuilder()
                             .setTitle(`Sticky Settings`)
                             .setDescription(
-                                `**Specific sticky settings: DISPLAY**\n*Bellow is the details of the sticky message.*\n\nChannel: <#${stickyData.channelId}>Active: \`${stickyData.active}\``
+                                `**Specific sticky settings: DISPLAY**\n*Bellow is the details of the sticky message.*\n\nChannel: <#${stickyData.channelId}>, Active: \`${stickyData.active}\``
                             ),
                     ],
                     components: [
