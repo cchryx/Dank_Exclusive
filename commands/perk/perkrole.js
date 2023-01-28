@@ -644,7 +644,7 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            if (user_fetch) user_fetch.roles.remove(perkroleData.roleId);
+            user_fetch.roles.remove(perkroleData.roleId);
 
             perkroleData.users.splice(
                 perkroleData.users.indexOf(interaction.user.id),
