@@ -131,6 +131,7 @@ module.exports = {
 
             if (options.content) {
                 sticky_message.content = options.content;
+                stickyData_create.content = options.content;
             }
 
             if (options.linkurl) {
@@ -148,6 +149,9 @@ module.exports = {
 
                     sticky_row.setComponents(sticky_button);
                     sticky_message.components.push(sticky_row);
+
+                    stickyData_create.components =
+                        sticky_message.components[0].data;
                 } catch (error) {
                     delete sticky_message.components;
                 }
@@ -174,6 +178,7 @@ module.exports = {
                 }
 
                 sticky_message.embeds.push(sticky_embed);
+                stickyData_create.embeds = sticky_message.embeds[0].data;
             }
 
             const sticky_send = await options.channel
@@ -229,20 +234,16 @@ module.exports = {
                     return error_reply(interaction, error_message);
                 }
 
-                const sticky_discordData = await options.channel.messages.fetch(
-                    stickyData.messageId
-                );
-
-                if (sticky_discordData.content) {
-                    sticky_message.content = sticky_discordData.content;
+                if (stickyData.content) {
+                    sticky_message.content = stickyData.content;
                 }
 
-                if (sticky_discordData.embeds) {
-                    sticky_message.embeds = sticky_discordData.embeds;
+                if (stickyData.embeds) {
+                    sticky_message.embeds = stickyData.embeds;
                 }
 
-                if (sticky_discordData.components) {
-                    sticky_message.components = sticky_discordData.components;
+                if (stickyData.components) {
+                    sticky_message.components = stickyData.components;
                 }
 
                 interaction.reply({
@@ -250,7 +251,7 @@ module.exports = {
                         new EmbedBuilder()
                             .setTitle(`Sticky Settings`)
                             .setDescription(
-                                `**Specific sticky settings: DISPLAY**\n*Bellow is the details of the sticky message.*\n\nChannel: <#${stickyData.channelId}>`
+                                `**Specific sticky settings: DISPLAY**\n*Bellow is the details of the sticky message.*\n\nChannel: <#${stickyData.channelId}>Active: \`${stickyData.active}\``
                             ),
                     ],
                     components: [

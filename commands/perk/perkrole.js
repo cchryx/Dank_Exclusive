@@ -594,10 +594,16 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            const user_fetch = await interaction.guild.members.fetch(
-                options.user.id
-            );
-            user_fetch.roles.remove(perkroleData.roleId);
+            const user_fetch = await interaction.guild.members
+                .fetch(options.user.id)
+                .catch((error) => {
+                    return false;
+                });
+
+            if (user_fetch !== false) {
+                user_fetch.roles.remove(perkroleData.roleId);
+            }
+
             perkroleData.users.splice(
                 perkroleData.users.indexOf(options.user.id),
                 1

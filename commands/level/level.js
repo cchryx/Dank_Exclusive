@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 
 const UserModel = require("../../models/userSchema");
+const { user_exp_calculation } = require("../../utils/level");
 
 const { user_fetch } = require("../../utils/user");
 
@@ -31,6 +32,7 @@ module.exports = {
         let exp_cap;
 
         if (interaction.options.getSubcommand() === "show") {
+            const expData = await user_exp_calculation(interaction);
             const level_embed = new EmbedBuilder();
             const options = {
                 user: interaction.options.getUser("user"),
@@ -54,7 +56,9 @@ module.exports = {
                     iconURL: userDiscord.displayAvatarURL(),
                 })
                 .setDescription(
-                    `**ᴘʀᴇꜱᴛɪɢᴇ:** \`${userData.levelInfo.prestige.toLocaleString()}\``
+                    `**ᴘʀᴇꜱᴛɪɢᴇ:** \`${userData.levelInfo.prestige.toLocaleString()}\`\nᴇxᴘᴇʀɪᴇɴᴄᴇ ᴘᴇʀ ᴍᴇꜱꜱᴀɢᴇ: \`${expData.exp_increase.toLocaleString()}\`\nᴇxᴘᴇʀɪᴇɴᴄᴇ ᴄᴏᴏʟᴅᴏᴡɴ: \`${(
+                        expData.cooldown / 1000
+                    ).toLocaleString()} s\``
                 )
                 .addFields({
                     name: `** **`,

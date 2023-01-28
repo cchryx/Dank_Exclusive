@@ -7,13 +7,14 @@ const { user_fetch } = require("./user");
 const { guild_fetch } = require("./guild");
 const { EmbedBuilder } = require("discord.js");
 
+const cooldown = 5 * 1000;
+
 class Levelfunctions {
     static async user_exp_add_message(client, message) {
-        if(message.author.id === "685672031395905583") return; // blacklist poWer
+        if (message.author.id === "685672031395905583") return; // blacklist poWer
         const userData = await user_fetch(message.author.id);
         const guildData = await guild_fetch(message.guild.id);
         const level_initial = userData.levelInfo.level;
-        const cooldown = 5 * 1000;
         const INCREMENT = 50;
         const exp_cap = INCREMENT + userData.levelInfo.level * INCREMENT;
         let exp_increase = 1;
@@ -114,15 +115,52 @@ class Levelfunctions {
         }
     }
 
+    static async user_exp_calculation(interaction) {
+        const user_discordData = await interaction.guild.members.fetch(
+            interaction.user.id
+        );
+        const userData = await user_fetch(user_discordData.user.id);
+        const guildData = await guild_fetch(user_discordData.guild.id);
+        let exp_increase = 1;
+        let exp_multiplier = 1;
+
+        if (
+            guildData.level.multipliers.channel.hasOwnProperty(
+                interaction.channelId
+            )
+        ) {
+            exp_multiplier +=
+                guildData.level.multipliers.channel[interaction.channelId];
+        }
+
+        Object.keys(guildData.level.multipliers.role).forEach((role) => {
+            try {
+                if (user_discordData.roles.cache.has(role)) {
+                    exp_multiplier += guildData.level.multipliers.role[role];
+                }
+                return;
+            } catch (error) {
+                return;
+            }
+        });
+
+        exp_increase *= exp_multiplier;
+
+        return {
+            cooldown,
+            exp_multiplier,
+            exp_increase,
+        };
+    }
+
     static async user_exp_add_interaction(client, message) {
-        if(message.interaction.user.id === "685672031395905583") return; // blacklist poWer
+        if (message.interaction.user.id === "685672031395905583") return; // blacklist poWer
         const user_discordData = await message.guild.members.fetch(
             message.interaction.user.id
         );
         const userData = await user_fetch(user_discordData.user.id);
         const guildData = await guild_fetch(user_discordData.guild.id);
         const level_initial = userData.levelInfo.level;
-        const cooldown = 5 * 1000;
         const INCREMENT = 50;
         const exp_cap = INCREMENT + userData.levelInfo.level * INCREMENT;
         let exp_increase = 1;

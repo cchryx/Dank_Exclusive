@@ -202,22 +202,23 @@ class Discordfunctions {
         });
 
         if (!stickyData) return;
+        if (stickyData.active === false) return;
 
         const sticky_message = {};
         const sticky_discordData = await message.channel.messages.fetch(
             stickyData.messageId
         );
 
-        if (sticky_discordData.content) {
-            sticky_message.content = sticky_discordData.content;
+        if (stickyData.content) {
+            sticky_message.content = stickyData.content;
         }
 
-        if (sticky_discordData.embeds) {
-            sticky_message.embeds = sticky_discordData.embeds;
+        if (stickyData.embeds) {
+            sticky_message.embeds = stickyData.embeds;
         }
 
-        if (sticky_discordData.components) {
-            sticky_message.components = sticky_discordData.components;
+        if (stickyData.components) {
+            sticky_message.components = stickyData.components;
         }
 
         const sticky_discordData_new = await message.channel.send(

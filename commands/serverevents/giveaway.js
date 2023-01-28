@@ -588,7 +588,7 @@ module.exports = {
             });
 
             if (giveaways_ended.length <= 0) {
-                error_message = `\`There are no ended giveaways to be cleared\``;
+                error_message = `There are no ended giveaways to be cleared.`;
                 return error_reply(interaction, error_message);
             }
 
@@ -601,7 +601,7 @@ module.exports = {
                     new EmbedBuilder()
                         .setColor(`#D8CCFF`)
                         .setDescription(
-                            `<a:ravena_check:1002981211708325950> **Successfully cleared up all giveaways that have ended**\nCleared Up: \`${giveaways_ended.length.toLocaleString()} giveaways\``
+                            `**Clean up giveaway data: SUCCESSFUL**\n*I have deleted giveaways that already ended from the database to free up space.*\nCleared Up: \`${giveaways_ended.length.toLocaleString()} giveaways\``
                         ),
                 ],
             });
