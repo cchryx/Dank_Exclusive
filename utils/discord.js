@@ -221,9 +221,9 @@ class Discordfunctions {
             sticky_message.components = stickyData.components;
         }
 
-        const sticky_discordData_new = await message.channel.send(
-            sticky_message
-        );
+        const sticky_discordData_new = await message.channel
+            .send(sticky_message)
+            .catch((error) => {});
 
         stickyData.messageId = sticky_discordData_new.id;
         await StickyModel.findOneAndUpdate(
