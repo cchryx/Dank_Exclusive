@@ -238,11 +238,11 @@ module.exports = {
                     sticky_message.content = stickyData.content;
                 }
 
-                if (stickyData.embeds) {
+                if (stickyData.embeds.length > 0) {
                     sticky_message.embeds = stickyData.embeds;
                 }
 
-                if (stickyData.components) {
+                if (stickyData.components.length > 0) {
                     sticky_message.components = [
                         new ActionRowBuilder().setComponents(
                             new ButtonBuilder(stickyData.components[0])
