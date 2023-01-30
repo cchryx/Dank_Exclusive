@@ -12,8 +12,6 @@ const { perk_autoreaction } = require("../utils/perk");
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
-        await discord_sticky_message(message);
-        
         if (message.author.bot) {
             if (!message.interaction) return;
             if (message.author.id === client.user.id) return;
@@ -23,6 +21,8 @@ module.exports = {
             await user_exp_add_message(client, message);
             await giveaway_requiredchat(message.author.id, message.channel.id);
         }
+        
+        await discord_sticky_message(message);
 
         if (message.mentions.members.size > 0) {
             if (message.mentions.repliedUser) return;
