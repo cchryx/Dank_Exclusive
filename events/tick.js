@@ -76,16 +76,13 @@ module.exports = {
                 const grindernotice_channel = client.channels.cache.get(
                     dankex_guildData.miscData.channels.grindersnotice
                 );
-                const grindersnotice_embeds = await grinders_map();
 
                 let deleted;
                 do {
                     deleted = await grindernotice_channel.bulkDelete(100);
                 } while (deleted.size != 0);
 
-                await grindernotice_channel.send({
-                    embeds: grindersnotice_embeds,
-                });
+                await grinders_map(grindernotice_channel);
             }
         }
 

@@ -255,10 +255,7 @@ module.exports = {
                 grinderData
             );
         } else if (interaction.options.getSubcommand() === "display") {
-            const grinderDatas_display = await grinders_map();
-            interaction.reply({
-                embeds: grinderDatas_display,
-            });
+            await grinders_map(interaction.channel);
         } else if (interaction.options.getSubcommand() === "kick") {
             const options = {
                 user: interaction.options.getMember("user"),
@@ -314,16 +311,13 @@ module.exports = {
             const grindernotice_channel = client.channels.cache.get(
                 guildData.miscData.channels.grindersnotice
             );
-            const grindersnotice_embeds = await grinders_map();
 
             let deleted;
             do {
                 deleted = await grindernotice_channel.bulkDelete(100);
             } while (deleted.size != 0);
 
-            await grindernotice_channel.send({
-                embeds: grindersnotice_embeds,
-            });
+            await grinders_map(grindernotice_channel);
 
             return interaction.reply({
                 embeds: [

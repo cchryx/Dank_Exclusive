@@ -3,7 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 const GrinderModel = require("../models/grinderSchema");
 
 class GrinderFunctions {
-    static async grinders_map() {
+    static async grinders_map(channel_discordData) {
         let grinderDatas = await GrinderModel.find();
         grinderDatas = grinderDatas.sort((a, b) => {
             const nextPayment_a = a.initialDate + a.payments * 86400000;
@@ -71,7 +71,9 @@ class GrinderFunctions {
             }
         }
 
-        return embedsData;
+        return embedsData.forEach((embed) => {
+            channel_discordData.send({ embeds: [embed] });
+        });
     }
 }
 
