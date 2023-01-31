@@ -122,9 +122,8 @@ module.exports = {
             }
 
             options.payments = Math.round(options.payments);
-            if (options.payments < 3) {
-                error_message =
-                    "Need at least 3 payments to create grinder permit.";
+            if (options.payments < 0) {
+                error_message = "Specify a positive integer.";
                 return error_reply(interaction, error_message);
             }
 
