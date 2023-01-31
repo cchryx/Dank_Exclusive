@@ -12,6 +12,20 @@ const { perk_autoreaction } = require("../utils/perk");
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
+        const guildData = await guild_fetch(message.guildId);
+
+        if (guildData.miscData.channels.grindersnotice) {
+            if (
+                message.channel.id ===
+                    guildData.miscData.channels.grindersnotice &&
+                message.author.id !== client.user.id
+            ) {
+                return await message.delete();
+            }
+        }
+
+        await discord_sticky_message(message);
+
         if (message.author.bot) {
             if (!message.interaction) return;
             if (message.author.id === client.user.id) return;
@@ -22,14 +36,12 @@ module.exports = {
             await giveaway_requiredchat(message.author.id, message.channel.id);
         }
 
-        await discord_sticky_message(message);
-
         if (message.mentions.members.size > 0) {
             if (message.mentions.repliedUser) return;
             return perk_autoreaction(
                 message,
                 message.mentions.members,
-                await guild_fetch(message.guildId)
+                guildData
             );
         }
     },

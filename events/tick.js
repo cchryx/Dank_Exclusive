@@ -17,6 +17,7 @@ const PchannelModel = require("../models/pchannelSchema");
 const { giveaway_end } = require("../utils/giveaway");
 const { partnership_channel_delete } = require("../utils/partnership");
 const { timer_end } = require("../utils/timer");
+const { grinders_map } = require("../utils/grinder");
 
 let mainCounter = 0;
 
@@ -67,6 +68,24 @@ module.exports = {
                     dankex_guildData,
                     pchannelData
                 );
+            }
+        }
+
+        if (dankex_guildData.miscData.channels.grindersnotice) {
+            if (mainCounter % 3600 === 0) {
+                const grindernotice_channel = client.channels.cache.get(
+                    dankex_guildData.miscData.channels.grindersnotice
+                );
+                const grindersnotice_embeds = await grinders_map();
+
+                let deleted;
+                do {
+                    deleted = await grindernotice_channel.bulkDelete(100);
+                } while (deleted.size != 0);
+
+                await grindernotice_channel.send({
+                    embeds: grindersnotice_embeds,
+                });
             }
         }
 

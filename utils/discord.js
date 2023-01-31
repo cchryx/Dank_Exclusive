@@ -196,13 +196,20 @@ class Discordfunctions {
             });
         }
     }
+
     static async discord_sticky_message(message) {
+        const lastmessage_discordData_fatch =
+            await message.channel.messages.fetch({
+                limit: 1,
+            });
+        const lastmessage_discordData = lastmessage_discordData_fatch.first();
         const stickyData = await StickyModel.findOne({
             channelId: message.channel.id,
         });
 
         if (!stickyData) return;
         if (stickyData.active === false) return;
+        if (lastmessage_discordData.id === stickyData.messageId) return;
 
         const sticky_message = {};
         const sticky_discordData = await message.channel.messages.cache.get(
