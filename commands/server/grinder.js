@@ -84,6 +84,11 @@ module.exports = {
                         .setDescription("Specify user server.")
                         .setRequired(true);
                 })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("refresh")
+                .setDescription("Refresh grinder board.")
         ),
     cooldown: 10,
     async execute(interaction, client) {
@@ -299,6 +304,33 @@ module.exports = {
                     ),
                 ],
                 ephemeral: true,
+            });
+        } else if (interaction.options.getSubcommand() === "refresh") {
+            if (!guildData.miscData.channels.grindersnotice) {
+                error_message = "Grinder notice channel not set.";
+                return error_reply(interaction, error_message);
+            }
+
+            const grindernotice_channel = client.channels.cache.get(
+                guildData.miscData.channels.grindersnotice
+            );
+            const grindersnotice_embeds = await grinders_map();
+
+            let deleted;
+            do {
+                deleted = await grindernotice_channel.bulkDelete(100);
+            } while (deleted.size != 0);
+
+            await grindernotice_channel.send({
+                embeds: grindersnotice_embeds,
+            });
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Refresh grinders notice board: SUCCESSFUL**\n*I refreshed the grinders notice board in <#${guildData.miscData.channels.grindersnotice}>.*`
+                    ),
+                ],
             });
         }
     },
