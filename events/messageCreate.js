@@ -23,7 +23,6 @@ module.exports = {
                 return await message.delete();
             }
         }
-
         await discord_sticky_message(message);
 
         if (message.author.bot) {
