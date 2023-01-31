@@ -15,49 +15,60 @@ class GrinderFunctions {
         const embedsNeeded = grinderDatas.length / embedTheshold;
         const embedsData = [];
 
-        for (let i = 0; i < embedsNeeded; i++) {
-            const grindersChunck = grinderDatas.slice(
-                embedTheshold * i,
-                embedTheshold * (i + 1)
+        if (grinderDatas.length === 0) {
+            embedsData.push(
+                new EmbedBuilder()
+                    .setTitle(`Grinders Notice Board`)
+                    .setDescription("`No grinders.`")
             );
+        } else {
+            for (let i = 0; i < embedsNeeded; i++) {
+                const grindersChunck = grinderDatas.slice(
+                    embedTheshold * i,
+                    embedTheshold * (i + 1)
+                );
 
-            const grinderDatas_map = grindersChunck
-                .map((grinderData) => {
-                    const paymentDue =
-                        grinderData.initialDate +
-                        grinderData.payments * 86400000;
-                    const timeLeft = paymentDue - Date.now();
-                    let symbol;
+                const grinderDatas_map = grindersChunck
+                    .map((grinderData) => {
+                        const paymentDue =
+                            grinderData.initialDate +
+                            grinderData.payments * 86400000;
+                        const timeLeft = paymentDue - Date.now();
+                        let symbol;
 
-                    if (timeLeft > 259200000) {
-                        symbol = "<:warning_none:1070054131127025805>";
-                    } else if (timeLeft <= 259200000 && timeLeft > 86400000) {
-                        symbol = "<:warning_time:1070054477584928798>";
-                    } else {
-                        symbol = "<:warning_servre:1070054714470834186>";
-                    }
+                        if (timeLeft > 259200000) {
+                            symbol = "<:warning_none:1070054131127025805>";
+                        } else if (
+                            timeLeft <= 259200000 &&
+                            timeLeft > 86400000
+                        ) {
+                            symbol = "<:warning_time:1070054477584928798>";
+                        } else {
+                            symbol = "<:warning_servre:1070054714470834186>";
+                        }
 
-                    if (timeLeft <= 0) {
-                        symbol = "<a:warning_flag:1070074604913168434>";
-                    }
+                        if (timeLeft <= 0) {
+                            symbol = "<a:warning_flag:1070074604913168434>";
+                        }
 
-                    return `> ${symbol} <@${
-                        grinderData.userId
-                    }> - Next Payment: <t:${Math.floor(
-                        paymentDue / 1000
-                    )}:D> <t:${Math.floor(paymentDue / 1000)}:R>`;
-                })
-                .join("\n");
+                        return `> ${symbol} <@${
+                            grinderData.userId
+                        }> - Next Payment: <t:${Math.floor(
+                            paymentDue / 1000
+                        )}:D> <t:${Math.floor(paymentDue / 1000)}:R>`;
+                    })
+                    .join("\n");
 
-            const embedData = new EmbedBuilder().setDescription(
-                grinderDatas_map
-            );
+                const embedData = new EmbedBuilder().setDescription(
+                    grinderDatas_map
+                );
 
-            if (i === 0) {
-                embedData.setTitle(`Grinders Notice Board`);
+                if (i === 0) {
+                    embedData.setTitle(`Grinders Notice Board`);
+                }
+
+                embedsData.push(embedData);
             }
-
-            embedsData.push(embedData);
         }
 
         return embedsData;
