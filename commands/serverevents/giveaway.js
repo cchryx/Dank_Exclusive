@@ -498,11 +498,9 @@ module.exports = {
                         new ButtonBuilder()
                             .setCustomId(`vote_perks`)
                             .setLabel(`Voting Perks`)
-                            .setEmoji(`<a:dankex:1054942804637388900>`)
                             .setStyle(embed_theme.button_style),
                         new ButtonBuilder()
                             .setLabel(`Vote here`)
-                            .setEmoji(`<a:dankex:1054942804637388900>`)
                             .setStyle(5)
                             .setURL(
                                 "https://top.gg/servers/902334382939963402/vote"
