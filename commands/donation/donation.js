@@ -99,7 +99,7 @@ module.exports = {
             let error_message;
             const guildData = await guild_fetch(interaction.guildId);
             const checkAccess = await discord_check_role(interaction, [
-                "904456239415697441",
+                "1016888202725965864",
             ]);
             if (checkAccess === false) {
                 error_message = "You don't have the roles to use this command.";
