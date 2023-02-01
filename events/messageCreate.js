@@ -1,6 +1,6 @@
 const { InteractionType, Collection, MessageEmbed } = require("discord.js");
-const { discord_sticky_message } = require("../utils/discord");
 
+const { discord_sticky_message } = require("../utils/discord");
 const { giveaway_requiredchat } = require("../utils/giveaway");
 const { guild_fetch } = require("../utils/guild");
 const {

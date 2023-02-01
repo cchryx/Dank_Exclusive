@@ -81,6 +81,32 @@ class Donationfunctions {
 
         return userData.donation[category];
     }
+
+    static async donation_autoprompt(message) {
+        if (
+            message.author.id === "270904126974590976" &&
+            message.channel.id === "1058865697196871720" &&
+            message.embeds[0].description === "Successfully donated!"
+        ) {
+            const message_ref = message.channel.messages.cache.get(
+                message.reference.messageId
+            );
+            const userId = message_ref.interaction.user.id;
+            if (message_ref.embeds[0].data.description.includes(`⏣`)) {
+                let found_number = message_ref.embeds[0].data.description.match(
+                    /[0-9]+(\.[0-9][0-9]?)?/gm
+                );
+
+                found_number = Number(
+                    found_number
+                        .map((num) => {
+                            return num;
+                        })
+                        .join("")
+                );
+            }
+        }
+    }
 }
 
 module.exports = Donationfunctions;

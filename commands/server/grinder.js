@@ -13,6 +13,7 @@ const {
 const GrinderModel = require("../../models/grinderSchema");
 
 const { discord_check_role } = require("../../utils/discord");
+const { donation_autoroles, donation_edit } = require("../../utils/donation");
 const { error_reply } = require("../../utils/error");
 const { grinders_map } = require("../../utils/grinder");
 const { guild_fetch } = require("../../utils/guild");
@@ -133,6 +134,7 @@ module.exports = {
             }
 
             paymentDue = Date.now() + options.payments * 86400000;
+            const paymentAmount = options.payments * paymentIncrement;
 
             interaction.reply({
                 embeds: [
@@ -157,6 +159,47 @@ module.exports = {
                     .get(options.user.id)
                     .roles.add(guildData.miscData.roles.grinder);
             }
+
+            const donation_newtotal = await donation_edit(
+                options.user.id,
+                "dankmemer",
+                "add",
+                paymentAmount
+            );
+
+            const donation_autorole = await donation_autoroles(
+                options.user,
+                guildData.donation.roles["dankmemer"],
+                donation_newtotal
+            );
+
+            if (guildData.miscData.channels.log) {
+                client.channels.cache
+                    .get(guildData.miscData.channels.log)
+                    .send({
+                        embeds: [
+                            new EmbedBuilder().setDescription(
+                                `**Edit donation: LOG**\n\nIssued By: ${
+                                    interaction.user
+                                }\nUser Edited: ${
+                                    options.user
+                                }\nCategory: \`dankmemer\`\nAction: \`add\`\nValue: \`${paymentAmount.toLocaleString()}\`\nNew Total: \`${donation_newtotal.toLocaleString()}\`\n\n${donation_autorole}`
+                            ),
+                        ],
+                    });
+            }
+
+            interaction.channel.send({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Edit donation: SUCCESSFUL**\n\nIssued By: ${
+                            interaction.user
+                        }\nUser Edited: ${
+                            options.user
+                        }\nCategory: \`dankmemer\`\nAction: \`add\`\nValue: \`${paymentAmount.toLocaleString()}\`\nNew Total: \`${donation_newtotal.toLocaleString()}\`\n\n${donation_autorole}`
+                    ),
+                ],
+            });
 
             return await GrinderModel.create({
                 userId: options.user.id,
@@ -233,6 +276,7 @@ module.exports = {
 
             const paymentDue =
                 grinderData.initialDate + grinderData.payments * 86400000;
+            const paymentAmount = options.payments * paymentIncrement;
 
             interaction.reply({
                 embeds: [
@@ -246,6 +290,47 @@ module.exports = {
                         ).toLocaleString()}\`\nNext Payment: <t:${Math.floor(
                             paymentDue / 1000
                         )}:D> <t:${Math.floor(paymentDue / 1000)}:R>`
+                    ),
+                ],
+            });
+
+            const donation_newtotal = await donation_edit(
+                options.user.id,
+                "dankmemer",
+                "add",
+                paymentAmount
+            );
+
+            const donation_autorole = await donation_autoroles(
+                options.user,
+                guildData.donation.roles["dankmemer"],
+                donation_newtotal
+            );
+
+            if (guildData.miscData.channels.log) {
+                client.channels.cache
+                    .get(guildData.miscData.channels.log)
+                    .send({
+                        embeds: [
+                            new EmbedBuilder().setDescription(
+                                `**Edit donation: LOG**\n\nIssued By: ${
+                                    interaction.user
+                                }\nUser Edited: ${
+                                    options.user
+                                }\nCategory: \`dankmemer\`\nAction: \`add\`\nValue: \`${paymentAmount.toLocaleString()}\`\nNew Total: \`${donation_newtotal.toLocaleString()}\`\n\n${donation_autorole}`
+                            ),
+                        ],
+                    });
+            }
+
+            interaction.channel.send({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Edit donation: SUCCESSFUL**\n\nIssued By: ${
+                            interaction.user
+                        }\nUser Edited: ${
+                            options.user
+                        }\nCategory: \`dankmemer\`\nAction: \`add\`\nValue: \`${paymentAmount.toLocaleString()}\`\nNew Total: \`${donation_newtotal.toLocaleString()}\`\n\n${donation_autorole}`
                     ),
                 ],
             });

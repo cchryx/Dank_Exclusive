@@ -10,7 +10,7 @@ const humanizeDuration = require("humanize-duration");
 
 const GiveawayModel = require("../models/giveawaySchema");
 
-const { discord_self_role } = require("../utils/discord");
+const { discord_self_role, discord_check_role } = require("../utils/discord");
 const { error_reply } = require("../utils/error");
 const {
     giveaway_check_fulfill,
@@ -51,10 +51,10 @@ const humantime = humanizeDuration.humanizer({
 module.exports = {
     name: "interactionCreate",
     async execute(interaction, client) {
+        let error_message;
         const guildData = await guild_fetch(interaction.guildId);
         const userData = await user_fetch(interaction.user.id);
 
-        let error_message;
         if (interaction.type === InteractionType.ApplicationCommand) {
             if (interaction.guildId !== "902334382939963402") {
                 return interaction.reply({
