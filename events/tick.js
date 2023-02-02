@@ -13,11 +13,12 @@ const GuildModel = require("../models/guildSchema");
 const GiveawayModel = require("../models/giveawaySchema");
 const TimerModel = require("../models/timerSchema");
 const PchannelModel = require("../models/pchannelSchema");
+const GrinderModel = require("../models/grinderSchema");
 
 const { giveaway_end } = require("../utils/giveaway");
 const { partnership_channel_delete } = require("../utils/partnership");
 const { timer_end } = require("../utils/timer");
-const { grinders_map } = require("../utils/grinder");
+const { grinders_map, grinder_autokick } = require("../utils/grinder");
 
 let mainCounter = 0;
 
@@ -68,6 +69,18 @@ module.exports = {
                     dankex_guildData,
                     pchannelData
                 );
+            }
+        }
+
+        const grinder_query = await GrinderModel.find({});
+
+        for (const grinderData of grinder_query) {
+            const kickDate =
+                grinderData.initialDate +
+                grinderData.payments * 86400000 +
+                3 * 86400000;
+            if (Date.now() >= kickDate) {
+                await grinder_autokick(client, dankex_guildData, grinderData);
             }
         }
 

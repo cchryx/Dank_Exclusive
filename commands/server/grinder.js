@@ -373,7 +373,7 @@ module.exports = {
                 grindernotice_channel.send({
                     embeds: [
                         new EmbedBuilder().setDescription(
-                            `${options.user} has been kick from the grinder team by ${interaction.user}`
+                            `${options.user} has been kick from the grinder team by ${interaction.user}.`
                         ),
                     ],
                 });

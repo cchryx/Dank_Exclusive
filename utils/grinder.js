@@ -1,4 +1,5 @@
-const { EmbedBuilder } = require("discord.js");
+const { ButtonBuilder } = require("@discordjs/builders");
+const { EmbedBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
 
 const GrinderModel = require("../models/grinderSchema");
 
@@ -71,8 +72,62 @@ class GrinderFunctions {
             }
         }
 
-        return embedsData.forEach((embed) => {
-            channel_discordData.send({ embeds: [embed] });
+        return embedsData.forEach((embed, index) => {
+            if (index + 1 === embedsData.length) {
+                channel_discordData.send({
+                    embeds: [embed],
+                    components: [
+                        new ActionRowBuilder().setComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`grinder_show`)
+                                .setLabel(`Quick Find`)
+                                .setStyle(ButtonStyle.Primary)
+                        ),
+                    ],
+                });
+            } else {
+                channel_discordData.send({ embeds: [embed] });
+            }
+        });
+    }
+
+    static async grinder_autokick(client, guildData, grinderData) {
+        const guild_discordData = await client.guilds.fetch(guildData.guildId);
+        const user_discordData = await guild_discordData.members.fetch(
+            grinderData.userId
+        );
+
+        if (guildData.miscData.roles.grinder) {
+            user_discordData.roles.remove(guildData.miscData.roles.grinder);
+        }
+
+        if (guildData.miscData.channels.grindersnotice) {
+            const grindernotice_channel = client.channels.cache.get(
+                guildData.miscData.channels.grindersnotice
+            );
+
+            grindernotice_channel.send({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `${user_discordData} has been auto-kicked for not paying 3 days after deadline.`
+                    ),
+                ],
+            });
+        }
+
+        user_discordData
+            .send({
+                content: `${user_discordData}`,
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Grinder: NOTICE**\n*You have been auto-kicked from the grinder team for not paying 3 days after deadline.*`
+                    ),
+                ],
+            })
+            .catch((error) => {});
+
+        return await GrinderModel.findOneAndDelete({
+            userId: user_discordData.user.id,
         });
     }
 }

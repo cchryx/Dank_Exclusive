@@ -9,6 +9,7 @@ const {
 const humanizeDuration = require("humanize-duration");
 
 const GiveawayModel = require("../models/giveawaySchema");
+const GrinderModel = require("../models/grinderSchema");
 
 const { discord_self_role, discord_check_role } = require("../utils/discord");
 const { error_reply } = require("../utils/error");
@@ -200,6 +201,45 @@ module.exports = {
                     timerData.data,
                     guildData
                 );
+            } else if (interaction.customId === "grinder_show") {
+                const paymentIncrement = 3 * 1000 * 1000;
+                const target = interaction.user;
+
+                grinderData = await GrinderModel.findOne({
+                    userId: target.id,
+                });
+
+                if (!grinderData) {
+                    error_message = "This user doesn't have a grinder permit.";
+                    return error_reply(interaction, error_message);
+                }
+
+                const paymentDue =
+                    grinderData.initialDate + grinderData.payments * 86400000;
+
+                return interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setAuthor({
+                                name: `${target.tag || target.user.tag}`,
+                                iconURL: target.displayAvatarURL(),
+                            })
+                            .setDescription(
+                                `**Grinder Permit**\n*Here lies this user's grinder permit.*\n\nUser: ${target}\nTotal Contributions: \`⏣ ${(
+                                    grinderData.payments * paymentIncrement
+                                ).toLocaleString()}\`\nPayments: \`${grinderData.payments.toLocaleString()}\`\n\nNext Payment: <t:${Math.floor(
+                                    paymentDue / 1000
+                                )}:D> <t:${Math.floor(
+                                    paymentDue / 1000
+                                )}:R>\nInitial Date: <t:${Math.floor(
+                                    grinderData.initialDate / 1000
+                                )}:D> <t:${Math.floor(
+                                    grinderData.initialDate / 1000
+                                )}:R>`
+                            ),
+                    ],
+                    ephemeral: true,
+                });
             }
 
             if (

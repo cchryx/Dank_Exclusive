@@ -212,9 +212,11 @@ class Discordfunctions {
         if (lastmessage_discordData.id === stickyData.messageId) return;
 
         const sticky_message = {};
-        const sticky_discordData = await message.channel.messages.cache.get(
+        const sticky_discordData = await message.channel.messages.fetch(
             stickyData.messageId
         );
+
+        const deleted_discordData = await sticky_discordData.delete();
 
         if (stickyData.content) {
             sticky_message.content = stickyData.content;
@@ -243,8 +245,6 @@ class Discordfunctions {
             },
             stickyData
         );
-
-        if (sticky_discordData) await sticky_discordData.delete();
     }
 }
 
