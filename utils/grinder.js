@@ -97,10 +97,6 @@ class GrinderFunctions {
             grinderData.userId
         );
 
-        if (guildData.miscData.roles.grinder) {
-            user_discordData.roles.remove(guildData.miscData.roles.grinder);
-        }
-
         if (guildData.miscData.channels.grindersnotice) {
             const grindernotice_channel = client.channels.cache.get(
                 guildData.miscData.channels.grindersnotice
@@ -115,7 +111,12 @@ class GrinderFunctions {
             });
         }
 
-        user_discordData
+        if (user_discordData) {
+            if (guildData.miscData.roles.grinder) {
+                user_discordData.roles.remove(guildData.miscData.roles.grinder);
+            }
+            
+             user_discordData
             .send({
                 content: `${user_discordData}`,
                 embeds: [
@@ -125,6 +126,7 @@ class GrinderFunctions {
                 ],
             })
             .catch((error) => {});
+        }
 
         return await GrinderModel.findOneAndDelete({
             userId: user_discordData.user.id,
