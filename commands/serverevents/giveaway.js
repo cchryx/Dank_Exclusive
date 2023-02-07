@@ -359,7 +359,7 @@ module.exports = {
                         embed_theme.emoji_mainpoint
                     }**Donator:** ${options.sponsor}`
                 )
-                .setImage(embed_theme.dividerurl)
+                .setImage(embed_theme.divider_url)
                 .setFooter({
                     text: `Winners: ${options.winners.toLocaleString()}`,
                 });
