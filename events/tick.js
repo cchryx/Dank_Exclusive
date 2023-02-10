@@ -72,32 +72,32 @@ module.exports = {
             }
         }
 
-        const grinder_query = await GrinderModel.find({});
+//         const grinder_query = await GrinderModel.find({});
 
-        for (const grinderData of grinder_query) {
-            const kickDate =
-                grinderData.initialDate +
-                grinderData.payments * 86400000 +
-                3 * 86400000;
-            if (Date.now() >= kickDate) {
-                await grinder_autokick(client, dankex_guildData, grinderData);
-            }
-        }
+//         for (const grinderData of grinder_query) {
+//             const kickDate =
+//                 grinderData.initialDate +
+//                 grinderData.payments * 86400000 +
+//                 3 * 86400000;
+//             if (Date.now() >= kickDate) {
+//                 await grinder_autokick(client, dankex_guildData, grinderData);
+//             }
+//         }
 
-        if (dankex_guildData.miscData.channels.grindersnotice) {
-            if (mainCounter % 3600 === 0) {
-                const grindernotice_channel = client.channels.cache.get(
-                    dankex_guildData.miscData.channels.grindersnotice
-                );
+//         if (dankex_guildData.miscData.channels.grindersnotice) {
+//             if (mainCounter % 3600 === 0) {
+//                 const grindernotice_channel = client.channels.cache.get(
+//                     dankex_guildData.miscData.channels.grindersnotice
+//                 );
 
-                let deleted;
-                do {
-                    deleted = await grindernotice_channel.bulkDelete(100);
-                } while (deleted.size != 0);
+//                 let deleted;
+//                 do {
+//                     deleted = await grindernotice_channel.bulkDelete(100);
+//                 } while (deleted.size != 0);
 
-                await grinders_map(grindernotice_channel);
-            }
-        }
+//                 await grinders_map(grindernotice_channel);
+//             }
+//         }
 
         setTimeout(() => {
             client.emit("tick");
