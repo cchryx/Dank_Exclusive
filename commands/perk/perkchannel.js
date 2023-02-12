@@ -37,13 +37,6 @@ module.exports = {
         )
         .addSubcommand((subcommand) =>
             subcommand
-                .setName("scan")
-                .setDescription(
-                    "Scan perk channels to see which ones aren't valid anymore."
-                )
-        )
-        .addSubcommand((subcommand) =>
-            subcommand
                 .setName("userremove")
                 .setDescription(
                     "Choose a user to remove from your perk channel."
