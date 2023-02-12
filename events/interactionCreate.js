@@ -147,7 +147,7 @@ module.exports = {
                     messageId: interaction.message.id,
                 });
 
-                if (giveawayData.hostId !== interaction.user.id) {
+                if (giveawayData.data.hostId !== interaction.user.id) {
                     return interaction.reply({
                         embeds: [
                             new EmbedBuilder()
