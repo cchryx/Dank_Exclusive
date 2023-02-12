@@ -147,7 +147,21 @@ module.exports = {
                     messageId: interaction.message.id,
                 });
 
-                if (giveawayData.data.hostId !== interaction.user.id) {
+                if (!giveawayData) {
+                    return interaction.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription(
+                                    `\`This giveaway no longer exists, so you cannot interact with it\``
+                                )
+                                .setColor("#ffc182"),
+                        ],
+
+                        ephemeral: true,
+                    });
+                }
+
+                if (giveawayData.hostId !== interaction.user.id) {
                     return interaction.reply({
                         embeds: [
                             new EmbedBuilder()
