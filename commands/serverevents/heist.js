@@ -213,6 +213,7 @@ module.exports = {
                 });
             await interaction.channel.permissionOverwrites
                 .edit("902358680748568596", {
+                    MentionEveryone: true,
                     ViewChannel: true,
                     SendMessages: true,
                     AddReactions: true,
@@ -265,6 +266,7 @@ module.exports = {
                 {
                     id: "902358680748568596",
                     allow: [
+                        PermissionsBitField.Flags.MentionEveryone,
                         PermissionsBitField.Flags.SendMessages,
                         PermissionsBitField.Flags.AddReactions,
                         PermissionsBitField.Flags.UseApplicationCommands,

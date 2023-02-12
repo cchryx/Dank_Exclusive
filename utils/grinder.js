@@ -115,22 +115,42 @@ class GrinderFunctions {
             if (guildData.miscData.roles.grinder) {
                 user_discordData.roles.remove(guildData.miscData.roles.grinder);
             }
-            
-             user_discordData
-            .send({
-                content: `${user_discordData}`,
-                embeds: [
-                    new EmbedBuilder().setDescription(
-                        `**Grinder: NOTICE**\n*You have been auto-kicked from the grinder team for not paying 3 days after deadline.*`
-                    ),
-                ],
-            })
-            .catch((error) => {});
+
+            user_discordData
+                .send({
+                    content: `${user_discordData}`,
+                    embeds: [
+                        new EmbedBuilder().setDescription(
+                            `**Grinder: NOTICE**\n*You have been auto-kicked from the grinder team for not paying 3 days after deadline.*`
+                        ),
+                    ],
+                })
+                .catch((error) => {});
         }
 
         return await GrinderModel.findOneAndDelete({
             userId: user_discordData.user.id,
         });
+    }
+
+    static async grinder_reminder(client, guildData, grinderData) {
+        const guild_discordData = await client.guilds.fetch(guildData.guildId);
+        const user_discordData = await guild_discordData.members.fetch(
+            grinderData.userId
+        );
+
+        if (user_discordData) {
+            user_discordData
+                .send({
+                    content: `${user_discordData}`,
+                    embeds: [
+                        new EmbedBuilder().setDescription(
+                            `**Grinder: NOTICE**\n*You are being reminded that you are late 2 days for your grinder payment. You will be kicked from the grinder team automatically in 1 day if you do not pay in time.*`
+                        ),
+                    ],
+                })
+                .catch((error) => {});
+        }
     }
 }
 

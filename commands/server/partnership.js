@@ -227,7 +227,6 @@ module.exports = {
                 options.unhidden === "false" &&
                 guildData.miscData.roles.noPartnership
             ) {
-                console.log(true);
                 partnership_channel_information.permissionOverwrites.push({
                     id: guildData.miscData.roles.noPartnership,
                     deny: [PermissionsBitField.Flags.ViewChannel],

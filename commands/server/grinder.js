@@ -393,6 +393,15 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
+            const message_DiscordData = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Refresh grinders notice board: PROCESSING**\n*In the process of refreshing <#${guildData.miscData.channels.grindersnotice}>.*`
+                    ),
+                ],
+                fetchReply: true,
+            });
+
             const grindernotice_channel = client.channels.cache.get(
                 guildData.miscData.channels.grindersnotice
             );
@@ -404,7 +413,7 @@ module.exports = {
 
             await grinders_map(grindernotice_channel);
 
-            return interaction.reply({
+            return message_DiscordData.edit({
                 embeds: [
                     new EmbedBuilder().setDescription(
                         `**Refresh grinders notice board: SUCCESSFUL**\n*I refreshed the grinders notice board in <#${guildData.miscData.channels.grindersnotice}>.*`

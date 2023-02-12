@@ -6,7 +6,10 @@ module.exports = {
     once: true,
     async execute(client) {
         console.log(`Client logged in as ${client.user.tag}`.green);
-        client.emit("tick");
+        client.emit("tickGiveaway");
+        client.emit("tickGrinder");
+        client.emit("tickPartnership");
+        client.emit("tickTimer");
 
         client.user.setPresence({
             activities: [
