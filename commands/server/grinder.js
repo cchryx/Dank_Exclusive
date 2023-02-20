@@ -343,7 +343,7 @@ module.exports = {
             await grinders_map(interaction.channel);
         } else if (interaction.options.getSubcommand() === "kick") {
             const options = {
-                user: interaction.options.getMember("user"),
+                user: interaction.options.getUser("user"),
             };
 
             grinderData = await GrinderModel.findOne({
