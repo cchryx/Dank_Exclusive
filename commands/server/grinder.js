@@ -343,7 +343,7 @@ module.exports = {
             await grinders_map(interaction.channel);
         } else if (interaction.options.getSubcommand() === "kick") {
             const options = {
-                user: interaction.options.getUser("user"),
+                user: interaction.options.getMember("user"),
             };
 
             grinderData = await GrinderModel.findOne({
@@ -359,12 +359,14 @@ module.exports = {
                 userId: options.user.id,
             });
 
-            if (guildData.miscData.roles.grinder) {
-                interaction.guild.members.cache
-                    .get(options.user.id)
-                    .roles.remove(guildData.miscData.roles.grinder);
+            if (options.user) {
+                if (guildData.miscData.roles.grinder) {
+                    interaction.guild.members.cache
+                        .get(options.user.id)
+                        .roles.remove(guildData.miscData.roles.grinder);
+                }
             }
-
+            
             if (guildData.miscData.channels.grindersnotice) {
                 const grindernotice_channel = client.channels.cache.get(
                     guildData.miscData.channels.grindersnotice
