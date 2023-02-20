@@ -242,6 +242,7 @@ module.exports = {
             perkchannel_discordData = await interaction.guild.channels
                 .create(perkchannel_information)
                 .catch((error) => {
+                    console.log(error)
                     error_message = `${error.rawError.message}`;
                     error_reply(interaction, error_message);
                     return null;
