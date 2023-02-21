@@ -12,7 +12,7 @@ const GiveawayModel = require("../models/giveawaySchema");
 const GrinderModel = require("../models/grinderSchema");
 
 const { discord_self_role, discord_check_role } = require("../utils/discord");
-const { error_reply } = require("../utils/error");
+const { error_reply, error_log } = require("../utils/error");
 const {
     giveaway_check_fulfill,
     giveaway_fetch,
@@ -78,6 +78,7 @@ module.exports = {
                 error_message =
                     "An error occured when executing this application command!";
                 error_reply(interaction, error_message);
+                error_log(client, error);
             }
         } else if (interaction.isButton()) {
             if (interaction.customId === "giveaway_join") {

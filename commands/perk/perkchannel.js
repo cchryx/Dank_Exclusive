@@ -18,6 +18,7 @@ const {
     perk_slots_max,
     perk_channel_create,
 } = require("../../utils/perk");
+const { discord_check_role } = require("../../utils/discord");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -93,6 +94,26 @@ module.exports = {
                         .setDescription("Valid perk channel you are in.")
                         .setRequired(true);
                 })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("revoke")
+                .setDescription("Delete a perk channel.")
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("user")
+                        .setDescription("Valid perk channel owner.");
+                })
+                .addChannelOption((oi) => {
+                    return oi
+                        .setName("channel")
+                        .setDescription("Valid perk channel.");
+                })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("purge")
+                .setDescription("Delete all inactive perk channel.")
         ),
 
     async execute(interaction, client) {
@@ -585,6 +606,142 @@ module.exports = {
                 embeds: [
                     new EmbedBuilder().setDescription(
                         `**Sync perk channel permissions: SUCCESSFUL**\n*I synced your perk channel permissions according what is stored.*\n\nChannel: <#${perkchannel_discordData.id}>\nChannel Id: \`${perkchannel_discordData.id}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "revoke") {
+            const checkAccess = await discord_check_role(interaction, [
+                "938372143853502494",
+            ]);
+            if (checkAccess === false) {
+                error_message = "You don't have the roles to use this command.";
+                return error_reply(interaction, error_message);
+            }
+
+            options = {
+                user: interaction.options.getUser("user"),
+                channel: interaction.options.getChannel("channel"),
+            };
+
+            if (!options.user && !options.channel) {
+                error_message = "Provide at least a channel or channel owner.";
+                return error_reply(interaction, error_message);
+            }
+
+            const perkchannelData_target = options.user
+                ? await perk_channel_fetch(options.user.id)
+                : await PerkchannelModel.findOne({
+                      channelId: options.channel.id,
+                  });
+
+            if (!perkchannelData_target) {
+                error_message = "Couldn't find perk channel.";
+                return error_reply(interaction, error_message);
+            }
+
+            perkchannel_discordData = interaction.guild.channels.cache.get(
+                perkchannelData_target.channelId
+            );
+
+            await PerkchannelModel.findOneAndDelete({
+                channelId: perkchannelData_target.channelId,
+            });
+
+            if (!perkchannel_discordData) {
+                error_message =
+                    "That channel no longer exists in the server. I deleted it from the database.";
+
+                return error_reply(interaction, error);
+            }
+
+            await interaction.guild.channels.delete(
+                perkchannelData_target.channelId
+            );
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Delete perk channel: SUCCESSFUL**\n*I have deleted that perk channel for you and is cleared from database.*\n\nOwner: <@${perkchannelData_target.userId}>\nChannel: <#${perkchannelData_target.channelId}> \`${perkchannelData_target.channelId}\``
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "purge") {
+            const perkchannelDatas = await PerkchannelModel.find();
+            const message_discordData = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Purge perk-channels: PROCESSING**\n*Deleting inactive channels...*\n*Requirement: the 100th most recent message is within 14 days*\n\nChannels Found: \`${perkchannelDatas.length.toLocaleString()}\``
+                    ),
+                ],
+                fetchReply: true,
+            });
+            const perkchannelDatas_flagged = [];
+
+            for (let i = 0; i < perkchannelDatas.length; i++) {
+                perkchannelData = perkchannelDatas[i];
+                perkchannel_discordData = interaction.guild.channels.cache.get(
+                    perkchannelData.channelId
+                );
+
+                if (!perkchannel_discordData) {
+                    await PerkchannelModel.findOneAndDelete({
+                        channelId: perkchannelData.channelId,
+                    });
+                    continue;
+                }
+
+                if (perkchannel_discordData.parentId === "1007061047913488425")
+                    continue;
+
+                const messages_discordData =
+                    await perkchannel_discordData.messages.fetch({
+                        limit: 100,
+                    });
+                const messages_discordData_last = messages_discordData.last();
+
+                if (
+                    Date.now() - messages_discordData_last.createdTimestamp >
+                    1209600000
+                ) {
+                    perkchannelData.channelName = perkchannel_discordData.name;
+                    perkchannelDatas_flagged.push(perkchannelData);
+                }
+
+                if (
+                    i === 0 ||
+                    i + 1 === perkchannelDatas.length ||
+                    i % 5 === 0
+                ) {
+                    await interaction.guild.channels.delete(
+                        perkchannelData.channelId
+                    );
+
+                    await PerkchannelModel.findOneAndDelete({
+                        channelId: perkchannelData.channelId,
+                    });
+
+                    await message_discordData.edit({
+                        embeds: [
+                            new EmbedBuilder().setDescription(
+                                `**Purge perk-channels: PROCESSING**\n*Deleting inactive channels...*\n*Requirement: the 100th most recent message is within 14 days*\n\nChannels Found: \`${perkchannelDatas.length.toLocaleString()}\`\nChannels Proccessed: \`${
+                                    i + 1
+                                }\``
+                            ),
+                        ],
+                    });
+                }
+            }
+
+            await message_discordData.edit({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Purge perk-channels: SUCCESSFUL**\n*Deleting inactive channels...*\n*Requirement: the 100th most recent message is within 14 days*\n\nChannels Found: \`${perkchannelDatas.length.toLocaleString()}\`\nChannels Proccessed: \`${perkchannelDatas.length.toLocaleString()}\`\nChannels Deleted: \`${
+                            perkchannelDatas_flagged.length
+                        }\`\n\n${perkchannelDatas_flagged
+                            .map((d) => {
+                                return `\`-\`<@${d.userId}> \`#${d.channelName}\``;
+                            })
+                            .join("\n")}`
                     ),
                 ],
             });

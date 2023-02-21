@@ -16,6 +16,7 @@ const {
     perk_slots_max,
     perk_role_create,
 } = require("../../utils/perk");
+const { discord_check_role } = require("../../utils/discord");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -131,6 +132,21 @@ module.exports = {
             subcommand
                 .setName("sync")
                 .setDescription("Sync your users to your perk role.")
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("revoke")
+                .setDescription("Delete a perk role.")
+                .addUserOption((oi) => {
+                    return oi
+                        .setName("user")
+                        .setDescription("Valid perk role owner.");
+                })
+                .addRoleOption((oi) => {
+                    return oi
+                        .setName("role")
+                        .setDescription("Valid perk role.");
+                })
         ),
     async execute(interaction, client) {
         let error_message;
@@ -692,6 +708,60 @@ module.exports = {
                 embeds: [
                     new EmbedBuilder().setDescription(
                         `**Sync perk role users: SUCCESSFUL**\n*I synced your perk channel users according what is stored.*\n\nRole: <@&${perkroleData.roleId}>\nRole Id: \`${perkroleData.roleId}\`\nSlots Occupied: \`${slots_used}/${slots_max.slots_max}\``
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "revoke") {
+            const checkAccess = await discord_check_role(interaction, [
+                "938372143853502494",
+            ]);
+            if (checkAccess === false) {
+                error_message = "You don't have the roles to use this command.";
+                return error_reply(interaction, error_message);
+            }
+
+            options = {
+                user: interaction.options.getUser("user"),
+                role: interaction.options.getRole("role"),
+            };
+
+            if (!options.user && !options.role) {
+                error_message = "Provide at least a role or role owner.";
+                return error_reply(interaction, error_message);
+            }
+
+            const perkroleData_target = options.user
+                ? await perk_role_fetch(options.user.id)
+                : await PerkroleModel.findOne({
+                      roleId: options.role.id,
+                  });
+
+            if (!perkroleData_target) {
+                error_message = "Couldn't find perk role.";
+                return error_reply(interaction, error_message);
+            }
+
+            perkrole_discordData = interaction.guild.roles.cache.get(
+                perkroleData_target.roleId
+            );
+
+            await PerkroleModel.findOneAndDelete({
+                roleId: perkroleData_target.roleId,
+            });
+
+            if (!perkrole_discordData) {
+                error_message =
+                    "That role no longer exists in the server. I deleted it from the database.";
+
+                return error_reply(interaction, error);
+            }
+
+            await interaction.guild.roles.delete(perkroleData_target.roleId);
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Delete perk role: SUCCESSFUL**\n*I have deleted that perk role for you and is cleared from database.*\n\nOwner: <@${perkroleData_target.userId}>\nRole: <@${perkroleData_target.roleId}> \`${perkroleData_target.roleId}\``
                     ),
                 ],
             });

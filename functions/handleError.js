@@ -1,14 +1,16 @@
-const { Discord } = require("discord.js");
+const { error_log } = require("../utils/error");
 
 module.exports = (client) => {
-    process.on("uncaughtException", (err) => {
-        if (err.code === 10008) {
+    process.on("uncaughtException", (error) => {
+        if (error.code === 10008) {
             return;
         }
-        console.log(err);
+        console.log(error);
+        error_log(client, error);
     });
 
-    process.on("unhandledRejection", (err) => {
-        console.log(err);
+    process.on("unhandledRejection", (error) => {
+        console.log(error);
+        error_log(client, error);
     });
 };

@@ -11,6 +11,7 @@ const {
 } = require("../../utils/donation");
 const { guild_fetch } = require("../../utils/guild");
 const { discord_check_role } = require("../../utils/discord");
+const { auto_log } = require("../../utils/auto");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -126,23 +127,19 @@ module.exports = {
                 donation_newtotal
             );
 
-            if (guildData.miscData.channels.log) {
-                client.channels.cache
-                    .get(guildData.miscData.channels.log)
-                    .send({
-                        embeds: [
-                            new EmbedBuilder().setDescription(
-                                `**Edit donation: LOG**\n\nIssued By: ${
-                                    interaction.user
-                                }\nUser Edited: ${options.user}\nCategory: \`${
-                                    options.category
-                                }\`\nAction: \`${
-                                    options.action
-                                }\`\nValue: \`${options.value.toLocaleString()}\`\nNew Total: \`${donation_newtotal.toLocaleString()}\`\n\n${donation_autorole}`
-                            ),
-                        ],
-                    });
-            }
+            await auto_log(interaction, {
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Edit donation: LOG**\n\nIssued By: ${
+                            interaction.user
+                        }\nUser Edited: ${options.user}\nCategory: \`${
+                            options.category
+                        }\`\nAction: \`${
+                            options.action
+                        }\`\nValue: \`${options.value.toLocaleString()}\`\nNew Total: \`${donation_newtotal.toLocaleString()}\`\n\n${donation_autorole}`
+                    ),
+                ],
+            });
 
             return interaction.reply({
                 embeds: [

@@ -2,6 +2,7 @@ const { EmbedBuilder, ButtonBuilder } = require("@discordjs/builders");
 const { ActionRowBuilder, ButtonStyle } = require("discord.js");
 const UserModel = require("../models/userSchema");
 
+const { guild_fetch } = require("./guild");
 const { user_fetch } = require("./user");
 
 class Autofunctions {
@@ -57,6 +58,16 @@ class Autofunctions {
                     ],
                 });
             }
+        }
+    }
+
+    static async auto_log(interaction, data) {
+        const guildData = await guild_fetch(interaction.guildId);
+
+        if (guildData.miscData.channels.log) {
+            interaction.guild.channels.cache
+                .get(guildData.miscData.channels.log)
+                .send(data);
         }
     }
 }
