@@ -700,10 +700,6 @@ module.exports = {
                     });
                 const messages_discordData_last = messages_discordData.last();
 
-                console.log(
-                    Date.now() - messages_discordData_last.createdTimestamp
-                );
-
                 if (
                     Date.now() - messages_discordData_last.createdTimestamp >
                     1209600000
