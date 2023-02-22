@@ -366,7 +366,7 @@ module.exports = {
                         .roles.remove(guildData.miscData.roles.grinder);
                 }
             }
-            
+
             if (guildData.miscData.channels.grindersnotice) {
                 const grindernotice_channel = client.channels.cache.get(
                     guildData.miscData.channels.grindersnotice
@@ -413,7 +413,7 @@ module.exports = {
                 deleted = await grindernotice_channel.bulkDelete(100);
             } while (deleted.size != 0);
 
-            await grinders_map(grindernotice_channel);
+            await grinders_map(grindernotice_channel, true);
 
             return message_DiscordData.edit({
                 embeds: [

@@ -4,7 +4,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonStyle } = require("discord.js");
 const GrinderModel = require("../models/grinderSchema");
 
 class GrinderFunctions {
-    static async grinders_map(channel_discordData) {
+    static async grinders_map(channel_discordData, warn_mentions) {
         let grinderDatas = await GrinderModel.find();
         grinderDatas = grinderDatas.sort((a, b) => {
             const nextPayment_a = a.initialDate + a.payments * 86400000;
@@ -15,6 +15,7 @@ class GrinderFunctions {
         const embedTheshold = 25;
         const embedsNeeded = grinderDatas.length / embedTheshold;
         const embedsData = [];
+        const warnMentionsIds = [];
 
         if (grinderDatas.length === 0) {
             embedsData.push(
@@ -50,6 +51,7 @@ class GrinderFunctions {
 
                         if (timeLeft <= 0) {
                             symbol = "<a:warning_flag:1070074604913168434>";
+                            warnMentionsIds.push(grinderData.userId);
                         }
 
                         return `> ${symbol} <@${
@@ -70,6 +72,16 @@ class GrinderFunctions {
 
                 embedsData.push(embedData);
             }
+        }
+
+        if (warn_mentions === true) {
+            channel_discordData.send({
+                content: `**LATE PAYMENTS:**\n*You will be automatically kicked from grinder when you are 3 days late of payment.*\n${warnMentionsIds.map(
+                    (id) => {
+                        return `<@${id}>`;
+                    }
+                )}`,
+            });
         }
 
         return embedsData.forEach((embed, index) => {
@@ -145,7 +157,7 @@ class GrinderFunctions {
                     content: `${user_discordData}`,
                     embeds: [
                         new EmbedBuilder().setDescription(
-                            `**Grinder: NOTICE**\n*You are being reminded that you are late 2 days for your grinder payment. You will be kicked from the grinder team automatically in 1 day if you do not pay in time.*`
+                            `**Grinder: NOTICE**\n*You are being reminded that you are late 2 days for your grinder payment. You will be kicked from the grinder team automatically in 1 day if you do not pay in time.*\n\n`
                         ),
                     ],
                 })

@@ -34,12 +34,11 @@ module.exports = {
                 3 * 86400000;
             if (Date.now() >= kickDate) {
                 await grinder_autokick(client, dankex_guildData, grinderData);
-            } else if (Date.now() >= kickDate - 86400000) {
             }
         }
 
         if (dankex_guildData.miscData.channels.grindersnotice) {
-            if (mainCounter % 3600 === 0) {
+            if (mainCounter % 21600 === 0) {
                 const grindernotice_channel = client.channels.cache.get(
                     dankex_guildData.miscData.channels.grindersnotice
                 );
@@ -49,7 +48,7 @@ module.exports = {
                     deleted = await grindernotice_channel.bulkDelete(100);
                 } while (deleted.size != 0);
 
-                await grinders_map(grindernotice_channel);
+                await grinders_map(grindernotice_channel, true);
             }
         }
 
