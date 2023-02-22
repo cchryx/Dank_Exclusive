@@ -263,7 +263,7 @@ module.exports = {
             perkchannel_discordData = await interaction.guild.channels
                 .create(perkchannel_information)
                 .catch((error) => {
-                    console.log(error)
+                    console.log(error);
                     error_message = `${error.rawError.message}`;
                     error_reply(interaction, error_message);
                     return null;
@@ -700,18 +700,13 @@ module.exports = {
                     });
                 const messages_discordData_last = messages_discordData.last();
 
+                console.log(
+                    Date.now() - messages_discordData_last.createdTimestamp
+                );
+
                 if (
                     Date.now() - messages_discordData_last.createdTimestamp >
                     1209600000
-                ) {
-                    perkchannelData.channelName = perkchannel_discordData.name;
-                    perkchannelDatas_flagged.push(perkchannelData);
-                }
-
-                if (
-                    i === 0 ||
-                    i + 1 === perkchannelDatas.length ||
-                    i % 5 === 0
                 ) {
                     await interaction.guild.channels.delete(
                         perkchannelData.channelId
@@ -721,6 +716,15 @@ module.exports = {
                         channelId: perkchannelData.channelId,
                     });
 
+                    perkchannelData.channelName = perkchannel_discordData.name;
+                    perkchannelDatas_flagged.push(perkchannelData);
+                }
+
+                if (
+                    i === 0 ||
+                    i + 1 === perkchannelDatas.length ||
+                    i % 5 === 0
+                ) {
                     await message_discordData.edit({
                         embeds: [
                             new EmbedBuilder().setDescription(
