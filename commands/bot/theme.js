@@ -21,7 +21,7 @@ module.exports = {
         .addSubcommand((subcommand) => {
             return subcommand
                 .setName("show")
-                .setDescription("Show the current set theme of the server.");
+                .setDescription("Show the current theme of the server.");
         }),
     cooldown: 10,
     async execute(interaction, client) {
