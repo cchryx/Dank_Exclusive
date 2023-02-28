@@ -6,6 +6,7 @@ const GuildModel = require("../../models/guildSchema");
 const { guild_fetch } = require("../../utils/guild");
 const { user_exp_calculation } = require("../../utils/level");
 const { user_fetch } = require("../../utils/user");
+const { discord_check_role } = require("../../utils/discord");
 
 module.exports = {
     data: new SlashCommandBuilder()
