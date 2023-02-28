@@ -11,7 +11,6 @@ const TimerModel = require("../../models/timerSchema");
 
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
-const { time_format } = require("../../utils/time");
 const { discord_check_role } = require("../../utils/discord");
 
 module.exports = {

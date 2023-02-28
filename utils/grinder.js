@@ -105,9 +105,9 @@ class GrinderFunctions {
 
     static async grinder_autokick(client, guildData, grinderData) {
         const guild_discordData = await client.guilds.fetch(guildData.guildId);
-        const user_discordData = await guild_discordData.members.fetch(
-            grinderData.userId
-        );
+        const user_discordData = await guild_discordData.members
+            .fetch(grinderData.userId)
+            .catch((error) => {});
 
         if (guildData.miscData.channels.grindersnotice) {
             const grindernotice_channel = client.channels.cache.get(
@@ -141,7 +141,7 @@ class GrinderFunctions {
         }
 
         return await GrinderModel.findOneAndDelete({
-            userId: user_discordData.user.id,
+            userId: grinderData.userId,
         });
     }
 

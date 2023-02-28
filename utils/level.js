@@ -1,6 +1,7 @@
 const fs = require("fs");
 
-const USERMODEL = require("../models/userSchema");
+const UserModel = require("../models/userSchema");
+const GuildModel = require("../models/guildSchema");
 const LVLCOOLDOWN = require("../cooldowns/exp.json");
 
 const { user_fetch } = require("./user");
@@ -59,6 +60,10 @@ class Levelfunctions {
         check = timeLeft - Date.now() >= timeLeft || timeLeft - Date.now() <= 0;
 
         if (check) {
+            guildData.temporaryExp[message.author.id] =
+                guildData.temporaryExp.hasOwnProperty(message.author.id)
+                    ? guildData.temporaryExp[message.author.id] + 1
+                    : 1;
             userData.levelInfo.exp += exp_increase;
 
             if (userData.levelInfo.exp >= exp_cap) {
@@ -79,9 +84,14 @@ class Levelfunctions {
             );
         }
 
-        await USERMODEL.findOneAndUpdate(
+        await UserModel.findOneAndUpdate(
             { userId: message.author.id },
             userData
+        );
+
+        await GuildModel.findOneAndUpdate(
+            { guildId: guildData.guildId },
+            guildData
         );
 
         if (userData.levelInfo.level > level_initial) {
@@ -225,7 +235,7 @@ class Levelfunctions {
             );
         }
 
-        await USERMODEL.findOneAndUpdate(
+        await UserModel.findOneAndUpdate(
             { userId: user_discordData.user.id },
             userData
         );
@@ -276,7 +286,7 @@ class Levelfunctions {
             userData.levelInfo.level = value;
         }
 
-        await USERMODEL.findOneAndUpdate({ userId: userId }, userData);
+        await UserModel.findOneAndUpdate({ userId: userId }, userData);
 
         if (guildData.level.channel) {
             interaction.guild.channels.cache.get(guildData.level.channel).send({

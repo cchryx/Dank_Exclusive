@@ -33,7 +33,7 @@ module.exports = {
                     return oi
                         .setName("category")
                         .setDescription(
-                            "Which donation category do you want to edit?"
+                            "Which donation category do you want to view?"
                         )
                         .setRequired(true)
                         .addChoices(

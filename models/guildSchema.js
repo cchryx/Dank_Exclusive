@@ -40,6 +40,10 @@ const guildSchema = new mongoose.Schema(
                 },
             },
         },
+        temporaryExp: {
+            type: Object,
+            default: {},
+        },
         theme: {
             type: Object,
             default: {

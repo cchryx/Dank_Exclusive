@@ -2,8 +2,9 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 
 const UserModel = require("../../models/userSchema");
+const GuildModel = require("../../models/guildSchema");
+const { guild_fetch } = require("../../utils/guild");
 const { user_exp_calculation } = require("../../utils/level");
-
 const { user_fetch } = require("../../utils/user");
 
 module.exports = {
@@ -24,12 +25,31 @@ module.exports = {
             subcommand
                 .setName("leaderboard")
                 .setDescription("Show level leaderboard.")
+                .addStringOption((oi) =>
+                    oi
+                        .setName("category")
+                        .setDescription(
+                            "Which experience category do you want to view?"
+                        )
+                        .addChoices(
+                            { name: "Main", value: "main" },
+                            { name: "Temporary Experience", value: "tempexp" }
+                        )
+                        .setRequired(true)
+                )
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("resettempexp")
+                .setDescription("Reset temporary experience")
         ),
     cooldown: 10,
     async execute(interaction, client) {
         let error_message;
         const INCREMENT = 50;
         let exp_cap;
+
+        const guildData = await guild_fetch(interaction.guildId);
 
         if (interaction.options.getSubcommand() === "show") {
             const expData = await user_exp_calculation(interaction);
@@ -63,44 +83,129 @@ module.exports = {
                 .addFields({
                     name: `** **`,
                     value: `**ʟᴇᴠᴇʟ:** \`${userData.levelInfo.level.toLocaleString()}\`\n**ᴇxᴘᴇʀɪᴇɴᴄᴇ:** \`${userData.levelInfo.exp.toLocaleString()}/${exp_cap.toLocaleString()}\`\n**ᴛᴏᴛᴀʟ ᴍᴇꜱꜱᴀɢᴇꜱ ꜱᴇɴᴛ:** \`${userData.levelInfo.messages.toLocaleString()}\``,
-                    inline: true,
+                })
+                .addFields({
+                    name: `** **`,
+                    value: `**ᴛᴇᴍᴘᴏʀᴀʀʏ ʟᴇᴠᴇʟ:** \`${guildData.temporaryExp[
+                        userDiscord.id
+                    ].toLocaleString()}\``,
                 });
 
             return interaction.reply({ embeds: [level_embed] });
         } else if (interaction.options.getSubcommand() === "leaderboard") {
-            const usersData = await UserModel.find();
-            let level_sort = usersData.sort((a, b) => {
-                if (a.levelInfo.level === b.levelInfo.level) {
-                    return b.levelInfo.exp - a.levelInfo.exp;
-                } else {
-                    return b.levelInfo.level - a.levelInfo.level;
+            const options = {
+                category: interaction.options.getString("category"),
+            };
+            if (options.category === "main") {
+                const usersData = await UserModel.find();
+                let level_sort = usersData.sort((a, b) => {
+                    if (a.levelInfo.level === b.levelInfo.level) {
+                        return b.levelInfo.exp - a.levelInfo.exp;
+                    } else {
+                        return b.levelInfo.level - a.levelInfo.level;
+                    }
+                });
+
+                level_sort = level_sort.slice(0, 15);
+                const level_leaderboard_display = level_sort
+                    .map((userData, index) => {
+                        exp_cap =
+                            INCREMENT + userData.levelInfo.level * INCREMENT;
+
+                        return `**\`${index + 1}.\`** <@${
+                            userData.userId
+                        }> - **level ${
+                            userData.levelInfo.level
+                                ? userData.levelInfo.level.toLocaleString()
+                                : 0
+                        }** \`${
+                            userData.levelInfo.exp
+                                ? userData.levelInfo.exp.toLocaleString()
+                                : 0
+                        }/${exp_cap.toLocaleString()}\``;
+                    })
+                    .join("\n");
+
+                return interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription(
+                                `**Level leaderboard: DISPLAY**\n*Showing level leaderboard of the top 15 in ${interaction.guild.name}*\n\n${level_leaderboard_display}`
+                            )
+                            .setThumbnail(interaction.guild.iconURL()),
+                    ],
+                });
+            } else if ((options.category = "resettempexp")) {
+                const checkAccess = await discord_check_role(interaction, [
+                    "904456239415697441",
+                ]);
+                if (checkAccess === false) {
+                    error_message =
+                        "You don't have the roles to use this command.";
+                    return error_reply(interaction, error_message);
                 }
+
+                let exp_sort = Object.keys(guildData.temporaryExp).sort(
+                    (a, b) => {
+                        guildData.temporaryExp[b] - guildData.temporaryExp[a];
+                    }
+                );
+
+                exp_sort = exp_sort.slice(0, 15);
+                const exp_leaderboard_display = exp_sort
+                    .map((userId, index) => {
+                        return `**\`${
+                            index + 1
+                        }.\`** <@${userId}> - **Experience** \`${
+                            guildData.temporaryExp[userId]
+                        }\``;
+                    })
+                    .join("\n");
+
+                return interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription(
+                                `**Temporary experience leaderboard: DISPLAY**\n*Showing temporary experience leaderboard of the top 15 in ${interaction.guild.name}*\n\n${exp_leaderboard_display}`
+                            )
+                            .setThumbnail(interaction.guild.iconURL()),
+                    ],
+                });
+            }
+        } else if (interaction.options.getSubcommand() === "resettempexp") {
+            let exp_sort = Object.keys(guildData.temporaryExp).sort((a, b) => {
+                guildData.temporaryExp[b] - guildData.temporaryExp[a];
             });
 
-            level_sort = level_sort.slice(0, 15);
-            const donation_leaderboard_display = level_sort
-                .map((userData, index) => {
-                    exp_cap = INCREMENT + userData.levelInfo.level * INCREMENT;
-
-                    return `**\`${index + 1}.\`** <@${
-                        userData.userId
-                    }> - **level ${
-                        userData.levelInfo.level
-                            ? userData.levelInfo.level.toLocaleString()
-                            : 0
-                    }** \`${
-                        userData.levelInfo.exp
-                            ? userData.levelInfo.exp.toLocaleString()
-                            : 0
-                    }/${exp_cap.toLocaleString()}\``;
+            exp_sort = exp_sort.slice(0, 15);
+            const exp_leaderboard_display = exp_sort
+                .map((userId, index) => {
+                    return `**\`${
+                        index + 1
+                    }.\`** <@${userId}> - **Experience** \`${
+                        guildData.temporaryExp[userId]
+                    }\``;
                 })
                 .join("\n");
 
-            return interaction.reply({
+            await GuildModel.findOneAndUpdate(
+                { guildId: guildData.guildId },
+                { $set: { temporaryExp: {} } }
+            );
+
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Reset temporary experience: SUCCESSFUL**\n*I reset temporary experience, the leaderboard before reset is displayed below.*`
+                    ),
+                ],
+            });
+
+            return interaction.channel.send({
                 embeds: [
                     new EmbedBuilder()
                         .setDescription(
-                            `**Level leaderboard: DISPLAY**\n*Showing level leaderboard of the top 15 in ${interaction.guild.name}*\n\n${donation_leaderboard_display}`
+                            `**Temporary experience leaderboard: DISPLAY**\n*Showing temporary experience leaderboard of the top 15 in ${interaction.guild.name}*\n\n${exp_leaderboard_display}`
                         )
                         .setThumbnail(interaction.guild.iconURL()),
                 ],
