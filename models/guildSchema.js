@@ -40,10 +40,6 @@ const guildSchema = new mongoose.Schema(
                 },
             },
         },
-        temporaryExp: {
-            type: Object,
-            default: {},
-        },
         theme: {
             type: Object,
             default: {
@@ -56,6 +52,10 @@ const guildSchema = new mongoose.Schema(
                     "https://media.discordapp.net/attachments/1001660282663337986/1048011566529912882/ezgif.com-gif-maker_7.gif?width=576&height=35",
                 button_style: 2,
             },
+        },
+        temporaryExp: {
+            type: Object,
+            default: {},
         },
         miscData: {
             type: Object,
