@@ -515,7 +515,7 @@ module.exports = {
                     perkrole_discordData.color
                 }\`\nPosition: \`${perkrole_discordData.rawPosition}\`${
                     options.icon_emoji
-                        ? `Icon Emoji: ${options.icon_emoji}`
+                        ? `\nIcon Emoji: ${options.icon_emoji}`
                         : ""
                 }`
             );
