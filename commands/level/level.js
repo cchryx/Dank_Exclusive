@@ -148,7 +148,10 @@ module.exports = {
 
                 let exp_sort = Object.keys(guildData.temporaryExp).sort(
                     (a, b) => {
-                        guildData.temporaryExp[b] - guildData.temporaryExp[a];
+                        return (
+                            guildData.temporaryExp[b] -
+                            guildData.temporaryExp[a]
+                        );
                     }
                 );
 
