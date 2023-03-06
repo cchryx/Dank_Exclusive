@@ -60,10 +60,16 @@ class Levelfunctions {
         check = timeLeft - Date.now() >= timeLeft || timeLeft - Date.now() <= 0;
 
         if (check) {
-            guildData.temporaryExp[message.author.id] =
-                guildData.temporaryExp.hasOwnProperty(message.author.id)
-                    ? guildData.temporaryExp[message.author.id] + 1
-                    : 1;
+            if (message.channel.id === "908201143660859433") {
+                guildData.temporaryExp[message.author.id] =
+                    guildData.temporaryExp.hasOwnProperty(message.author.id)
+                        ? guildData.temporaryExp[message.author.id] + 1
+                        : 1;
+                await GuildModel.findOneAndUpdate(
+                    { guildId: guildData.guildId },
+                    guildData
+                );
+            }
             userData.levelInfo.exp += exp_increase;
 
             if (userData.levelInfo.exp >= exp_cap) {
@@ -87,11 +93,6 @@ class Levelfunctions {
         await UserModel.findOneAndUpdate(
             { userId: message.author.id },
             userData
-        );
-
-        await GuildModel.findOneAndUpdate(
-            { guildId: guildData.guildId },
-            guildData
         );
 
         if (userData.levelInfo.level > level_initial) {

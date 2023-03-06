@@ -21,6 +21,18 @@ module.exports = {
             return subcommand
                 .setName("show")
                 .setDescription("Show the current theme of the server.");
+        })
+        .addSubcommand((subcommand) => {
+            return subcommand
+                .setName("edit")
+                .setDescription("Edit the current theme of the server.")
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("setting")
+                        .setDescription(
+                            "Which part of the theme do you want to edit?"
+                        );
+                });
         }),
     cooldown: 10,
     async execute(interaction, client) {
@@ -36,30 +48,32 @@ module.exports = {
             return error_reply(interaction, error_message);
         }
 
-        return interaction.reply({
-            embeds: [
-                new EmbedBuilder()
-                    .setTitle(`Theme Settings`)
-                    .setDescription(
-                        `*Here lies all the themes.*\n\n${Object.keys(
-                            embed_theme
+        if (interaction.options.getSubcommand() === "show") {
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle(`Theme Settings`)
+                        .setDescription(
+                            `*Here lies all the themes.*\n\n${Object.keys(
+                                embed_theme
+                            )
+                                .map((key) => {
+                                    return `\`${key}\`: ${embed_theme[key]}`;
+                                })
+                                .join("\n")}`
                         )
-                            .map((key) => {
-                                return `\`${key}\`: ${embed_theme[key]}`;
-                            })
-                            .join("\n")}`
-                    )
-                    .setColor(embed_theme.color),
-            ],
-            components: [
-                new ActionRowBuilder().setComponents(
-                    new ButtonBuilder()
-                        .setDisabled()
-                        .setStyle(embed_theme.button_style)
-                        .setEmoji(`${embed_theme.emoji_join}`)
-                        .setCustomId("null")
-                ),
-            ],
-        });
+                        .setColor(embed_theme.color),
+                ],
+                components: [
+                    new ActionRowBuilder().setComponents(
+                        new ButtonBuilder()
+                            .setDisabled()
+                            .setStyle(embed_theme.button_style)
+                            .setEmoji(`${embed_theme.emoji_join}`)
+                            .setCustomId("null")
+                    ),
+                ],
+            });
+        }
     },
 };
