@@ -136,16 +136,7 @@ module.exports = {
                             .setThumbnail(interaction.guild.iconURL()),
                     ],
                 });
-            } else if ((options.category = "resettempexp")) {
-                const checkAccess = await discord_check_role(interaction, [
-                    "904456239415697441",
-                ]);
-                if (checkAccess === false) {
-                    error_message =
-                        "You don't have the roles to use this command.";
-                    return error_reply(interaction, error_message);
-                }
-
+            } else if ((options.category = "tempexp")) {
                 let exp_sort = Object.keys(guildData.temporaryExp).sort(
                     (a, b) => {
                         return (
