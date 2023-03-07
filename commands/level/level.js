@@ -97,7 +97,19 @@ module.exports = {
             const options = {
                 category: interaction.options.getString("category"),
             };
+
             if (options.category === "main") {
+                const interation_message = await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription(
+                                `**Level leaderboard: FETCHING**\n*Fetching level leaderboard of the top 15 in ${interaction.guild.name}*\n\n\`loading...\``
+                            )
+                            .setThumbnail(interaction.guild.iconURL()),
+                    ],
+                    fetchReply: true,
+                });
+
                 const usersData = await UserModel.find();
                 let level_sort = usersData.sort((a, b) => {
                     if (a.levelInfo.level === b.levelInfo.level) {
@@ -127,7 +139,7 @@ module.exports = {
                     })
                     .join("\n");
 
-                return interaction.reply({
+                return interation_message.edit({
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(
@@ -137,6 +149,16 @@ module.exports = {
                     ],
                 });
             } else if ((options.category = "tempexp")) {
+                const interation_message = await interaction.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription(
+                                `**Temporary experience leaderboard: FETCHING**\n*Fetching temporary experience leaderboard of the top 15 in ${interaction.guild.name}*\n\n\`loading...\``
+                            )
+                            .setThumbnail(interaction.guild.iconURL()),
+                    ],
+                    fetchReply: true,
+                });
                 let exp_sort = Object.keys(guildData.temporaryExp).sort(
                     (a, b) => {
                         return (
@@ -157,7 +179,7 @@ module.exports = {
                     })
                     .join("\n");
 
-                return interaction.reply({
+                return interation_message.edit({
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(
