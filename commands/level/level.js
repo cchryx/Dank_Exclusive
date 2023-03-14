@@ -87,9 +87,13 @@ module.exports = {
                 })
                 .addFields({
                     name: `** **`,
-                    value: `**ᴛᴇᴍᴘᴏʀᴀʀʏ ʟᴇᴠᴇʟ:** \`${guildData.temporaryExp[
-                        userDiscord.id
-                    ].toLocaleString()}\``,
+                    value: `**ᴛᴇᴍᴘᴏʀᴀʀʏ ʟᴇᴠᴇʟ:** \`${
+                        guildData.temporaryExp[userDiscord.id]
+                            ? guildData.temporaryExp[
+                                  userDiscord.id
+                              ].toLocaleString()
+                            : "0"
+                    }\``,
                 });
 
             return interaction.reply({ embeds: [level_embed] });
