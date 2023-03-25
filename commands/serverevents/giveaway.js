@@ -220,6 +220,18 @@ module.exports = {
                 return;
             }
 
+            // handle mention
+            if (options.mention) {
+                const checkMentioncd = await giveaway_check_mentioncd(
+                    interaction,
+                    options.mention
+                );
+
+                if (checkMentioncd === false) {
+                    return;
+                }
+            }
+
             const requiredChat_string = options.requiredchat;
             let requiredChat;
             let requiredChat_raw;
@@ -473,18 +485,6 @@ module.exports = {
                 components: rows,
                 allowedMentions: { parse: ["users", "roles"] },
             });
-
-            // handle mention
-            if (options.mention) {
-                const checkMentioncd = await giveaway_check_mentioncd(
-                    interaction,
-                    options.mention
-                );
-
-                if (checkMentioncd === false) {
-                    return;
-                }
-            }
 
             if (rolesData_raw.required) {
                 if (rolesData_raw.required.includes("922663821208879125")) {
