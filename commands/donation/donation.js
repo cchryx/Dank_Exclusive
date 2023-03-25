@@ -191,6 +191,17 @@ module.exports = {
                 category: interaction.options.getString("category"),
             };
 
+            const interation_message = await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription(
+                            `**Donation leaderboard: FETCHING**\n*Fetching donation leaderboard of the top 15 in ${interaction.guild.name}*\n\n\`loading...\``
+                        )
+                        .setThumbnail(interaction.guild.iconURL()),
+                ],
+                fetchReply: true,
+            });
+
             const usersData = await UserModel.find();
             let donation_sort = usersData.sort((a, b) => {
                 if (!a.donation[options.category]) {
@@ -221,7 +232,7 @@ module.exports = {
                 })
                 .join("\n");
 
-            return interaction.reply({
+            return interation_message.edit({
                 embeds: [
                     new EmbedBuilder()
                         .setDescription(
