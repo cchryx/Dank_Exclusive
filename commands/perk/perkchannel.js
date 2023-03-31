@@ -667,6 +667,10 @@ module.exports = {
                 ],
             });
         } else if (interaction.options.getSubcommand() === "purge") {
+            return error_reply(
+                interaction,
+                "Disabled command till further notice..."
+            );
             const perkchannelDatas = await PerkchannelModel.find();
             const message_discordData = await interaction.reply({
                 embeds: [

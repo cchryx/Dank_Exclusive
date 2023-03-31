@@ -1,5 +1,3 @@
-// cooldowns.js
-
 const cooldowns = new Map();
 
 module.exports = {
