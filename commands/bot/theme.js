@@ -7,7 +7,7 @@ const {
     ComponentType,
 } = require("discord.js");
 
-const TimerModel = require("../../models/timerSchema");
+const GuildModel = require("../../models/guildSchema");
 
 const { guild_fetch } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
@@ -28,10 +28,17 @@ module.exports = {
                 .setDescription("Edit the current theme of the server.")
                 .addStringOption((oi) => {
                     return oi
+                        .setRequired(true)
                         .setName("setting")
                         .setDescription(
                             "Which part of the theme do you want to edit?"
                         );
+                })
+                .addStringOption((oi) => {
+                    return oi
+                        .setRequired(true)
+                        .setName("value")
+                        .setDescription("What value do you want to use?");
                 });
         }),
     cooldown: 10,
@@ -71,6 +78,38 @@ module.exports = {
                             .setStyle(embed_theme.button_style)
                             .setEmoji(`${embed_theme.emoji_join}`)
                             .setCustomId("null")
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "edit") {
+            const options = {
+                setting: interaction.options.getString("setting"),
+                value: interaction.options.getString("value"),
+            };
+            const editable_elements = Object.keys(embed_theme);
+            const old_value = embed_theme[options.setting];
+
+            if (!editable_elements.includes(options.setting)) {
+                error_message =
+                    "There is no such setting! Run </theme show:1080271652199346206> to see all settings.";
+                return error_reply(interaction, error_message);
+            }
+
+            guildData.theme[options.setting] = options.value;
+
+            await GuildModel.findOneAndUpdate(
+                { guildId: guildData.guildId },
+                guildData
+            );
+
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Update theme: SUCCESSFUL**\n*I edited the theme for you.*\n\nSetting: \`${
+                            options.setting
+                        }\`\nChanges:\n${old_value}\n\`TO\`\n${
+                            guildData.theme[options.setting]
+                        }`
                     ),
                 ],
             });
