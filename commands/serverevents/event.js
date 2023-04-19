@@ -109,11 +109,11 @@ module.exports = {
                     name: `Information:`,
                     value: `${embedTheme.emoji_subpoint}**Host:** ${
                         interaction.user
-                    }\n${
-                        embedTheme.emoji_subpoint
-                    }**Channel:** <#902732993188200498>\n${
-                        embedTheme.emoji_subpoint
-                    }**Sponsor:** ${
+                    }\n${embedTheme.emoji_subpoint}**Channel:** ${
+                        options.event.toLowerCase().includes("mafia")
+                            ? "<#1097745904192200815>"
+                            : "<#902732993188200498>"
+                    }\n${embedTheme.emoji_subpoint}**Sponsor:** ${
                         options.sponsor ? options.sponsor : interaction.user
                     }\n${embedTheme.emoji_subpoint}**Message:** ${
                         options.message ? options.message : "`none`"
