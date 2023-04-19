@@ -95,7 +95,11 @@ module.exports = {
                 return error_reply(interaction, error_message);
             }
 
-            guildData.theme[options.setting] = options.value;
+            guildData.theme[options.setting] =
+                options.setting === "emoji_mainpoint" ||
+                options.setting === "emoji_subpoint"
+                    ? options.value + " "
+                    : options.value;
 
             await GuildModel.findOneAndUpdate(
                 { guildId: guildData.guildId },
