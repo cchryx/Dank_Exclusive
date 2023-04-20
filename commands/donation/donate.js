@@ -155,7 +155,7 @@ module.exports = {
                 donate_embed
                     .setTitle(`How to donate for an event`)
                     .setDescription(
-                        `\`\`\`/donate event\`\`\`\n<:yellowdot:959974563582718032> The minimum donation is **2 million per winner (dank)**\n<:yellowdot:959974563582718032> The minimum donations for Mafia is **25m** (no items)\n<:yellowdot:959974563582718032>  Dank items we will use dank memer's trading price\n<:yellowdot:959974563582718032> Wait patiently for an <@&904459850812100649> to take your donations`
+                        `\`\`\`/donate event\`\`\`\n<:yellowdot:959974563582718032> The minimum donation is **2 million per winner (dank)**\n<:yellowdot:959974563582718032> The minimum donation for Mafia is **25m** (no items)\n<:yellowdot:959974563582718032>  Dank items we will use dank memer's trading price\n<:yellowdot:959974563582718032> Wait patiently for an <@&904459850812100649> to take your donations`
                     );
 
                 interaction.reply({
