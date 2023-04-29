@@ -234,10 +234,31 @@ module.exports = {
             );
 
             if (rolesData.length <= 0) {
-                error_message = `Couldn't identify any roles to view  lock.`;
+                error_message = `Couldn't identify any roles to view lock.`;
                 return error_reply(interaction, error_message);
             }
 
+            if (dankexData.miscData.roles.bots) {
+                await interaction.channel.permissionOverwrites
+                    .edit(dankexData.miscData.roles.bots, {
+                        ViewChannel: true,
+                        MentionEveryone: true,
+                        ViewChannel: true,
+                        SendMessages: true,
+                        AddReactions: true,
+                        UseApplicationCommands: true,
+                        EmbedLinks: true,
+                        AttachFiles: true,
+                        UseExternalEmojis: true,
+                        ReadMessageHistory: true,
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return false;
+                    });
+            }
             rolesData.roles.forEach(async (role) => {
                 await interaction.channel.permissionOverwrites
                     .edit(role, {
@@ -336,6 +357,28 @@ module.exports = {
                     deny: [PermissionsBitField.Flags.SendMessages],
                 },
             ]);
+
+            if (dankexData.miscData.roles.bots) {
+                await interaction.channel.permissionOverwrites
+                    .edit(dankexData.miscData.roles.bots, {
+                        ViewChannel: true,
+                        MentionEveryone: true,
+                        ViewChannel: true,
+                        SendMessages: true,
+                        AddReactions: true,
+                        UseApplicationCommands: true,
+                        EmbedLinks: true,
+                        AttachFiles: true,
+                        UseExternalEmojis: true,
+                        ReadMessageHistory: true,
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return false;
+                    });
+            }
 
             interaction.reply({
                 embeds: [
