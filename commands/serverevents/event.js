@@ -5,11 +5,13 @@ const {
     ButtonBuilder,
     ButtonStyle,
     ComponentType,
+    PermissionsBitField,
 } = require("discord.js");
 
 const GuildModel = require("../../models/guildSchema");
 const { guild_checkperm_mod } = require("../../utils/guild");
 const { error_reply } = require("../../utils/error");
+const { discord_dissect_roles } = require("../../utils/discord");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -51,6 +53,22 @@ module.exports = {
         )
         .addSubcommand((subcommand) =>
             subcommand.setName("end").setDescription("Stop the ongoing event")
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("lock")
+                .setDescription(
+                    "Lockview so that only certain roles can view this heist."
+                )
+                .addStringOption((oi) => {
+                    return oi
+                        .setName("roles")
+                        .setDescription("Which roles can view this channel.")
+                        .setRequired(true);
+                })
+        )
+        .addSubcommand((subcommand) =>
+            subcommand.setName("unlock").setDescription("Reset heist lock")
         ),
     cooldown: 10,
     async execute(interaction, client) {
@@ -205,6 +223,135 @@ module.exports = {
                 },
                 dankexData
             );
+        } else if (interaction.options.getSubcommand() === "lock") {
+            const options = {
+                roles: interaction.options.getString("roles"),
+            };
+
+            const rolesData = await discord_dissect_roles(
+                interaction,
+                options.roles
+            );
+
+            if (rolesData.length <= 0) {
+                error_message = `Couldn't identify any roles to view  lock.`;
+                return error_reply(interaction, error_message);
+            }
+
+            rolesData.roles.forEach(async (role) => {
+                await interaction.channel.permissionOverwrites
+                    .edit(role, {
+                        ViewChannel: true,
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        error_message = `${error.rawError.message}`;
+                        error_reply(interaction, error_message);
+                        return false;
+                    });
+            });
+            await interaction.channel.permissionOverwrites
+                .edit(interaction.guild.id, {
+                    ViewChannel: false,
+                })
+                .catch((error) => {
+                    console.log(error);
+                    error_message = `${error.rawError.message}`;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+            await interaction.channel.permissionOverwrites
+                .edit("933489817319243837", {
+                    ViewChannel: true,
+                })
+                .catch((error) => {
+                    console.log(error);
+                    error_message = `${error.rawError.message}`;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+            await interaction.channel.permissionOverwrites
+                .edit("904459850812100649", {
+                    MentionEveryone: true,
+                    ViewChannel: true,
+                    SendMessages: true,
+                    AddReactions: true,
+                    UseApplicationCommands: true,
+                })
+                .catch((error) => {
+                    console.log(error);
+                    error_message = `${error.rawError.message}`;
+                    error_reply(interaction, error_message);
+                    return false;
+                });
+
+            const rolesData_map = rolesData.roles
+                .map((role) => {
+                    return `<@&${role}>`;
+                })
+                .join("\n");
+
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Event lock channel: SUCCESSFUL**\n*The roles below can still view this channel.*\n\n${rolesData_map}`
+                    ),
+                ],
+            });
+        } else if (interaction.options.getSubcommand() === "unlock") {
+            interaction.channel.permissionOverwrites.set([
+                {
+                    id: "955249569254473779",
+                    deny: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.SendMessagesInThreads,
+                        PermissionsBitField.Flags.CreatePublicThreads,
+                        PermissionsBitField.Flags.CreatePrivateThreads,
+                        PermissionsBitField.Flags.AddReactions,
+                        PermissionsBitField.Flags.CreateInstantInvite,
+                    ],
+                },
+                {
+                    id: "934672804413067274",
+                    deny: [
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.SendMessagesInThreads,
+                        PermissionsBitField.Flags.CreatePublicThreads,
+                        PermissionsBitField.Flags.CreatePrivateThreads,
+                        PermissionsBitField.Flags.AddReactions,
+                    ],
+                },
+                {
+                    id: "904459850812100649",
+                    allow: [
+                        PermissionsBitField.Flags.MentionEveryone,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.AddReactions,
+                        PermissionsBitField.Flags.UseApplicationCommands,
+                    ],
+                },
+                {
+                    id: interaction.guild.id,
+                    deny: [PermissionsBitField.Flags.SendMessages],
+                },
+            ]);
+
+            interaction.reply({
+                embeds: [
+                    new EmbedBuilder().setDescription(
+                        `**Event unlock channel: SUCCESSFUL**\n*Permissions of this channel has been reset, everyone can view this channel now.*`
+                    ),
+                    new EmbedBuilder()
+                        .setColor("#FAFFFC")
+                        .setTitle(
+                            `**Freeloaders are banned for 21 days <a:cat_sip:979941878403313664>**`
+                        )
+                        .setDescription(
+                            `<a:blue_heart:964357388771663953> Massive giveaways [\`here\`](https://canary.discord.com/channels/902334382939963402/902699081049182309)\n<a:blue_heart:964357388771663953> Thank you [\`grinders\`](https://discord.com/channels/902334382939963402/904459344882573372/964348763672043612) for making this heist possible`
+                        ),
+                ],
+            });
         }
     },
 };
